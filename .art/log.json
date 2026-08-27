@@ -2,6 +2,78 @@
  {
   "data": "2026-08-27",
   "projeto": "viagens",
+  "pagina": "/ + fecho + FAQ (capa inteira; paginas .doc intocadas de proposito)",
+  "direcao": "solari",
+  "tipo": "materializacao",
+  "base": "a entrada anterior deste mesmo log",
+  "eixos": {
+   "materia": "geometria + volume",
+   "motor": "autonomo",
+   "banda": "escura"
+  },
+  "pedido": "Dono disse literalmente 'Eu quero mais /art-direction'. Perguntei o que 'mais' queria dizer com tres opcoes (materializar a Solari / subir o gesto a escala de heroi / trocar de direcao) e ele escolheu materializar — a recomendacao era essa.",
+  "diagnostico": "A direcao tinha o VERBO e nao tinha a MATERIA. O 'virar' estava implementado nas quatro camadas, mas na tela parada a pagina era tipografia sobre um plano navy chapado: a pa era texto laranja sem corpo, a janela era um espaco em branco, as celulas eram linhas de tabela separadas por um fio de 1px, e nao havia fonte de luz declarada em lugar nenhum. Nada na pagina parecia feito de alguma coisa. Nenhum gate reprovava isso: G17 aceita fundo chapado quando o eixo de materia e `geometria`, que era o caso. Quem reprovou foi olhar o quadro de verificacao.",
+  "o_que_mudou": [
+   "FONTE DE LUZ UNICA a 200 graus, escrita em tokens.css e obedecida em todo elemento: toda aresta virada para cima acende, toda sombra cai para baixo. NAO virou token — nenhuma declaracao calcula a partir dela, e custom property que ninguem le e comentario com ponto e virgula.",
+   "A PA GANHOU CORPO: duas metades de plastico com corte DURO em 50% (--pa-cima / --pa-baixo, 0.05 de delta em L), aresta de cima acesa, pe na sombra. O vinco MUDOU DE DONO — estava na janela, entao a dobra ficava parada enquanto a peca girava por tras dela; agora cada pa carrega a propria. E o vinco virou DOIS fios (fresta escura + quina clara) em vez de um, que era borda de tabela.",
+   "A JANELA VIROU O BURACO DO PAINEL: recorte no metal (--moldura), sombra caindo da aresta de cima para dentro, quina de baixo pegando luz. E a pa subiu de --t-2xl (2.125rem) para --t-pa (3.25rem) — o gesto principal da direcao estava menor que dois subtitulos da pagina.",
+   "CAMADA DE LUZ NA PA QUE CAI: `.destino__pa::before` com sombra que apaga conforme a peca se vira para a fonte. Corre em `linear` — a UNICA coisa da pagina fora da curva da pa — porque --ease-pa despeja 80% do giro nos primeiros 17% do tempo e a luz na mesma curva apagava junto, deixando a materia visivel por ~40ms.",
+   "A PLACA E O FECHO viraram PAINEIS PARAFUSADOS NUMA PAREDE: corpo em gradiente (topo iluminado, pe na sombra da moldura), aresta de cima acesa, sombra de 2 degraus caindo na parede. O <header> virou TRILHO de metal recuado sangrando de ponta a ponta — antes a faixa se separava por um fio de 74rem no meio de uma tela de 1440px.",
+   "TODO FILETE DO SITE VIROU FRESTA (fio escuro + fio claro): placa, estacoes, lista densa, rivais, FAQ e a barra do rodape. As paginas .doc NAO receberam e continuam em filete simples — sao fichas, nao paineis.",
+   "OS CODIGOS VIRARAM PAS PEQUENAS (AER/HTL/PCT/CAR e o numero da estacao), mesma materia da pa grande. Os numeros dos ITENS ficaram como numerais soltos: sao secundarios, e uma duzia de plaquinhas no miolo apagaria a hierarquia.",
+   "O BOTAO PRIMARIO virou TECLA (luz continua, sem corte duro — tecla e bloco, nao folha), encaixada num RECESSO que era o unico card chapado que sobrava na pagina. Com 1px de curso no :active.",
+   "GRAO: feTurbulence gerado uma vez em data-uri, duas escalas, UMA camada `position: fixed` para o site inteiro. Nao um ::after por superficie — cada mix-blend-mode cria camada de composicao, e grao por linha da placa seriam 4+ repintando no scroll."
+  ],
+  "correcoes_encontradas_olhando": [
+   "A pa do destino tinha 22ch e o campo ficava METADE vazio: lia como caixa vazia com uma palavra encostada na esquerda, nao como pa. 18ch poe 'BUENOS AIRES' em 79% do campo.",
+   "O degrau da dobra falhou DUAS vezes antes de acertar. 0.026 e 0.036 de delta em L existiam no codigo e sumiam na tela — de pe, a um metro do monitor, a pa voltava a ler como retangulo liso com um risco no meio. 0.05 e o valor que a luz conta.",
+   "O vinco a 50% cortava as letras 10% da altura de caixa alta ABAIXO do centro: os destinos sao todos em maiuscula e a perna do descendente fica vazia embaixo, o que sobe o centro visual. 47%.",
+   "Trocar o padding da .linha de --e-2 para --e-3 derrubou a coluna do nome para 146px em 360px e 'Passagens aereas' a 16px de mono mede 154 — quebrou em duas linhas. O log da entrada anterior ja avisava que a mono nao perdoa 1px, e eu quebrei exatamente isso. Corrigido com a primeira coluna em `auto` (a pa do codigo mede 40px, a coluna fixa reservava 52) mais o padding de volta: 20px recuperados.",
+   "MEU BUG DE FERRAMENTA, nao de design: as escritas em Python converteram global.css, tokens.css, README.md e verificar.mjs de LF para CRLF, e o test/placa.test.mjs quebrou porque a regex do keyframe casa com \n. Revertido em modo binario. Nao ha .gitattributes neste repo."
+  ],
+  "construido_e_removido": [
+   "Congelar o quadro da queda trocando --pa-giro por CSS. Nao funciona: o animation-delay e resolvido quando a animacao nasce e o Chromium nao reinicia uma animacao em curso porque a custom property que alimenta o delay mudou. Media sombra 0.00 nos tres quadros — exatamente o que se veria se a camada estivesse quebrada, que e o falso negativo mais perigoso que existe porque parece um achado. Trocado por pausar e rebobinar pela Web Animations API.",
+   "Tres tokens orfaos removidos junto: --vinco (a dobra virou o par sombra/luz), --t-2xl (a pa migrou para --t-pa) e --luz-azimute (virou regra escrita, nao token)."
+  ],
+  "custo": {
+   "faixa": "captacao",
+   "js_gzip_kb": 0,
+   "deps_novas": [],
+   "peso_novo_kb": {
+    "grao_data_uri": 0.33
+   },
+   "lcp_ms": {
+    "mediana": 316,
+    "amostras": [
+     420,
+     312,
+     316,
+     328,
+     288
+    ],
+    "alvo": 1500,
+    "condicao": "build servido estatico, CPU 4x estrangulada, 1440x900",
+    "elemento": "H1.placa__titulo"
+   },
+   "cls": 0.0,
+   "contraste_pares": 37,
+   "contraste_reprovados": 0,
+   "teclado": "22 paradas, 0 sem anel de foco",
+   "console": "limpo em 360 / 768 / 1440",
+   "estouro_horizontal": "nenhum nas tres larguras"
+  },
+  "gates": {
+   "G17_superficie_com_materia": "era o gate que passava por regra e falhava na tela — `geometria` isenta de grao, e a isencao virou desculpa. Agora fecha por merito: grao, volume, duas metades, fresta e fonte de luz unica.",
+   "G18_sombra_com_cor": "fechado — toda sombra sai de --sombra-cor (navy fechado em OKLCH) via color-mix. Nenhum preto puro sobre objeto azul.",
+   "G11_uma_ideia": "fechado — a materia REFORCA o verbo em vez de somar um quinto gesto: a pagina inteira e feita de pas, das quatro linhas ao codigo da estacao. A unica peca que nao e pa e a tecla, e ela e declarada como bloco, nao folha.",
+   "G21_blur_nao_anima": "fechado — o feTurbulence e gerado uma vez em data-uri e nao existe filter dentro de keyframe.",
+   "G23_reduced_motion": "fechado — a camada de luz da pa e desligada explicitamente no bloco reduce, senao o destino nascia atras de um veu de 0.88 (o valor de repouso do keyframe).",
+   "G32_difere_do_log": "N/A DECLARADO, e o unico n/a desta entrada: nao e direcao nova, e a MESMA direcao da entrada anterior executada ate o fim. A regra de variedade existe para impedir que projetos diferentes saiam iguais; aqui e a mesma pagina ficando mais ela."
+  }
+ },
+ {
+  "data": "2026-08-27",
+  "projeto": "viagens",
   "pagina": "/ (e toda a capa: /sobre, legais, 404)",
   "direcao": "solari",
   "tipo": "custom",
@@ -65,7 +137,13 @@
    },
    "lcp_ms": {
     "mediana": 316,
-    "amostras": [280, 288, 316, 324, 324],
+    "amostras": [
+     280,
+     288,
+     316,
+     324,
+     324
+    ],
     "alvo": 1500,
     "condicao": "build servido estatico, CPU 4x estrangulada, 1440x900",
     "elemento": "H1.placa__titulo"

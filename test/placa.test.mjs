@@ -40,10 +40,14 @@ test("cada pá ocupa 1/N do ciclo no keyframe", () => {
   // O `hold` termina no fim do slot da pá (12.5% com 8 destinos) e a saída
   // vaza um giro além dele, sobrepondo a entrada da pá seguinte. Se a saída
   // couber DENTRO do slot, sobra uma janela com a placa vazia.
-  const fim = Number(global_.match(/\n  1%,\n  ([\d.]+)% \{/)?.[1]);
+  // `\r?\n` e nao `\n`: este repo roda com core.autocrlf=true, entao o
+  // global.css sai do clone com CRLF e uma regex ancorada em \n puro nao casa
+  // com nada. O teste passava a virar NaN e a acusar o keyframe, que estava
+  // certo. Falha de leitura disfarcada de falha de design.
+  const fim = Number(global_.match(/\r?\n  1%,\r?\n  ([\d.]+)% \{/)?.[1]);
   assert.equal(fim, fatia, `o hold termina em ${fim}%, deveria terminar em ${fatia}%`);
 
-  const saida = Number(global_.match(/\n  ([\d.]+)% \{\n    transform: rotateX\(92deg\)/)?.[1]);
+  const saida = Number(global_.match(/\r?\n  ([\d.]+)% \{\r?\n    transform: rotateX\(92deg\)/)?.[1]);
   const giroEmPorcento = (giro / total) * 100;
   assert.equal(
     +(saida - fim).toFixed(4),

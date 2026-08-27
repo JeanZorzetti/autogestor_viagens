@@ -73,6 +73,31 @@ const PARES = {
     ["texto-3 / placa", "--texto-3", "--placa", 4.5],
     ["texto-3 / placa-linha", "--texto-3", "--placa-linha", 4.5],
   ],
+  "a matéria: o painel deixou de ser cor chapada": [
+    // O corpo da placa virou gradiente (topo iluminado, pé na sombra da
+    // moldura). Todo texto que mora nela agora tem DOIS fundos possíveis, e é
+    // o extremo escuro que decide — medir só a cor média deixaria passar um
+    // par que reprova no rodapé da seção.
+    ["texto / placa-alto", "--texto", "--placa-alto", 4.5],
+    ["texto / placa-baixo (o pé do painel)", "--texto", "--placa-baixo", 4.5],
+    ["texto-2 / placa-baixo", "--texto-2", "--placa-baixo", 4.5],
+    ["texto-3 / placa-alto (o extremo claro)", "--texto-3", "--placa-alto", 4.5],
+    // O <header> virou trilho de metal recuado, mais escuro que tudo. Texto
+    // sobre ele ficou MAIS legível, não menos — mas medido, não presumido.
+    ["texto (marca na faixa) / moldura", "--texto", "--moldura", 4.5],
+    ["texto-3 (GYN Goiânia) / moldura", "--texto-3", "--moldura", 4.5],
+    ["marca (busca aberta 24h) / moldura", "--marca", "--moldura", 4.5],
+    ["anel de foco / moldura", "--foco", "--moldura", 3],
+  ],
+  "a pá — texto sobre as duas metades da peça": [
+    // A pá tem metade de cima iluminada e metade de baixo na própria sombra,
+    // com corte duro em 50%. O nome do destino atravessa as duas, então as
+    // duas precisam passar: é literalmente o mesmo texto em dois fundos.
+    ["marca-alta (destino) / pá metade de cima", "--marca-alta", "--pa-cima", 4.5],
+    ["marca-alta (destino) / pá metade de baixo", "--marca-alta", "--pa-baixo", 4.5],
+    ["marca (código AER/HTL) / pá metade de cima", "--marca", "--pa-cima", 4.5],
+    ["marca (código AER/HTL) / pá metade de baixo", "--marca", "--pa-baixo", 4.5],
+  ],
   "marca — o laranja medido das peças de captação": [
     // #f88400 é o laranja exato de "AGORA!" e do botão BUSCAR nas peças de
     // ago/2026 (amostrado em pixel, não aproximado). Sobre o navy ele passa
@@ -103,7 +128,11 @@ const PARES = {
   "separadores — decorativos, medidos só para registro": [
     ["borda / placa", "--borda", "--placa", 1],
     ["borda / fundo", "--borda", "--fundo", 1],
-    ["vinco da pá / placa", "--vinco", "--placa", 1],
+    // O vinco deixou de ser UM fio (--vinco, removido) e virou o par
+    // sombra/luz: a fresta e a quina que pega a luz logo abaixo dela.
+    ["vinco: fio de sombra / fio de luz", "--vinco-sombra", "--vinco-luz", 1],
+    ["aresta acesa / corpo da pá", "--aresta-luz", "--pa-cima", 1],
+    ["moldura (trilho) / placa", "--moldura", "--placa", 1],
   ],
 };
 

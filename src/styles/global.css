@@ -32,6 +32,26 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* O grão. UMA camada para o site inteiro — `position: fixed` cobrindo a janela
+   em vez de um ::after por superfície. A diferença não é elegância: cada
+   `mix-blend-mode` cria uma camada de composição, e pôr grão em cada linha da
+   placa seriam 4+ camadas repintando no scroll. Aqui é uma, e ela não rola.
+
+   `soft-light` e não `overlay` porque a banda é escura: overlay sobre navy
+   estoura o claro do ruído e vira poeira branca. 0.055 é o teto em que a
+   textura ainda se lê como plástico injetado e não como chiado. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  pointer-events: none;
+  background-image: var(--grao), var(--grao);
+  background-size: 240px 240px, 90px 90px;
+  opacity: 0.055;
+  mix-blend-mode: soft-light;
+}
+
 img,
 svg {
   display: block;
@@ -109,22 +129,34 @@ p {
    está pendurada pela aresta de cima, como no mecanismo real, e não gira pelo
    próprio centro.                                                            */
 
-/* O vinco: a linha onde a pá real se dobra ao meio. É a sombra desta direção —
-   não existe box-shadow difusa em lugar nenhum deste site. Mora na janela do
-   destino, e é ele que faz a célula continuar lendo como PÁ quando está
-   parada — o caso do movimento reduzido, em que não há giro nenhum para
-   explicar o que aquilo é. */
+/* O vinco: a linha onde a pá real se dobra ao meio. É ele que faz a peça
+   continuar lendo como PÁ quando está parada — o caso do movimento reduzido,
+   em que não há giro nenhum para explicar o que aquilo é.
+
+   MORA NA PÁ, não na janela. Ficou na janela na primeira versão e o defeito
+   só aparece em movimento: a dobra ficava suspensa no ar enquanto a peça
+   girava por trás dela, o que não é uma dobra, é um risco no vidro. */
 .vinco {
   position: relative;
 }
+/* DOIS fios, não um — e é aqui que a matéria começa. Um fio escuro sozinho é
+   borda de tabela, que era o que havia antes. O sulco de uma dobra real tem a
+   fresta (escura, onde a luz de 200° não entra) e, logo abaixo dela, a quina
+   da metade de baixo pegando essa mesma luz. Dois pixels no total. */
 .vinco::after {
   content: "";
   position: absolute;
   inset-inline: 0;
-  top: 50%;
-  height: 1px;
-  background: var(--vinco);
+  /* 47% e não 50%. A dobra de uma pá real corta o CARACTERE ao meio, e o meio
+     do caractere não é o meio da caixa de linha: os destinos são todos em
+     caixa alta e a perna do descendente fica vazia embaixo, o que empurra o
+     centro visual das maiúsculas para cima. Medido no quadro de 1440: a 50% o
+     fio cortava as letras a 10% da altura de caixa alta abaixo do centro. */
+  top: calc(47% - 1px);
+  height: 2px;
+  background: linear-gradient(to bottom, var(--vinco-sombra) 0 1px, var(--vinco-luz) 1px 2px);
   pointer-events: none;
+  z-index: 1;
 }
 
 /* ── camada 1 · ENTRADA ────────────────────────────────────────────────────
@@ -245,6 +277,15 @@ p {
   .destino__pa:first-child {
     opacity: 1;
   }
+  /* A pá parada está TRAVADA, e pá travada está de frente para a luz: a
+     camada de sombra não pode ficar no valor de repouso do keyframe (0.88),
+     senão o destino nasce escuro atrás de um véu. Ela nasce acesa, e quem faz
+     a peça continuar lendo como pá aqui é o corpo — vinco, duas metades,
+     aresta —, não o movimento que não existe. */
+  .destino__pa::before {
+    animation: none !important;
+    opacity: 0;
+  }
   .status__b {
     display: none;
   }
@@ -255,21 +296,50 @@ p {
 
 /* ═══ 3 · A PLACA (a primeira tela) ═════════════════════════════════════════ */
 
+/* A placa é um PAINEL PARAFUSADO NUMA PAREDE, e a parede é o --fundo. Antes
+   isto era `background: var(--placa)` com um fio embaixo — a mesma cor de
+   ponta a ponta, que é como se pinta uma div e não como se ilumina um objeto.
+
+   Três coisas, todas obedecendo a luz de 200°: o corpo tem gradiente (topo
+   claro, pé na sombra da própria moldura), a aresta de cima acende, e o pé
+   projeta sombra na parede em vez de terminar num fio. */
+.placa,
+.fecho {
+  position: relative;
+  background: linear-gradient(to bottom, var(--placa-alto) 0, var(--placa) 34%, var(--placa-baixo) 100%);
+  /* A rampa da sombra: cada degrau dobra o borrão e reduz o alfa. É o que
+     separa "difusa" de "0 4px 12px rgba(0,0,0,.1)". A cor tem matiz — é o navy
+     fechado, nunca preto sobre objeto azul. */
+  box-shadow:
+    inset 0 1px 0 var(--aresta-luz),
+    0 1px 0 var(--moldura),
+    0 6px 12px -6px color-mix(in oklch, var(--sombra-cor) 55%, transparent),
+    0 18px 36px -18px color-mix(in oklch, var(--sombra-cor) 45%, transparent);
+}
 .placa {
   padding-block: var(--e-6) var(--e-10);
-  background: var(--placa);
-  border-bottom: 1px solid var(--borda);
 }
 
 /* A faixa de status: o que uma placa de aeroporto tem em cima. É também a
    nav — e é por isso que não existe barra de 4 links neste site. */
+/* O trilho. A faixa vivia dentro do container e se separava do conteúdo por um
+   fio que parava nas margens — um fio de 74rem no meio de uma tela de 1440px
+   não é a régua de cima de um painel, é uma borda de div. O trilho é o
+   <header> INTEIRO, sangrando de ponta a ponta: metal recuado, mais escuro que
+   o painel, com o pé na sombra. É por contraste com ele que a aresta acesa no
+   topo de .placa lê como o painel começando. */
+header {
+  position: relative;
+  background: var(--moldura);
+  box-shadow: inset 0 -1px 0 color-mix(in oklch, var(--sombra-cor) 70%, transparent);
+}
+
 .faixa {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--e-3) var(--e-5);
   padding-block: var(--e-3);
-  border-bottom: 1px solid var(--borda);
   font-family: var(--mono);
   font-size: var(--t-xs);
   letter-spacing: 0.14em;
@@ -294,9 +364,27 @@ p {
   display: none;
   color: var(--borda-forte);
 }
+/* "BUSCA ABERTA 24H" é o indicador de painel operando, e num painel de verdade
+   isso é uma lâmpada. Quadrado e não círculo: nesta direção tudo é retângulo,
+   e um ponto redondo aqui seria a única curva do site. Não pisca — piscar
+   seria um quinto gesto, e a direção tem um só. */
 .faixa__fim {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e-2);
   margin-inline-start: auto;
   color: var(--marca);
+}
+.faixa__fim::before {
+  content: "";
+  inline-size: 6px;
+  block-size: 6px;
+  flex: none;
+  background: var(--marca);
+  /* O halo: a lâmpada suja o metal em volta. Sem ele é um quadradinho
+     laranja; com ele é algo aceso atrás de um vidro. */
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--marca) 28%, transparent), 0 0 10px 1px
+    color-mix(in oklch, var(--marca) 45%, transparent);
 }
 
 .placa__topo {
@@ -336,37 +424,70 @@ h1.placa__titulo em {
    Zero JS: oito pás no mesmo lugar da grade, cada uma com o mesmo keyframe e
    um atraso de 1/8 do ciclo. */
 .destino {
-  display: flex;
-  align-items: center;
-  gap: var(--e-4);
   margin-top: var(--e-6);
   padding-top: var(--e-5);
-  border-top: 1px solid var(--borda);
+  border-top: 1px solid var(--vinco-sombra);
+  box-shadow: inset 0 1px 0 var(--vinco-luz);
   font-family: var(--mono);
 }
+/* O rótulo saiu de ao lado e foi para CIMA da janela. Dois motivos, e o
+   segundo é o que decide: (1) é assim que um campo de painel é rotulado, e
+   (2) em 360px o rótulo ao lado deixava ~246px para a janela, e "BUENOS
+   AIRES" a 12 caracteres de mono no piso do --t-pa mede 202px mais folga —
+   cabia por 14px, o que é o mesmo que não caber. */
 .destino__rotulo {
+  display: block;
+  margin-bottom: var(--e-3);
   font-size: var(--t-xs);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--texto-3);
-  flex: none;
 }
 /* A janela reserva a altura da pá com `line-height` fixo, e NÃO com o texto
    dentro dela. As oito pás vivem na mesma célula da grade e todas menos uma
    estão giradas para fora — se a altura viesse do conteúdo, ela mudaria a cada
    giro e arrastaria a linha inteira junto. É daqui que sai o CLS 0. */
+/* A JANELA É O BURACO DO PAINEL, não um espaço em branco. Antes era uma célula
+   de grade transparente e a pá era texto solto dentro dela — por isso a placa
+   parada lia como lista. Agora é um recorte no metal: mais escuro que o
+   painel, com a luz de 200° batendo na quina de baixo do recorte (a única que
+   ela alcança lá dentro) e sombra caindo da aresta de cima para dentro.
+
+   18ch é medido, não escolhido: o destino mais longo ("BUENOS AIRES", 12
+   caracteres) ocupa 79% do campo e o mais curto ("LISBOA") ocupa 39%. Campo
+   sobrando é o que uma pá de placa real parece — o que não pode é sobrar
+   METADE, que é onde 22ch caía e a peça lia como caixa vazia com uma palavra
+   encostada na esquerda. Encolhe junto com a tela pelo min(). */
 .destino__janela {
   display: inline-grid;
   align-items: center;
-  perspective: 460px;
-  min-width: 0;
+  perspective: 620px;
+  inline-size: min(100%, 18ch);
+  padding: 3px; /* a folga entre a pá e a moldura do recorte */
   line-height: 1.15;
-  font-size: var(--t-2xl);
+  font-size: var(--t-pa);
+  background: var(--moldura);
+  border-radius: calc(var(--r-1) + 3px);
+  box-shadow:
+    inset 0 3px 6px -2px color-mix(in oklch, var(--sombra-cor) 80%, transparent),
+    inset 0 -1px 0 var(--vinco-luz);
 }
+/* A PÁ, que agora tem corpo: duas metades de plástico dobradas no vinco. A de
+   cima pega a luz, a de baixo vive na sombra da de cima — o corte é DURO em
+   50% (dois `hard stops`), porque plástico dobrado não tem degradê na dobra. */
 .destino__pa {
   grid-area: 1 / 1;
+  position: relative;
   transform-origin: 50% 0;
   backface-visibility: hidden;
+  padding: 0.3em 0.42em;
+  border-radius: var(--r-1);
+  background: linear-gradient(to bottom, var(--pa-cima) 0 50%, var(--pa-baixo) 50% 100%);
+  /* Aresta de cima acesa, pé da peça na sombra. Mesma luz de 200° da placa e
+     do trilho — a regra é uma fonte de luz para o site inteiro. */
+  box-shadow:
+    inset 0 1px 0 var(--aresta-luz),
+    inset 0 -1px 0 var(--vinco-sombra);
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--marca-alta);
@@ -413,6 +534,52 @@ h1.placa__titulo em {
   }
 }
 
+/* A LUZ NA PÁ QUE CAI. Sem isto o giro lê como texto girando: a face chegava
+   com o mesmo brilho a 92° e a 0°, o que não acontece com nada físico. Uma
+   superfície de canto para a luz recebe quase nada dela e acende conforme se
+   vira para a fonte — é a única razão pela qual uma pá de verdade "aparece"
+   em vez de simplesmente estar lá.
+
+   Anda no MESMO ciclo, com a MESMA curva e o MESMO atraso da pá: se
+   dessincronizar, a peça acende antes de terminar de cair. Fica acima do
+   vinco (z-index 2 contra 1) porque a dobra também está na sombra — sombra que
+   respeita um sulco de 1px é sombra desenhada. */
+.destino__pa::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  pointer-events: none;
+  background: var(--sombra-cor);
+  /* `linear`, e é a ÚNICA coisa nesta página que não corre na curva da pá.
+     Não é descuido: --ease-pa despeja 80% do giro nos primeiros 17% do tempo
+     ("cai rápido e trava seco", que é o caráter certo para uma pá de
+     alumínio). Com a luz na mesma curva, ela apagava junto — a peça aterrissa
+     acesa em ~40ms e a matéria não chega a ser vista. Em linear a luz fica
+     PARA TRÁS do ângulo: a pá trava primeiro e termina de pegar a luz depois,
+     que é o atraso que faz a superfície ler como superfície. */
+  animation: sombra-pa var(--pa-total) linear infinite both;
+  animation-delay: calc(var(--i) * var(--pa-parada) - var(--pa-giro));
+}
+
+/* 1.4% e não 1%: a pá trava em 1% do ciclo (--pa-giro, 176ms) e a luz só
+   acaba de subir 70ms depois. Esse rabo é a peça assentando. Na saída não há
+   rabo nenhum — 12.5% → 13.5% é o giro exato: peça que sai não assenta, some. */
+@keyframes sombra-pa {
+  0% {
+    opacity: 0.88;
+  }
+  1.4%,
+  12.5% {
+    opacity: 0;
+  }
+  13.5%,
+  100% {
+    opacity: 0.88;
+  }
+}
+
 /* ═══ 4 · AS LINHAS DA PLACA (a estrutura: Índice) ══════════════════════════
    Zero cards nesta página, e isso é a estrutura escolhida, não economia. A
    página do hub tinha quatro cards com ícone; aqui os mesmos quatro produtos
@@ -423,28 +590,65 @@ h1.placa__titulo em {
   list-style: none;
   margin: var(--e-6) 0 0;
   padding: 0;
-  border-top: 1px solid var(--borda);
+  /* Mesmo sulco de dois fios da .linha, no topo da lista. Ver o comentário
+     abaixo: o que separa duas células de um painel é uma FRESTA, e fresta tem
+     dois lados. */
+  background-image: linear-gradient(to bottom, var(--vinco-sombra) 0 1px, var(--vinco-luz) 1px 2px);
+  background-repeat: no-repeat;
+  background-position: top;
+  background-size: 100% 2px;
+  padding-top: 2px;
 }
 
+/* A LINHA VIROU CÉLULA. Antes eram linhas separadas por `border-bottom: 1px
+   solid var(--borda)` — o mesmo fio que separa linha de tabela em qualquer
+   lugar, e é por isso que a placa lia como tabela.
+
+   O que separa duas células de um painel de verdade é uma FRESTA entre duas
+   peças de plástico: escura no vão, clara na quina de baixo que pega a luz de
+   200°. Dois fios em `background-image` e não em `border` de propósito — a
+   borda de baixo de uma célula seria coberta pelo `background-color` que a
+   célula seguinte pinta no hover, e a fresta sumiria justo debaixo do cursor. */
 .linha {
   display: grid;
-  grid-template-columns: 3.25rem 1fr auto;
+  /* `auto` e não 3.25rem na primeira coluna, e o padding lateral voltou para
+     --e-2: MEDIDO em 360px depois que o código virou pá. A pá do código mede
+     40px e a coluna fixa reservava 52; com o padding em --e-3 a coluna do nome
+     caía para 146px e "Passagens aéreas" a 16px de mono mede 154 — quebrava em
+     duas linhas e desalinhava a célula inteira. As duas correções somam 20px e
+     a coluna sobra 12. Grid iguala a largura de `auto` entre as linhas, então
+     as quatro pás continuam do mesmo tamanho. */
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: var(--e-4);
   min-height: var(--celula-mobile);
   padding: var(--e-3) var(--e-2);
-  border-bottom: 1px solid var(--borda);
   color: var(--texto);
   text-decoration: none;
-  background: transparent;
-  transition: background var(--dur-rapida) var(--ease-saida);
+  background-color: transparent;
+  background-image: linear-gradient(to bottom, var(--vinco-sombra) 0 1px, var(--vinco-luz) 1px 2px);
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-size: 100% 2px;
+  transition: background-color var(--dur-rapida) var(--ease-saida);
 }
 .linha:hover,
 .linha:focus-visible {
-  background: var(--placa-linha);
+  background-color: var(--placa-linha);
 }
 
+/* O código é uma PÁ PEQUENA, e usa exatamente a matéria da pá do destino: duas
+   metades, aresta acesa em cima, pé na sombra. Não é enfeite repetido — é o
+   que amarra a página numa ideia só. Um painel Solari é feito de pás; a maior
+   mostra o destino e as pequenas mostram o código da linha. */
 .linha__codigo {
+  justify-self: start;
+  padding: 0.18em 0.4em;
+  border-radius: var(--r-1);
+  background: linear-gradient(to bottom, var(--pa-cima) 0 50%, var(--pa-baixo) 50% 100%);
+  box-shadow:
+    inset 0 1px 0 var(--aresta-luz),
+    inset 0 -1px 0 var(--vinco-sombra);
   font-family: var(--mono);
   font-size: var(--t-sm);
   letter-spacing: 0.08em;
@@ -509,17 +713,37 @@ h1.placa__titulo em {
   text-transform: uppercase;
   text-decoration: none;
   cursor: pointer;
-  transition: background var(--dur-rapida) var(--ease-saida), border-color var(--dur-rapida) var(--ease-saida);
+  transition: background var(--dur-rapida) var(--ease-saida), border-color var(--dur-rapida) var(--ease-saida),
+    transform var(--dur-instante) var(--ease-saida), box-shadow var(--dur-instante) var(--ease-saida);
 }
+/* A TECLA. Não é pá: pá é uma folha pendurada que vira, tecla é um bloco de
+   plástico que se afunda — por isso a luz aqui cai contínua, sem o corte duro
+   em 50% que as pás têm. Mesma fonte de 200°: topo aceso, corpo na cor da
+   marca, e a peça projeta sombra no recesso em que está encaixada. */
 .btn--primario {
-  background: var(--marca);
+  background: linear-gradient(to bottom, var(--marca-alta) 0, var(--marca) 58%);
   color: var(--tinta-sobre-marca);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklch, white 42%, transparent),
+    0 2px 0 color-mix(in oklch, var(--sombra-cor) 55%, transparent),
+    0 10px 20px -8px color-mix(in oklch, var(--sombra-cor) 70%, transparent);
   /* Sobre laranja o anel laranja daria 1.0:1 e sumiria. Troca para a mesma
      tinta escura do rótulo: 6.9:1. Isto não é gosto, é WCAG 2.4.11. */
   --foco: var(--tinta-sobre-marca);
 }
 .btn--primario:hover {
-  background: var(--marca-alta);
+  background: linear-gradient(to bottom, var(--marca-alta) 0, var(--marca-alta) 58%);
+}
+/* Tecla que tem volume e não afunda ao ser apertada lê como adesivo. 1px de
+   curso e a sombra encolhe junto — não é uma quinta camada de coreografia, é
+   a peça respondendo ao dedo. Some sozinho em movimento reduzido, que zera
+   toda transição. */
+.btn--primario:active {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklch, white 30%, transparent),
+    0 1px 0 color-mix(in oklch, var(--sombra-cor) 55%, transparent),
+    0 4px 10px -6px color-mix(in oklch, var(--sombra-cor) 70%, transparent);
 }
 .btn--contorno {
   border-color: var(--borda-forte);
@@ -540,9 +764,16 @@ h1.placa__titulo em {
    do hub e do coopluz) nem o percurso 5/7 do site de seguro. É um índice: um
    número de célula, um título de placa, e uma lista densa embaixo. */
 
+/* TODO FILETE DESTE SITE É UMA FRESTA. O fio escuro é o vão entre duas peças
+   e o claro logo depois dele é a quina que pega a luz de 200° — o mesmo sulco
+   da dobra da pá e da separação entre células da placa. Um miolo cheio de
+   filetes de 1px e um painel cheio de frestas seriam duas linguagens na mesma
+   página; aqui é uma. A sombra vai para FORA numa borda de baixo e para
+   DENTRO (`inset`) numa de cima: é sempre o lado oposto ao vão. */
 .estacao {
   padding-block: var(--e-10);
-  border-bottom: 1px solid var(--borda);
+  border-bottom: 1px solid var(--vinco-sombra);
+  box-shadow: 0 1px 0 var(--vinco-luz);
 }
 .estacao__cabeca {
   display: grid;
@@ -550,12 +781,24 @@ h1.placa__titulo em {
   gap: var(--e-4);
   align-items: start;
 }
+/* O número da estação é a mesma pá pequena do código da linha da placa —
+   AER/HTL lá em cima, 01/02/03 aqui. Os números dos ITENS continuam sendo
+   numerais soltos de propósito: eles são secundários (--texto-3), e uma dúzia
+   de plaquinhas no miolo faria a hierarquia sumir. Pá é para o que marca
+   posição na placa, não para tudo que tem número. */
 .estacao__num {
+  justify-self: start;
+  margin-top: 0.3em;
+  padding: 0.18em 0.4em;
+  border-radius: var(--r-1);
+  background: linear-gradient(to bottom, var(--pa-cima) 0 50%, var(--pa-baixo) 50% 100%);
+  box-shadow:
+    inset 0 1px 0 var(--aresta-luz),
+    inset 0 -1px 0 var(--vinco-sombra);
   font-family: var(--mono);
   font-size: var(--t-sm);
   color: var(--marca);
   letter-spacing: 0.08em;
-  padding-top: 0.45em;
 }
 .estacao__titulo {
   font-size: var(--t-3xl);
@@ -576,7 +819,8 @@ h1.placa__titulo em {
   margin: var(--e-8) 0 0;
   padding: 0;
   counter-reset: item;
-  border-top: 1px solid var(--borda);
+  border-top: 1px solid var(--vinco-sombra);
+  box-shadow: inset 0 1px 0 var(--vinco-luz);
 }
 .itens > li {
   counter-increment: item;
@@ -584,7 +828,8 @@ h1.placa__titulo em {
   grid-template-columns: 3.25rem 1fr;
   gap: var(--e-4);
   padding-block: var(--e-5);
-  border-bottom: 1px solid var(--borda);
+  border-bottom: 1px solid var(--vinco-sombra);
+  box-shadow: 0 1px 0 var(--vinco-luz);
   transform-origin: 50% 0;
 }
 .itens > li::before {
@@ -613,7 +858,8 @@ h1.placa__titulo em {
   gap: var(--e-2) var(--e-5);
   margin-top: var(--e-6);
   padding: var(--e-4) 0;
-  border-block: 1px solid var(--borda);
+  border-block: 1px solid var(--vinco-sombra);
+  box-shadow: inset 0 1px 0 var(--vinco-luz), 0 1px 0 var(--vinco-luz);
   list-style: none;
   font-family: var(--mono);
   font-size: var(--t-sm);
@@ -630,10 +876,12 @@ h1.placa__titulo em {
    navegador moderno e o teclado já funciona sem uma linha de ARIA. */
 .faq {
   margin-top: var(--e-8);
-  border-top: 1px solid var(--borda);
+  border-top: 1px solid var(--vinco-sombra);
+  box-shadow: inset 0 1px 0 var(--vinco-luz);
 }
 .faq details {
-  border-bottom: 1px solid var(--borda);
+  border-bottom: 1px solid var(--vinco-sombra);
+  box-shadow: 0 1px 0 var(--vinco-luz);
 }
 .faq summary {
   display: grid;
@@ -681,8 +929,6 @@ h1.placa__titulo em {
 
 .fecho {
   padding-block: var(--e-10);
-  background: var(--placa);
-  border-bottom: 1px solid var(--borda);
 }
 .fecho__grade {
   display: grid;
@@ -699,11 +945,18 @@ h1.placa__titulo em {
   color: var(--texto-2);
   max-width: var(--leitura);
 }
+/* Era o único card chapado que sobrou: fundo liso e um fio de 1px em volta,
+   ou seja, a silhueta exata que o resto do site deixou de ter. Agora é o mesmo
+   RECESSO da janela do destino — buraco no metal, sombra caindo da aresta de
+   cima para dentro, quina de baixo pegando a luz. E o que mora dentro dele é
+   uma tecla acesa. */
 .fecho__caixa {
-  border: 1px solid var(--borda);
-  border-radius: var(--r-1);
+  border-radius: calc(var(--r-1) + 3px);
   padding: var(--e-5);
-  background: var(--fundo);
+  background: var(--moldura);
+  box-shadow:
+    inset 0 3px 6px -2px color-mix(in oklch, var(--sombra-cor) 80%, transparent),
+    inset 0 -1px 0 var(--vinco-luz);
 }
 .fecho__caixa h3 {
   font-size: var(--t-xl);
@@ -741,7 +994,12 @@ h1.placa__titulo em {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   padding-bottom: var(--e-4);
-  border-bottom: 1px solid var(--borda);
+  /* A barra de baixo da placa fecha com a mesma fresta que abre lá em cima.
+     As páginas de documento NÃO recebem esta fresta e continuam em filete
+     simples (`.doc h2`, `.trilha`) — elas são fichas, não painéis, e essa
+     diferença é da estrutura escolhida, não descuido. */
+  border-bottom: 1px solid var(--vinco-sombra);
+  box-shadow: 0 1px 0 var(--vinco-luz);
 }
 .rodape__linha a {
   color: var(--texto-3);

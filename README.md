@@ -161,6 +161,10 @@ JS adicionado: 0 kb gzip (nenhuma dependência de runtime)
 LCP: 0,32s (alvo 1,5s) · CLS: 0,0000 (alvo 0,05) · INP: n/d (não há interação com JS)
 Elemento de LCP: H1.placa__titulo
 Fonte: 1 arquivo, 15,6 kb (IBM Plex Mono 600, subset latin, do próprio domínio)
+Matéria: 0 kb baixados — grão é um feTurbulence gerado UMA vez em data-uri
+         (~330 bytes no CSS, estático, nunca dentro de @keyframes) e todo o
+         volume é gradiente e box-shadow. Uma camada de mix-blend-mode no
+         site inteiro, fixa, que não repinta no scroll.
 Fallback: sem JS a página é idêntica — a coreografia inteira é CSS. Sem suporte
           a scroll-timeline ou com prefers-reduced-motion, a placa nasce
           inteira e parada, com um destino visível e o vinco no lugar.
@@ -173,7 +177,13 @@ código 1 se qualquer um desses números estourar o orçamento — o orçamento 
 escrito na constante `ORCAMENTO` no topo dele, não neste README.
 
 Também verificado: console limpo nas três larguras, nenhum estouro horizontal,
-22 paradas de teclado todas com anel de foco visível.
+22 paradas de teclado todas com anel de foco visível, e 37 pares de contraste
+medidos por `logos/contraste.mjs` a partir dos próprios tokens (0 reprovados).
+
+Três quadros extras congelam a pá NO MEIO DA QUEDA pela Web Animations API e
+medem a camada de luz: 0,77 → 0,49 → 0,00. É o que prova que a peça aterrissa
+e SÓ ENTÃO termina de pegar a luz, em vez de chegar acesa — a diferença entre
+uma superfície e um texto girando, e ela não aparece em quadro parado.
 
 ## Deploy
 

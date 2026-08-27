@@ -47,8 +47,12 @@ const faqSchema = {
           src/data/conteudo.ts para o porquê de não haver tarifa aqui. */}
       <div class="destino">
         <span class="destino__rotulo">Destino</span>
-        <span class="destino__janela vinco" aria-hidden="true">
-          {DESTINOS.map((d, i) => <span class="destino__pa" style={`--i:${i}`}>{d}</span>)}
+        {/* O vinco mudou de dono e isso não é detalhe de classe: ele estava na
+            JANELA, então a dobra ficava parada enquanto a pá girava por trás
+            dela — uma dobra que não acompanha a peça é um risco no vidro, não
+            uma dobra. Agora cada pá carrega o próprio vinco e gira com ele. */}
+        <span class="destino__janela" aria-hidden="true">
+          {DESTINOS.map((d, i) => <span class="destino__pa vinco" style={`--i:${i}`}>{d}</span>)}
         </span>
         <span class="visualmente-oculto">
           Destinos nacionais e internacionais, entre eles {DESTINOS.join(", ")}.

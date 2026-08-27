@@ -10,6 +10,10 @@
 //     coreografia nenhuma; o gesto desta direção acontece descendo.
 //   · 1 quadro de hover na linha da placa — a camada de ponteiro é opcional e
 //     declarada, então precisa aparecer funcionando ou ser removida.
+//   · 3 quadros da pá NO MEIO DA QUEDA, congelados pela Web Animations API —
+//     a matéria desta direção é uma peça caindo, e peça caindo não aparece em
+//     quadro parado. Provam que a luz corre atrás do ângulo em vez de a pá
+//     aterrissar já acesa.
 //   · 1 quadro com prefers-reduced-motion — provando que a placa sobrevive
 //     parada. É o piso da direção, não um extra.
 //   · console limpo, e nenhum deslocamento de layout entre os quadros.
@@ -104,6 +108,70 @@ for (const [nome, largura, altura] of [
   const virou = await pagina.locator(".linha").first().locator(".status__b").isVisible();
   if (!virou) problemas.push("hover: a face B do status não apareceu");
   console.log(`hover   status virou: ${virou}`);
+  await ctx.close();
+}
+
+// ── quadros da pá caindo: a matéria em movimento ────────────────────────────
+// Quadro parado não prova a peça. A pá tem corpo (duas metades, vinco, aresta
+// acesa) e uma camada de luz que acende conforme ela se vira para a fonte — se
+// essa camada dessincronizar do giro, a peça acende antes de aterrissar e
+// ninguém percebe olhando a placa parada.
+//
+// Como o quadro é congelado sem gravar vídeo: pausa e rebobina pela Web
+// Animations API. NÃO dá para fazer isso trocando `--pa-giro` no CSS — o
+// `animation-delay` é resolvido quando a animação nasce e o Chromium não
+// reinicia uma animação em curso porque a custom property que alimenta o delay
+// mudou. Foi a primeira tentativa e ela media sombra 0.00 nos três quadros,
+// que é exatamente o que se veria se a camada estivesse quebrada: o falso
+// negativo mais perigoso que existe, porque parece um achado.
+//
+// Todas as pás vão para o MESMO ponto da linha do tempo. A pá 0 nasce com
+// delay negativo de um giro, então esse ponto cai dentro da queda dela; as
+// outras sete têm delay positivo, ainda não começaram, e o `both` as segura no
+// quadro 0 — que é a pá fora de vista. Uma peça caindo, sete guardadas.
+{
+  const ctx = await navegador.newContext({ viewport: { width: 1440, height: 900 } });
+  const pagina = await ctx.newPage();
+  await pagina.goto(base, { waitUntil: "networkidle" });
+  await pagina.evaluate(() => document.fonts.ready);
+
+  const lidas = [];
+  for (const [nome, local] of [
+    ["queda-inicio", 30],
+    ["queda-meio", 110],
+    ["queda-fim", 260],
+  ]) {
+    await pagina.evaluate((local) => {
+      const pas = document.getAnimations().filter((a) => a.effect?.target?.classList?.contains("destino__pa"));
+      // O delay é o mesmo para a pá 0 e para o ::before dela — os dois andam
+      // no mesmo ciclo, e é essa sincronia que o quadro está aqui para provar.
+      const delay = pas[0].effect.getComputedTiming().delay;
+      for (const a of pas) {
+        a.pause();
+        a.currentTime = delay + local;
+      }
+    }, local);
+    await pagina.waitForTimeout(120);
+    const caixa = await pagina.locator(".destino").boundingBox();
+    await pagina.screenshot({
+      path: `${SAIDA}/1440-${nome}.png`,
+      clip: { x: caixa.x - 8, y: caixa.y - 8, width: Math.min(760, caixa.width + 16), height: caixa.height + 16 },
+    });
+    lidas.push([
+      nome,
+      await pagina.evaluate(
+        () => +getComputedStyle(document.querySelector(".destino__pa"), "::before").opacity
+      ),
+    ]);
+  }
+
+  // A camada de luz tem que estar escura no começo da queda e ter APAGADO no
+  // fim. Medir só um ponto não prova sincronia: prova que existe uma sombra.
+  // O que prova é a rampa — escuro cedo, claro na aterrissagem.
+  const [inicio, , fim] = lidas.map(([, v]) => v);
+  if (!(inicio > 0.5)) problemas.push(`queda: a peça começou o giro a ${inicio.toFixed(2)} de sombra, esperava > 0.5`);
+  if (!(fim < 0.1)) problemas.push(`queda: a peça aterrissou com ${fim.toFixed(2)} de sombra, esperava < 0.1`);
+  console.log(`queda   sombra ${lidas.map(([n, v]) => `${n.replace("queda-", "")} ${v.toFixed(2)}`).join(" → ")}`);
   await ctx.close();
 }
 

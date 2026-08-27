@@ -47,7 +47,6 @@
   --noite-950: oklch(0.1661 0.0607 257.7); /* fundo da página */
   --noite-900: oklch(0.2059 0.0826 259.7); /* corpo da placa */
   --noite-850: oklch(0.2420 0.0760 258.5); /* linha da placa, superfície alta */
-  --noite-800: oklch(0.2900 0.0700 258.0); /* vinco da pá */
   --noite-700: oklch(0.3600 0.0620 257.0); /* vinco forte, separador visível */
   /* 0.505 e não 0.44, e a diferença NÃO é gosto: em 0.44 a borda do botão de
      contorno media 2.32:1 sobre a placa, abaixo do 3:1 que a WCAG 1.4.11 exige
@@ -65,7 +64,6 @@
   --fundo: var(--noite-950);
   --placa: var(--noite-900);
   --placa-linha: var(--noite-850);
-  --vinco: var(--noite-800);
   --borda: var(--noite-700);
   --borda-forte: var(--noite-600);
 
@@ -96,9 +94,16 @@
   --t-base: 1rem;
   --t-lg: 1.125rem;
   --t-xl: 1.375rem;
-  --t-2xl: clamp(1.5rem, 1.1rem + 1.8vw, 2.125rem);
   --t-3xl: clamp(1.75rem, 1.2rem + 2.6vw, 2.75rem);
   --t-placa: clamp(2.15rem, 1.15rem + 4.6vw, 4.25rem); /* o H1 — 3 linhas curtas */
+  /* A pá do destino. Ela é o GESTO PRINCIPAL da direção e estava em --t-2xl
+     (2.125rem no teto), menor que dois outros títulos da página — um motor
+     autônomo do tamanho de um subtítulo não é o motor de nada. Agora é o
+     segundo maior elemento da página, atrás só do H1, e a proporção entre os
+     dois (4.25 : 3.25 = 1.31) é deliberada: a pá compete com o título, não
+     empata. Teto de 3.25rem e não mais: "BUENOS AIRES" tem 12 caracteres e a
+     12 caracteres de mono a 4rem a janela pediria 800px. */
+  --t-pa: clamp(1.75rem, 0.95rem + 3.6vw, 3.25rem);
 
   /* ── espaço ─────────────────────────────────────────────────────────────
      Escala de 4px. A placa usa uma unidade própria (--celula) porque a linha
@@ -123,6 +128,54 @@
      site de seguro — lá o problema era a banda clara e a sombra zero; aqui a
      banda é escura e o vinco da pá é a sombra. */
   --r-1: 2px;
+
+  /* ── matéria ────────────────────────────────────────────────────────────
+     A primeira versão desta direção tinha o VERBO (virar) e não tinha a
+     MATÉRIA: a pá era texto laranja num plano navy chapado, e placa parada
+     lia como lista. O que segue é do que a superfície é feita.
+
+     UMA FONTE DE LUZ, declarada aqui e obedecida em todo elemento. 200° é a
+     luz alta do saguão, vindo de cima e um pouco da esquerda: toda aresta
+     virada para cima acende, toda sombra cai para baixo e para a direita.
+     Sombra em cima de um elemento e do lado no vizinho é o que faz uma tela
+     parecer montada em vez de desenhada.
+
+     NÃO é token: nenhuma declaração calcula a partir dele, e custom property
+     que ninguém lê é o mesmo que comentário com ponto e vírgula. É uma REGRA,
+     e ela está escrita aqui. */
+  /* O corpo do painel não é chapado: a luz alta do saguão clareia o topo e
+     o pé fica na sombra da própria moldura. Valores LITERAIS e não
+     `oklch(from var(--placa) calc(l + …))` de propósito — o logos/contraste.mjs
+     lê estes tokens para medir os pares, e ele resolve `oklch(...)` e alias,
+     não cor relativa. Uma fonte da verdade vale mais que três caracteres. */
+  --placa-alto: oklch(0.2280 0.0826 259.7);
+  --placa-baixo: oklch(0.1940 0.0826 259.7);
+  /* A sombra tem matiz — é o navy fechado, nunca preto. Preto puro sobre
+     objeto colorido é o erro mais visível de banda escura. */
+  --sombra-cor: oklch(0.0900 0.0450 258);
+
+  /* A pá é uma peça física de duas metades dobradas no vinco. A de cima pega
+     a luz do saguão; a de baixo vive na própria sombra da de cima. Os 0.026 de
+     diferença de L são o degrau mínimo que ainda se lê como dobra a 1.5m da
+     tela — abaixo disso vira banding, acima vira duas peças diferentes. */
+  --pa-cima: oklch(0.2620 0.0790 258.5);
+  --pa-baixo: oklch(0.2120 0.0810 258.5);
+  /* O sulco do vinco: dois fios, não um. A linha escura é a fresta entre as
+     metades; a clara logo abaixo é a quina da metade de baixo pegando luz.
+     Um fio só lê como borda de tabela — é o que havia antes. */
+  --vinco-sombra: oklch(0.1500 0.0560 258);
+  --vinco-luz: oklch(0.3400 0.0700 258);
+  /* Aresta superior da pá e da moldura, onde a luz de 200° bate direto. */
+  --aresta-luz: oklch(0.4700 0.0680 258);
+  /* A moldura do painel: a placa está PARAFUSADA numa parede, e a parede é o
+     --fundo. Isto é o metal entre as duas. */
+  --moldura: oklch(0.1350 0.0520 258);
+
+  /* Grão. Gerado UMA vez como data-uri e nunca animado — feTurbulence animado
+     repinta a cada quadro e é a forma mais cara de conseguir textura.
+     Duas escalas sobrepostas (240px e 90px) leem como plástico injetado; uma
+     só lê como ruído de TV. */
+  --grao: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
 
   /* ── movimento ──────────────────────────────────────────────────────────
      Uma ideia, quatro expressões. `--dur-pa` é o único tempo novo: é quanto
