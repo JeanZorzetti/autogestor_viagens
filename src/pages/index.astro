@@ -1,0 +1,238 @@
+---
+import Base from "../layouts/Base.astro";
+import { CONCORRENTES, DESTINOS, PASSOS, PERGUNTAS, PRODUTOS, RAZOES } from "../data/conteudo";
+import { ATENDIMENTO, EMPRESA, EXTERNOS, whatsapp } from "../consts";
+
+const BUSCA = EXTERNOS.busca;
+const AJUDA = whatsapp("Olá! Estou comprando pelo site de viagens e preciso de ajuda.");
+
+const titulo = "Passagens aéreas, hotéis e pacotes em até 12x | Autogestor Viagens";
+const descricao =
+  "Busque, compare e emita você mesmo: passagens aéreas nacionais e internacionais, hotéis, pacotes e aluguel de carro, com promoções diárias e pagamento em até 12x no cartão.";
+
+/* O FAQ da página e o FAQPage do JSON-LD saem da MESMA lista. Manter os dois à
+   mão é como uma das duas versões envelhece sem ninguém perceber — e a que
+   envelhece costuma ser a que o buscador lê. */
+const faqSchema = {
+  "@type": "FAQPage",
+  "@id": "#faq",
+  mainEntity: PERGUNTAS.map((q) => ({
+    "@type": "Question",
+    name: q.p,
+    acceptedAnswer: { "@type": "Answer", text: q.r },
+  })),
+};
+---
+
+<Base titulo={titulo} descricao={descricao} schema={[faqSchema]}>
+  {/* ══ A PLACA ═════════════════════════════════════════════════════════════
+      Primeira tela. O H1 NÃO anima: ele é o elemento de LCP e já está no
+      primeiro quadro pintado. O que vira em volta dele é a placa — é a regra
+      "o resto chega em volta do LCP", não economia de código. */}
+  <section class="placa">
+    <div class="container">
+      <div class="placa__topo">
+        <h1 class="placa__titulo">
+          Pesquise<br />onde quiser.<br /><em>Compare aqui.</em>
+        </h1>
+        <p class="placa__chamada">
+          Passagem aérea, hotel, pacote e aluguel de carro na mesma busca, no Brasil e no exterior, em
+          <strong>até 12x no cartão</strong>. Promoções novas todo dia, e a compra fechada por você — sem esperar
+          cotação de ninguém.
+        </p>
+      </div>
+
+      {/* O motor autônomo da direção: a pá que vira sozinha.
+          São DESTINOS, não preços. Ver o comentário no topo de
+          src/data/conteudo.ts para o porquê de não haver tarifa aqui. */}
+      <div class="destino">
+        <span class="destino__rotulo">Destino</span>
+        <span class="destino__janela vinco" aria-hidden="true">
+          {DESTINOS.map((d, i) => <span class="destino__pa" style={`--i:${i}`}>{d}</span>)}
+        </span>
+        <span class="visualmente-oculto">
+          Destinos nacionais e internacionais, entre eles {DESTINOS.join(", ")}.
+        </span>
+      </div>
+
+      {/* As quatro linhas da placa. A linha INTEIRA é o link — não há botão
+          dentro dela. Isto substitui os quatro cards com ícone que a mesma
+          oferta tinha na página do hub: a estrutura aqui é Índice, e índice
+          não tem card. */}
+      <ol class="linhas">
+        {
+          PRODUTOS.map((p, i) => (
+            <li>
+              <a
+                class="linha entra"
+                style={`--atraso:${160 + i * 60}`}
+                href={BUSCA}
+                target="_blank"
+                rel="noopener"
+              >
+                <span class="linha__codigo">{p.codigo}</span>
+                <span>
+                  <span class="linha__nome">{p.nome}</span>
+                  <span class="linha__nota">{p.nota}</span>
+                </span>
+                <span class="linha__onde">{p.onde}</span>
+                <span class="status">
+                  <span class="status__a">24h</span>
+                  <span class="status__b" aria-hidden="true">
+                    Abrir
+                  </span>
+                  <span class="visualmente-oculto"> — buscar {p.nome.toLowerCase()}, abre em nova aba</span>
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+
+      <p class="placa__nota">
+        Grátis para pesquisar e sem cadastro para ver preço. O valor válido é o que aparece na busca no momento da
+        compra — esta página não exibe tarifa porque tarifa muda por rota e por data.
+      </p>
+    </div>
+  </section>
+
+  {/* ══ 01 ══════════════════════════════════════════════════════════════════ */}
+  <section class="estacao">
+    <div class="container">
+      <div class="estacao__cabeca">
+        <span class="estacao__num" aria-hidden="true">01</span>
+        <div>
+          <h2 class="estacao__titulo">Compare antes de fechar</h2>
+          <p class="estacao__chamada">
+            Você já ia abrir os outros de qualquer jeito. Abra — e antes de clicar em comprar, rode a mesma busca
+            aqui. É um minuto para descobrir se a mesma viagem sai por menos.
+          </p>
+          {/* Nomes em tipografia, nunca logotipo: são marcas registradas de
+              terceiros e não há ativo licenciado neste repositório. */}
+          <ul class="rivais">
+            {CONCORRENTES.map((c) => <li>{c}</li>)}
+            <li aria-hidden="true">…</li>
+            <li>e o site da própria companhia</li>
+          </ul>
+        </div>
+      </div>
+
+      <ol class="itens">
+        {
+          RAZOES.map((r) => (
+            <li class="vira-no-scroll">
+              <div>
+                <h3>{r.titulo}</h3>
+                <p>{r.texto}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+
+      <p class="acao-estacao">
+        <a class="btn btn--contorno" href={BUSCA} target="_blank" rel="noopener">
+          Buscar minha viagem<span class="visualmente-oculto"> — nossa busca online, abre em nova aba</span>
+        </a>
+      </p>
+    </div>
+  </section>
+
+  {/* ══ 02 ══════════════════════════════════════════════════════════════════ */}
+  <section class="estacao">
+    <div class="container">
+      <div class="estacao__cabeca">
+        <span class="estacao__num" aria-hidden="true">02</span>
+        <div>
+          <h2 class="estacao__titulo">Três passos, do jeito que você já compra tudo</h2>
+          <p class="estacao__chamada">
+            Do primeiro clique ao bilhete no e-mail, sem depender de alguém confirmar do outro lado.
+          </p>
+        </div>
+      </div>
+
+      <ol class="itens">
+        {
+          PASSOS.map((p) => (
+            <li class="vira-no-scroll">
+              <div>
+                <h3>{p.titulo}</h3>
+                <p>{p.texto}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  {/* ══ 03 ══════════════════════════════════════════════════════════════════ */}
+  <section class="estacao">
+    <div class="container">
+      <div class="estacao__cabeca">
+        <span class="estacao__num" aria-hidden="true">03</span>
+        <div>
+          <h2 class="estacao__titulo">Perguntas</h2>
+          <p class="estacao__chamada">
+            As mesmas que chegam no {EMPRESA.telefoneExibicao}. Se a sua não estiver aqui, mande — o WhatsApp responde
+            {" "}{ATENDIMENTO.prazo}.
+          </p>
+        </div>
+      </div>
+
+      {/* <details> nativo: abre sem JS, o teclado já funciona sem uma linha de
+          ARIA e o navegador consegue encontrar texto dentro do que está
+          fechado. Um acordeão em JS aqui seria trabalho para reimplementar o
+          que o elemento já faz. */}
+      <div class="faq">
+        {
+          PERGUNTAS.map((q) => (
+            <details>
+              <summary>{q.p}</summary>
+              <div class="faq__r">
+                <p>{q.r}</p>
+                {"fonte" in q && q.fonte && (
+                  <a class="faq__fonte" href={q.fonte.href} target="_blank" rel="noopener">
+                    {q.fonte.texto}
+                    <span class="visualmente-oculto"> — abre em nova aba</span>
+                  </a>
+                )}
+              </div>
+            </details>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  {/* ══ FECHO ═══════════════════════════════════════════════════════════════ */}
+  <section class="fecho">
+    <div class="container fecho__grade">
+      <div>
+        <h2>Sua próxima viagem começa aqui</h2>
+        <p>
+          {EMPRESA.nome} é a frente de turismo do Grupo Autogestor, que atua desde {EMPRESA.fundacao} em Goiânia. A
+          busca é sua e roda sozinha; quando precisar de gente, o {EMPRESA.telefoneExibicao} atende
+          {" "}{ATENDIMENTO.horarioCurto}.
+        </p>
+        <p>
+          <a href="/sobre">Quem opera este site e quem emite a reserva</a>
+        </p>
+      </div>
+
+      <div class="fecho__caixa">
+        <h3>Escolha seu destino agora</h3>
+        <p>Voos, hotéis, pacotes e carros — Brasil e exterior, em até 12x no cartão.</p>
+        <a class="btn btn--primario btn--bloco" href={BUSCA} target="_blank" rel="noopener">
+          Buscar minha viagem<span class="visualmente-oculto"> — nossa busca online, abre em nova aba</span>
+        </a>
+        <p class="depois-do-btn">
+          A busca abre em nova aba, na plataforma de reservas. Dúvida no meio da compra?
+          <a href={AJUDA} target="_blank" rel="noopener">
+            Chame no WhatsApp<span class="visualmente-oculto"> — abre em nova aba</span></a
+          >.
+        </p>
+      </div>
+    </div>
+  </section>
+</Base>

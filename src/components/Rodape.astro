@@ -1,0 +1,57 @@
+---
+import { ATENDIMENTO, EMPRESA, EXTERNOS, SITE, enderecoLinha, whatsapp } from "../consts";
+
+/* Rodapé de uma linha — a barra de baixo da placa.
+ *
+ * Não é o bloco de quatro colunas que toda landing tem: o site tem quatro
+ * páginas, e quatro páginas cabem numa linha. As notas embaixo existem porque
+ * são obrigação, não decoração: quem opera o site, quem emite a reserva, e
+ * onde conferir o registro que o FAQ afirma. */
+
+const ANO = new Date().getFullYear();
+const AJUDA = whatsapp("Olá! Estou no site de viagens e preciso de ajuda.");
+
+const paginas = [
+  { nome: "Início", href: "/" },
+  { nome: "Sobre", href: "/sobre" },
+  { nome: "Privacidade", href: "/privacidade" },
+  { nome: "Termos", href: "/termos" },
+];
+---
+
+<footer class="rodape">
+  <div class="container">
+    <nav class="rodape__linha" aria-label="Páginas deste site">
+      {paginas.map((p) => <a href={p.href}>{p.nome}</a>)}
+      <a href={AJUDA} target="_blank" rel="noopener">
+        WhatsApp {EMPRESA.telefoneExibicao}<span class="visualmente-oculto"> — abre em nova aba</span>
+      </a>
+      <a href={`${SITE.hub}/`}>Grupo Autogestor</a>
+    </nav>
+
+    {/* Quem opera e quem emite. A busca e a emissão rodam na plataforma da
+        OnerTravel sob a marca Autogestor Viagens; deixar isso implícito é o
+        tipo de omissão que vira reclamação quando a pessoa vê outro nome no
+        e-mail de confirmação. */}
+    <p class="rodape__nota">
+      {EMPRESA.nomeLegal}. {enderecoLinha}. Atendimento {ATENDIMENTO.horario}, responde {ATENDIMENTO.prazo}.
+    </p>
+    <p class="rodape__nota">
+      A busca, a reserva e a emissão rodam na plataforma da OnerTravel sob a marca {EMPRESA.nome}. O contrato de
+      transporte, hospedagem ou locação é sempre com a companhia aérea, a rede hoteleira ou a locadora escolhida na
+      compra. O seguro viagem é intermediado pela corretora do grupo, registro SUSEP {EMPRESA.susep} — <a
+        href={EXTERNOS.susepConsulta}
+        target="_blank"
+        rel="noopener">conferir na consulta pública<span class="visualmente-oculto"> — abre em nova aba</span></a
+      >. Prestadores de turismo são cadastrados no Ministério do Turismo; a situação de qualquer agência pode ser
+      verificada no <a href={EXTERNOS.cadastur} target="_blank" rel="noopener"
+        >Cadastur<span class="visualmente-oculto"> — abre em nova aba</span></a
+      >.
+    </p>
+    <p class="rodape__nota">
+      Tarifas, disponibilidade e número de parcelas sem juros são definidos pela companhia, pela rede ou pela locadora
+      e mudam por rota e por data. Nenhum preço é exibido nesta página: o valor válido é o que aparece na busca no
+      momento da compra. © {ANO} {EMPRESA.nome}.
+    </p>
+  </div>
+</footer>

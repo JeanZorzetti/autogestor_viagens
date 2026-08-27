@@ -1,0 +1,95 @@
+---
+import Base from "../layouts/Base.astro";
+import { EMPRESA, GA4, LEGAL_ATUALIZADO, enderecoLinha } from "../consts";
+---
+
+<Base
+  titulo="Política de privacidade | Autogestor Viagens"
+  descricao="Que dados este site coleta (praticamente nenhum), o que a plataforma de reservas coleta, e como exercer os direitos da LGPD."
+  atualizado={LEGAL_ATUALIZADO}
+  trilha={[
+    { nome: "Início", href: "/" },
+    { nome: "Privacidade", href: "/privacidade" },
+  ]}
+>
+  <div class="doc container">
+    <h1>Política de privacidade</h1>
+    <p class="doc__data">Última revisão: {LEGAL_ATUALIZADO}</p>
+
+    <h2>O resumo</h2>
+    <p>
+      <strong>Este site não tem formulário.</strong> Ele não pede nome, e-mail, telefone nem documento, e não grava
+      nada seu em banco de dados nenhum. Toda a compra acontece na plataforma de reservas, que é outro ambiente, com
+      política própria. O que existe aqui é medição de audiência anônima e, se você clicar no WhatsApp, uma conversa
+      que começa por sua iniciativa.
+    </p>
+
+    <h2>Quem é o controlador</h2>
+    <p>
+      {EMPRESA.nomeLegal}, em {enderecoLinha}. Contato para assuntos de privacidade:
+      {" "}<a href={`mailto:${EMPRESA.email}`}>{EMPRESA.email}</a>.
+    </p>
+
+    <h2>O que este site coleta</h2>
+    <ul>
+      <li>
+        <strong>Medição de audiência (Google Analytics 4, propriedade {GA4}).</strong> Páginas vistas, origem da
+        visita, tipo de aparelho e dados aproximados de localização derivados do IP. Serve para saber quais páginas
+        funcionam. Base legal: legítimo interesse (art. 7º, IX da LGPD). O script só é carregado depois que a página
+        termina de pintar.
+      </li>
+      <li>
+        <strong>Registros do servidor.</strong> A hospedagem (Vercel) mantém logs técnicos de acesso, com IP e
+        agente do navegador, para operar e proteger o serviço.
+      </li>
+      <li>
+        <strong>Nada além disso.</strong> Não há cookie de publicidade, pixel de rede social, mapa de calor, gravação
+        de sessão nem chat embutido nesta página.
+      </li>
+    </ul>
+
+    <h2>O que a plataforma de reservas coleta</h2>
+    <p>
+      Ao clicar em “Buscar minha viagem” você sai deste domínio e entra na plataforma da OnerTravel, operada sob a
+      marca {EMPRESA.nome}. Para emitir bilhete e voucher, ela precisa dos dados que qualquer compra de viagem exige:
+      nome completo dos passageiros, documento, data de nascimento, contato e dados de pagamento. Esse tratamento é
+      regido pela política daquele ambiente, exibida lá antes do pagamento. Os dados de cartão não passam por este
+      site em momento algum.
+    </p>
+
+    <h2>WhatsApp</h2>
+    <p>
+      Os links de WhatsApp abrem uma conversa com a mensagem já escrita. Nada é enviado até você tocar em enviar. A
+      partir daí, o conteúdo da conversa fica com a gente e com a Meta, conforme a política do próprio WhatsApp, e é
+      usado só para responder ao que você perguntou.
+    </p>
+
+    <h2>Com quem os dados são compartilhados</h2>
+    <p>
+      Com os operadores necessários para o site existir e a viagem acontecer: hospedagem (Vercel), medição (Google),
+      a plataforma de reservas (OnerTravel) e, na sua compra, a companhia aérea, a rede hoteleira ou a locadora
+      escolhida. Não vendemos dado para ninguém e não fazemos disparo de marketing para quem não pediu.
+    </p>
+
+    <h2>Por quanto tempo</h2>
+    <p>
+      Dados de medição seguem a retenção configurada no GA4. Conversas de WhatsApp ficam enquanto forem úteis ao
+      atendimento. Dados de uma compra ficam com a plataforma e com o fornecedor do serviço, pelo prazo que a
+      legislação fiscal e o contrato de transporte exigem.
+    </p>
+
+    <h2>Seus direitos</h2>
+    <p>
+      A LGPD garante confirmação de tratamento, acesso, correção, anonimização, portabilidade, eliminação e revogação
+      de consentimento. Escreva para <a href={`mailto:${EMPRESA.email}`}>{EMPRESA.email}</a> e a resposta sai dentro
+      do prazo legal. Para dados de uma reserva já emitida, o pedido pode precisar ser encaminhado à plataforma ou ao
+      fornecedor — e nesse caso encaminhamos, dizendo para quem.
+    </p>
+
+    <h2>Como recusar a medição</h2>
+    <p>
+      Bloqueadores de rastreador e o modo “Do Not Track” do navegador impedem o carregamento do GA4, e o site
+      continua funcionando inteiro sem ele. Nenhuma funcionalidade depende de você aceitar medição.
+    </p>
+  </div>
+</Base>

@@ -1,0 +1,96 @@
+---
+import Base from "../layouts/Base.astro";
+import { EMPRESA, EXTERNOS, LEGAL_ATUALIZADO, enderecoLinha } from "../consts";
+---
+
+<Base
+  titulo="Termos de uso | Autogestor Viagens"
+  descricao="O que este site é, o que ele não é, quem responde pela viagem comprada e o que fazer quando algo dá errado."
+  atualizado={LEGAL_ATUALIZADO}
+  trilha={[
+    { nome: "Início", href: "/" },
+    { nome: "Termos", href: "/termos" },
+  ]}
+>
+  <div class="doc container">
+    <h1>Termos de uso</h1>
+    <p class="doc__data">Última revisão: {LEGAL_ATUALIZADO}</p>
+
+    <h2>O que este site é</h2>
+    <p>
+      Uma página institucional de {EMPRESA.nomeLegal} ({enderecoLinha}), apresentando a frente de turismo do grupo e
+      levando à plataforma onde a busca e a compra acontecem. <strong>Nenhuma venda é feita aqui.</strong> Este
+      domínio não processa pagamento, não emite bilhete e não guarda dados de reserva.
+    </p>
+
+    <h2>Preço e disponibilidade</h2>
+    <p>
+      Esta página não exibe tarifa, e isso é deliberado: preço de passagem e diária de hotel muda por rota, por data
+      e por hora. O único valor válido é o que a busca mostra no momento da compra, com o total à vista e o
+      parcelamento na tela antes da confirmação. Qualquer valor citado fora dali — em anúncio, em conversa ou numa
+      captura de tela antiga — não vincula ninguém.
+    </p>
+    <p>
+      “Até 12x no cartão” é o teto de parcelamento oferecido. Quantas dessas parcelas saem <em>sem juros</em> depende
+      da tarifa, da operadora e do emissor do cartão, e o número exato aparece no checkout antes de você confirmar.
+    </p>
+
+    <h2>Quem responde pela viagem</h2>
+    <p>
+      A busca e a emissão rodam na plataforma da OnerTravel sob a marca {EMPRESA.nome}. O contrato de transporte, de
+      hospedagem ou de locação é celebrado com a companhia aérea, a rede hoteleira ou a locadora escolhida, e são
+      elas que respondem pela prestação do serviço: horário, embarque, acomodação, bagagem, atraso, cancelamento e
+      reacomodação seguem as regras da tarifa comprada e a legislação aplicável, inclusive as resoluções da ANAC.
+    </p>
+    <p>
+      O papel da agência é intermediar: localizar a regra da sua tarifa, acionar a operadora e acompanhar. Ela não
+      substitui a companhia nem garante resultado que dependa exclusivamente dela.
+    </p>
+
+    <h2>Documentos de viagem são responsabilidade do passageiro</h2>
+    <p>
+      Passaporte válido, visto, exigências sanitárias e regras de entrada de cada país mudam e são conferidas por
+      quem viaja, antes da compra. Nome no bilhete precisa bater exatamente com o documento apresentado no embarque —
+      correção de nome depois de emitido costuma ter custo cobrado pela companhia, e em algumas tarifas não é
+      possível.
+    </p>
+
+    <h2>Arrependimento e cancelamento</h2>
+    <p>
+      Compras feitas fora do estabelecimento têm direito de arrependimento em 7 dias (art. 49 do CDC), com as
+      ressalvas que a legislação e a regulação do setor aéreo aplicam ao caso — para passagem aérea, a ANAC prevê
+      desistência sem ônus em até 24 horas da emissão, quando a compra ocorre com sete dias ou mais de antecedência
+      do voo. Fora dessas janelas, valem as regras da tarifa. O pedido é feito na plataforma onde a compra foi
+      concluída; se precisar de ajuda para achar o caminho, chame o {EMPRESA.telefoneExibicao}.
+    </p>
+
+    <h2>Seguro viagem</h2>
+    <p>
+      O seguro viagem é intermediado pela corretora do grupo, registro SUSEP {EMPRESA.susep} (<a
+        href={EXTERNOS.susepConsulta}
+        target="_blank"
+        rel="noopener">consulta pública<span class="visualmente-oculto"> — abre em nova aba</span></a
+      >). Quem paga a indenização é a seguradora contratada, nos termos da apólice, e não a agência.
+    </p>
+
+    <h2>Marcas de terceiros</h2>
+    <p>
+      Nomes de companhias aéreas, redes hoteleiras, locadoras e de outras agências citados neste site são marcas de
+      seus respectivos titulares, usados apenas para identificar do que se fala. Não há logotipo de terceiro
+      reproduzido aqui, e a citação não implica vínculo, patrocínio nem parceria além da que estiver expressamente
+      declarada.
+    </p>
+
+    <h2>Links para fora</h2>
+    <p>
+      Ao seguir um link externo — a busca, o WhatsApp, a consulta da SUSEP, o Cadastur — você entra num ambiente com
+      termos e política de privacidade próprios, que passam a valer a partir dali.
+    </p>
+
+    <h2>Alterações</h2>
+    <p>
+      Estes termos podem mudar. A data de revisão no alto da página diz qual versão está valendo; mudança relevante
+      aparece nessa data.
+    </p>
+  </div>
+</Base>

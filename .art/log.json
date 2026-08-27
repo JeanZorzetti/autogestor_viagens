@@ -1,0 +1,88 @@
+[
+ {
+  "data": "2026-08-27",
+  "projeto": "viagens",
+  "pagina": "/ (e toda a capa: /sobre, legais, 404)",
+  "direcao": "solari",
+  "tipo": "custom",
+  "base": "terminal-vivo",
+  "eixos": {
+   "materia": "geometria",
+   "motor": "autonomo",
+   "banda": "escura"
+  },
+  "estrutura": "Indice — tudo e lista, ZERO cards na pagina inteira. Os quatro produtos que na pagina do hub eram cards com icone viraram linhas de placa (codigo a esquerda, status a direita, a linha inteira e o link). Nav = faixa de status de aeroporto, NAO barra de 4 links. Rodape = uma linha, NAO bloco de 4 colunas. Nao e a pilha `.secao > .container > olho + h2 + chamada` do hub e do coopluz, nem o Percurso de estacoes em grade 5/7 do seguros. Paginas internas usam `.doc` simples de proposito: sao fichas, nao paineis de partida.",
+  "pedido": "Dono pediu 'agora vamos criar a viagens.roilabs.com.br', citando os tres irmaos (autogestor, coopluz, seguros) como contexto. Escolheu SITE NOVO DO ZERO contra a minha recomendacao de fork do seguros, e apontou https://autogestor.roilabs.com.br/viagens como definicao do produto. Escolheu Solari entre tres propostas; a recomendacao era Solari.",
+  "decisao": "As quatro pecas reais em docs/viagens/ do hub mudaram a premissa antes de construir, e isso foi declarado ao dono: a Autogestor Viagens JA TEM marca (hexagono-vortice, lockup navy + laranja), entao 'identidade propria' nao significa inventar paleta. A paleta foi AMOSTRADA EM PIXEL com Pillow por regiao do lockup: navy #00143c, laranja #f88400, azul do hexagono #144880, ceu #5898cc. O laranja daqui NAO e o do seguros (#fb7402, matiz ~27 vs ~32) — sao pecas diferentes, medidas diferentes. O que e original: direcao, estrutura, tipografia. Segundo achado declarado: a plataforma de destino (white-label OnerTravel) tem header VERDE e botao de pagamento roxo, entao existe uma emenda de ambiente no clique do CTA.",
+  "recusadas": [
+   "Escotilha (luz volumetrica / ponteiro / media) — janela oval de cabine com refracao e borda de Fresnel. Recusada por custo de pintura: backdrop-filter e caro em Android mediano e o trafego desta vertical e majoritariamente celular, onde o motor de ponteiro nem existe.",
+   "Carimbo (pigmento / autonomo / clara) — passaporte offset fora de registro, grao pesado. Recusada por banda: o Corte Seco (banda clara) foi revertido no seguros dois dias antes, e pigmento/impressao ja foi gasto no `fatura` do coopluz."
+  ],
+  "eliminadas_por_log": [
+   "Corte Seco — usada E revertida no seguros em 25/08",
+   "Costura — usada no hub em 21/08",
+   "Ima — usada no coopluz em 22/08",
+   "Baralho — eixos identicos ao `fatura` do coopluz (pigmento/scroll/media)",
+   "Tipo Cinetico e Sombra Longa — banda clara",
+   "Esteira (34kb) e Displacement (14kb+shader) — custo em funil mobile",
+   "Deriva — campo em canvas num funil de conversao, o mesmo motivo pelo qual o seguros recusou `Brasa`",
+   "Telemetria — nao existe dado proprio; numero inventado e o gate G9"
+  ],
+  "verbo": "virar — uma pa gira no eixo horizontal e trava num valor novo",
+  "camadas": {
+   "entrada": "as quatro linhas da placa viram e travam, stagger de 60ms comecando em 160ms. O H1 NAO entra: ele e o elemento de LCP (confirmado H1.placa__titulo no verificar.mjs) e ja esta no primeiro quadro.",
+   "autonomo": "O GESTO PRINCIPAL. A pa do destino vira sozinha a cada 2.2s entre 8 destinos, com `animation-delay: calc(var(--i) * 2.2s - 0.176s)` e um keyframe de 8 fatias. Zero JS, zero listener. Sao DESTINOS e nunca precos: nome de cidade e fato, tarifa sem consulta seria numero inventado.",
+   "scroll": "cada item da lista densa vira ao entrar, via animation-timeline: view(), range entry 8% cover 34% (~35vh de rolagem). Nativo, 0kb.",
+   "ponteiro": "OPCIONAL, declarada: a celula de status vira de 24H para ABRIR no hover. Desligada em (hover: none) — no celular a informacao continua visivel e nada exclusivo dela existe.",
+   "transicao": "View Transitions cross-document. A faixa de status atravessa (view-transition-name: faixa) e o corpo vira em rotateX 38deg em vez de piscar."
+  },
+  "correcoes_encontradas_olhando": [
+   "A pa do destino caia fora da linha de base do rotulo: `align-items: baseline` num flex com 8 spans empilhados e rotacionados. Trocado por center + line-height fixo na janela — e daqui que sai o CLS 0.",
+   "JANELA VAZIA DE 176ms entre uma pa e a proxima. O atraso negativo uniforme NAO cria sobreposicao (adianta todas igualmente); quem sobrepoe e o keyframe. A saida passou de 11.5%->12.5% para 12.5%->13.5%, vazando alem do slot. Medido quadro a quadro com sonda de opacidade em 40 amostras a 120ms, nao deduzido.",
+   "Em 360px 'Passagens aereas' a 18px de mono media 173px numa coluna de 172px e quebrava em duas linhas. Nome caiu para --t-base abaixo de 46rem.",
+   "A faixa de status quebrava em duas linhas em 360px deixando o separador '·' orfao no fim da primeira. Escondido abaixo de 46rem.",
+   "A lista densa deixava metade da largura vazia em 1440px (paragrafo travado em 62ch sob um filete que ia ate a borda). Virou tres colunas acima de 62rem via `display: contents`, repetindo a grade da placa.",
+   "A borda do botao de contorno dava 2.32:1 sobre a placa, abaixo do 3:1 da WCAG 1.4.11. --noite-600 foi de L 0.44 para 0.505 (3.07:1). Pego pelo logos/contraste.mjs ANTES de a pagina existir."
+  ],
+  "construido_e_removido": [
+   "A 'emenda' verde: faixa degradê de 3px sob o botao principal, avisando que a plataforma de destino e verde. Na tela nao se lia — a metade esquerda do degradê era a mesma cor do botao em cima dela. Removida junto com o token --plataforma-500; quem faz esse trabalho e a frase 'a busca abre em nova aba, na plataforma de reservas'. Registrado para ninguem reinventar achando que e melhoria.",
+   "A classe .pa (transform-origin + backface no primitivo) nunca chegou a marcacao — cada camada define o proprio. Removida. A .vinco tambem estava orfa, mas foi LIGADA na janela do destino em vez de apagada: e ela que faz a celula continuar lendo como pa quando esta parada, que e o caso do movimento reduzido.",
+   "10 tokens declarados e nunca referenciados (--azul-500, --ceu-400, --branco, --laranja-600, --marca-fechada, --e-1, --e-12, --r-2, --r-full, --dur-cena, --ease-cena)."
+  ],
+  "tipografia": {
+   "display": "IBM Plex Mono 600, 1 arquivo woff2 subset latin, 15.6kb, do proprio dominio, font-display: optional",
+   "corpo": "pilha do sistema, 0kb baixados",
+   "salto": "4.25x (corpo 1rem -> H1 4.25rem)",
+   "porque_mono": "placa de embarque E uma grade de celula de largura fixa. Mono e o material, nao cosplay de terminal — e por isso ela manda so no display e nas linhas da placa: o texto corrido roda na pilha do sistema, porque mono em 400 palavras cansa e o publico desta pagina nao e tecnico. E exatamente a parte da spec `Terminal Vivo` que foi recusada."
+  },
+  "custo": {
+   "faixa": "captacao",
+   "js_gzip_kb": 0,
+   "deps_novas": [],
+   "peso_novo_kb": {
+    "fonte": 15.6,
+    "og_png": 46.4
+   },
+   "lcp_ms": {
+    "mediana": 316,
+    "amostras": [280, 288, 316, 324, 324],
+    "alvo": 1500,
+    "condicao": "build servido estatico, CPU 4x estrangulada, 1440x900",
+    "elemento": "H1.placa__titulo"
+   },
+   "cls": 0.0,
+   "contraste_pares": 23,
+   "contraste_reprovados": 0,
+   "teclado": "22 paradas, 0 sem anel de foco",
+   "console": "limpo em 360 / 768 / 1440",
+   "estouro_horizontal": "nenhum nas tres larguras"
+  },
+  "gates": {
+   "G9_metrica_inventada": "fechado — nenhum preco em lugar nenhum do conteudo servido, e ha teste que falha se um R$ aparecer. A pa mostra destino, que e fato.",
+   "G11_uma_ideia": "fechado — virar nas quatro camadas, e nao existe um quinto gesto. Nao ha fade no site.",
+   "G24_fallback_composto": "fechado — sem JS a pagina e identica (a coreografia inteira e CSS); com prefers-reduced-motion a placa nasce inteira e parada, com um destino visivel e o vinco no lugar. Verificado em quadro proprio.",
+   "G27_ponteiro_exclusivo": "fechado — a camada de ponteiro so troca 24H por ABRIR; o link ja diz para onde vai e no toque a informacao continua visivel.",
+   "G33_estrutura_repetida": "fechado — Indice, e nem o hub, nem o coopluz, nem o seguros usam. Nav e rodape tambem trocados (faixa de status / uma linha)."
+  }
+ }
+]

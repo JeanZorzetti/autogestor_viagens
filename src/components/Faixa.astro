@@ -1,0 +1,40 @@
+---
+import Logo from "./Logo.astro";
+import { EMPRESA } from "../consts";
+
+/* A faixa de status — e é ela a navegação deste site.
+ *
+ * NÃO existe barra com quatro links e um botão à direita: essa silhueta é a de
+ * ~80% das landings, e a estrutura escolhida (Índice) pede que a navegação
+ * seja a própria lista. O que fica no topo é o que uma placa de aeroporto tem
+ * em cima: onde você está, e se o painel está operando. Os links do site
+ * inteiro moram no rodapé, que cabe numa linha porque são quatro páginas.
+ *
+ * `GYN` é o código IATA do aeroporto de Goiânia, onde a empresa fica. É dado,
+ * não enfeite: diz de onde a agência opera antes de a pessoa rolar. */
+
+const inicio = Astro.url.pathname === "/";
+---
+
+<header>
+  <div class="container">
+    <div class="faixa">
+      {
+        inicio ? (
+          <span class="faixa__marca">
+            <Logo size={26} />
+            {EMPRESA.nome}
+          </span>
+        ) : (
+          <a class="faixa__marca" href="/">
+            <Logo size={26} />
+            {EMPRESA.nome}
+          </a>
+        )
+      }
+      <span class="faixa__sep" aria-hidden="true">·</span>
+      <span>GYN Goiânia</span>
+      <span class="faixa__fim">Busca aberta 24h</span>
+    </div>
+  </div>
+</header>

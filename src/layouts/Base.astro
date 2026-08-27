@@ -1,0 +1,226 @@
+---
+import Faixa from "../components/Faixa.astro";
+import Rodape from "../components/Rodape.astro";
+import { ATENDIMENTO, EMPRESA, EXTERNOS, GA4, SITE } from "../consts";
+import { AREA_SERVIDA } from "../data/conteudo";
+import "../styles/global.css";
+
+interface Props {
+  titulo: string;
+  descricao: string;
+  /** Nós extras do @graph (FAQPage, Service…). Um grafo único por página: nós
+   *  soltos em <script> separados duplicam a entidade Organization. */
+  schema?: Record<string, unknown>[];
+  trilha?: { nome: string; href: string }[];
+  ogImagem?: string;
+  /** Página sem conteúdo próprio de busca (erro). Fora do índice, mas os
+   *  links continuam sendo seguidos. */
+  noindex?: boolean;
+  /** ISO (AAAA-MM-DD) da última revisão de uma política. Vira `dateModified`
+   *  do WebPage que já existe, em vez de um segundo nó: schema.org não tem
+   *  tipo para documento legal, e um WebPage extra na mesma URL duplica a
+   *  entidade em vez de descrevê-la. */
+  atualizado?: string;
+  /** Subtipo do WebPage ("AboutPage", "ContactPage"…) quando schema.org tem
+   *  um específico. */
+  tipoPagina?: string | string[];
+}
+
+const {
+  titulo,
+  descricao,
+  schema = [],
+  trilha = [],
+  ogImagem = "/img/og.png",
+  noindex = false,
+  atualizado,
+  tipoPagina = "WebPage",
+} = Astro.props;
+
+const site = Astro.site ?? new URL(SITE.url);
+// `trailingSlash: "never"` também vale para a home: sem o `.replace` final,
+// `new URL("/", site)` sempre devolve barra, que diverge do sitemap.xml.
+const canonical = new URL(Astro.url.pathname.replace(/\/$/, "") || "/", site).href.replace(/\/$/, "");
+const abs = (p: string) => new URL(p, site).href;
+
+// UMA organização. O tipo é `TravelAgency` (subtipo de LocalBusiness) e não
+// `Organization` genérica: é o que schema.org tem exatamente para agência de
+// viagens, e é o que permite a um motor de resposta distinguir esta empresa
+// de uma companhia aérea ou de uma rede hoteleira.
+//
+// O que este nó NÃO afirma: número de Cadastur. Afirmar registro sem ter o
+// número é o tipo de alegação que motor de resposta não cita e que órgão de
+// defesa do consumidor cobra. O `identifier` carrega o registro SUSEP, que a
+// casa tem de fato, com a URL da consulta pública junto — alegação com
+// caminho de verificação é o que se cita; número solto, não.
+const grafo: Record<string, unknown>[] = [
+  {
+    "@type": ["TravelAgency", "Organization"],
+    "@id": abs("/#agencia"),
+    name: SITE.nome,
+    legalName: EMPRESA.nomeLegal,
+    url: abs("/"),
+    logo: { "@type": "ImageObject", "@id": abs("/#logo"), url: abs("/img/icon-512.png"), width: 512, height: 512 },
+    image: { "@id": abs("/#logo") },
+    foundingDate: EMPRESA.fundacao,
+    description:
+      "Agência de viagens do Grupo Autogestor, em Goiânia (GO), atendendo todo o Brasil. Busca self-service de passagens aéreas nacionais e internacionais, hotéis, pacotes e aluguel de carro, com pagamento em até 12x no cartão.",
+    identifier: {
+      "@type": "PropertyValue",
+      name: "Registro SUSEP (corretora do grupo)",
+      value: EMPRESA.susep,
+      url: EXTERNOS.susepConsulta,
+    },
+    telephone: EMPRESA.telefone,
+    email: EMPRESA.email,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: EMPRESA.endereco.rua,
+      addressLocality: EMPRESA.endereco.cidade,
+      addressRegion: EMPRESA.endereco.uf,
+      postalCode: EMPRESA.endereco.cep,
+      addressCountry: EMPRESA.endereco.pais,
+    },
+    geo: { "@type": "GeoCoordinates", latitude: EMPRESA.geo.lat, longitude: EMPRESA.geo.lon },
+    areaServed: AREA_SERVIDA,
+    openingHoursSpecification: [ATENDIMENTO.horarioSchema],
+    sameAs: [...EMPRESA.redes],
+    // O hub é a matriz das seis frentes. Sem isto, dois domínios com o mesmo
+    // endereço e telefone aparecem como empresas diferentes — que é o que
+    // derruba SEO local.
+    parentOrganization: { "@type": "Organization", name: EMPRESA.nome, url: `${SITE.hub}/` },
+  },
+  {
+    "@type": "WebSite",
+    "@id": abs("/#site"),
+    url: abs("/"),
+    name: SITE.nome,
+    inLanguage: "pt-BR",
+    publisher: { "@id": abs("/#agencia") },
+  },
+  {
+    "@type": tipoPagina,
+    "@id": `${canonical}#pagina`,
+    url: canonical,
+    name: titulo,
+    description: descricao,
+    inLanguage: "pt-BR",
+    isPartOf: { "@id": abs("/#site") },
+    about: { "@id": abs("/#agencia") },
+    ...(atualizado ? { dateModified: atualizado } : {}),
+    ...(trilha.length ? { breadcrumb: { "@id": `${canonical}#trilha` } } : {}),
+  },
+  ...(trilha.length
+    ? [
+        {
+          "@type": "BreadcrumbList",
+          "@id": `${canonical}#trilha`,
+          itemListElement: trilha.map((t, i) => ({
+            "@type": "ListItem",
+            position: i + 1,
+            name: t.nome,
+            item: abs(t.href),
+          })),
+        },
+      ]
+    : []),
+  ...schema,
+];
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{titulo}</title>
+    <meta name="description" content={descricao} />
+    {/* Sem canonical quando a página está fora do índice: a tag existe para
+         dizer qual URL indexar, e /404 apontaria para /404 — declarando como
+         canônica exatamente a página que o `noindex` da linha seguinte manda
+         ignorar. Duas instruções contraditórias na mesma <head>. */}
+    {!noindex && <link rel="canonical" href={canonical} />}
+    {noindex && <meta name="robots" content="noindex, follow" />}
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    {/* Uma requisição de fonte, um peso, do próprio domínio. `crossorigin`
+         mesmo sendo mesma origem: sem ele o preload de fonte é descartado e o
+         arquivo é baixado duas vezes — fonte é sempre buscada em modo CORS, e
+         o preload precisa casar com esse modo. */}
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/plex-mono-600-latin.woff2" crossorigin />
+
+    {/* Um valor só, sem par claro/escuro: este site tem uma banda (ver o
+         carimbo em tokens.css). É o próprio --noite-950, para a barra do
+         navegador continuar a página em vez de cortá-la. */}
+    <meta name="theme-color" content="#000d28" />
+
+    {/* GA4, mesma propriedade do hub — as seis frentes são um funil só. Só no
+        build de produção: `astro dev` na máquina de quem edita mandaria
+        pageview de localhost para a mesma propriedade.
+
+        O script do Google entra DEPOIS da pintura, no evento `load`. Como
+        `<script async>` no <head> ele executa na thread principal exatamente
+        na janela em que o navegador quer pintar a primeira tela. Nada de
+        medição se perde: a fila do `dataLayer` é criada aqui, antes de tudo, e
+        o `gtag('config')` entra nela imediatamente; quando o gtag.js sobe, ele
+        processa a fila e o pageview é contado com os mesmos dados. */}
+    {
+      import.meta.env.PROD && (
+        <script
+          is:inline
+          set:html={`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA4}');addEventListener('load',function(){var s=document.createElement('script');s.async=true;s.src='https://www.googletagmanager.com/gtag/js?id=${GA4}';document.head.appendChild(s);});`}
+        />
+      )
+    }
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE.nome} />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:title" content={titulo} />
+    <meta property="og:description" content={descricao} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={abs(ogImagem)} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <script
+      type="application/ld+json"
+      is:inline
+      set:html={JSON.stringify({ "@context": "https://schema.org", "@graph": grafo })}
+    />
+  </head>
+  <body>
+    <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+    <Faixa />
+    <main id="conteudo" tabindex="-1">
+      {/* O BreadcrumbList do @graph acima descreve uma trilha que também
+          existe na página: o que o buscador lê é o que o leitor vê. O último
+          item não é link — é onde a pessoa já está. */}
+      {
+        trilha.length > 1 && (
+          <nav class="trilha" aria-label="Trilha de navegação">
+            <div class="container">
+              <ol>
+                {trilha.map((t, i) =>
+                  i === trilha.length - 1 ? (
+                    <li aria-current="page">{t.nome}</li>
+                  ) : (
+                    <li>
+                      <a href={t.href}>{t.nome}</a>
+                    </li>
+                  )
+                )}
+              </ol>
+            </div>
+          </nav>
+        )
+      }
+      <slot />
+    </main>
+    <Rodape />
+  </body>
+</html>

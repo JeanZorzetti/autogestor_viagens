@@ -1,0 +1,73 @@
+---
+import Base from "../layouts/Base.astro";
+import { ATENDIMENTO, EMPRESA, EXTERNOS, SITE, enderecoLinha, whatsapp } from "../consts";
+
+const AJUDA = whatsapp("Olá! Vim pelo site de viagens e quero falar com um especialista.");
+
+/* Documento, não placa. Esta página usa `.doc` e não `.estacao` de propósito:
+ * a home é um painel de partida, isto é uma ficha. Encenar um percurso que o
+ * conteúdo não tem é pior que não encenar nenhum. */
+---
+
+<Base
+  titulo={`Quem é a ${EMPRESA.nome} e quem emite a sua reserva`}
+  descricao="Agência de viagens do Grupo Autogestor, em Goiânia. Quem opera o site, quem emite a reserva, onde conferir os registros e como falar com uma pessoa."
+  tipoPagina="AboutPage"
+  trilha={[
+    { nome: "Início", href: "/" },
+    { nome: "Sobre", href: "/sobre" },
+  ]}
+>
+  <div class="doc container">
+    <h1>Quem opera este site</h1>
+    <p>
+      {EMPRESA.nome} é a frente de turismo do <a href={`${SITE.hub}/`}>Grupo Autogestor</a>, que atua desde
+      {" "}{EMPRESA.fundacao} em Goiânia. A razão social é {EMPRESA.nomeLegal}, com endereço em {enderecoLinha}.
+    </p>
+
+    <h2>Quem emite a reserva</h2>
+    <p>
+      A busca, a reserva e a emissão rodam na plataforma da <strong>OnerTravel</strong>, operada sob a marca
+      {" "}{EMPRESA.nome}. Quando você clica em “Buscar minha viagem”, sai deste site e entra nessa plataforma — o
+      visual muda, e isso é esperado. É a mesma compra, no ambiente de reservas.
+    </p>
+    <p>
+      O contrato de transporte, de hospedagem ou de locação é sempre com a companhia aérea, a rede hoteleira ou a
+      locadora que você escolher. Remarcação, cancelamento e reacomodação seguem a regra da tarifa comprada, definida
+      por essas empresas — não por nós. O que fazemos quando algo trava é localizar essa regra e acionar a operadora
+      por você.
+    </p>
+
+    <h2>Registros que dá para conferir</h2>
+    <p>
+      O grupo é corretora de seguros registrada na SUSEP sob o número <strong>{EMPRESA.susep}</strong>, e é por isso
+      que o seguro viagem sai daqui com a mesma análise de cobertura que fazemos em seguro de veículo. O registro
+      pode ser conferido na <a href={EXTERNOS.susepConsulta} target="_blank" rel="noopener"
+        >consulta pública da SUSEP<span class="visualmente-oculto"> — abre em nova aba</span></a
+      >.
+    </p>
+    <p>
+      Prestadores de turismo no Brasil são cadastrados no Ministério do Turismo. A situação cadastral de qualquer
+      agência — a nossa inclusive — pode ser verificada no <a href={EXTERNOS.cadastur} target="_blank" rel="noopener"
+        >Cadastur<span class="visualmente-oculto"> — abre em nova aba</span></a
+      >. Esta página não afirma um número de cadastro: afirmar registro sem o número é alegação que ninguém consegue
+      checar.
+    </p>
+
+    <h2>Por que a página não mostra preço</h2>
+    <p>
+      Porque não teria como estar certo. Tarifa aérea e diária de hotel mudam por rota, por data e por hora, e uma
+      página estática guardaria o preço de ontem. O valor que vale é o que aparece na busca no momento da compra, e é
+      lá que ele é exibido antes de você confirmar qualquer coisa — inclusive quantas parcelas saem sem juros.
+    </p>
+
+    <h2>Falar com uma pessoa</h2>
+    <p>
+      O WhatsApp <a href={AJUDA} target="_blank" rel="noopener"
+        >{EMPRESA.telefoneExibicao}<span class="visualmente-oculto"> — abre em nova aba</span></a
+      > atende {ATENDIMENTO.horario} e responde {ATENDIMENTO.prazo}. Não é obrigatório usar: a compra inteira pode ser
+      feita sozinha. É a rede de segurança de quem prefere.
+    </p>
+    <p>E-mail: <a href={`mailto:${EMPRESA.email}`}>{EMPRESA.email}</a>.</p>
+  </div>
+</Base>

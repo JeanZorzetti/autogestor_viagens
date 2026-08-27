@@ -1,0 +1,161 @@
+/* art-direction · solari · eixos: geometria/autônomo/escura · orçamento: 0kb · 2026-08-27 */
+
+/* ═══ A DIREÇÃO, EM UMA FRASE ═══════════════════════════════════════════════
+   A página é uma placa de embarque. O verbo é VIRAR: uma pá gira no eixo
+   horizontal e trava num valor novo. Esse único gesto aparece nas quatro
+   camadas da coreografia — entrada, scroll, ponteiro e troca de rota — e não
+   existe um quinto gesto. Não há fade em lugar nenhum: pá não desbota, pá
+   vira.
+
+   POR QUE NÃO É "TEMA HACKER". A monoespaçada aqui não é cosplay de terminal:
+   placa de embarque é uma grade de células de largura fixa, e é isso que a
+   mono é. Ela manda no display e nas linhas da placa; o texto corrido corre
+   na pilha do sistema, porque mono em 400 palavras cansa e o público desta
+   página não é técnico.
+
+   BANDA ESCURA NÃO É GOSTO. O laranja da casa (#f88400) dá 8.1:1 sobre o navy
+   e passa como texto normal; sobre branco daria 2.4:1 e reprovaria. Clarear a
+   marca para caber num fundo claro não é opção — a peça de captação que roda
+   hoje é navy, e é a mesma tinta.                                           */
+
+@font-face {
+  font-family: "Plex Mono";
+  font-style: normal;
+  font-weight: 600;
+  /* `optional`: se a fonte não chegar no primeiro quadro, a página fica na
+     mono do sistema e NÃO troca depois. Placa que reflui 300ms após pintar é
+     pior que placa numa mono ligeiramente diferente. */
+  font-display: optional;
+  src: url("/fonts/plex-mono-600-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  /* Só uma banda. Este site não tem alternador de tema, e a ausência é
+     decisão: o interruptor é o gesto do Coopluz e herdá-lo aqui seria pegar
+     emprestado o que faz aquele site ser ele. Some junto metade dos tokens
+     (não há `light-dark()`) e o script de pré-pintura do <head>. */
+  color-scheme: dark;
+
+  /* ── primitivos: amostrados em pixel das peças de captação de ago/2026
+        (docs/viagens/ do hub), convertidos para OKLCH. Não são valores
+        "próximos do laranja da marca" — são os valores. Nunca use um
+        primitivo direto num componente; use os papéis lá embaixo. ────────── */
+
+  /* navy — medido em #000d28 / #00143c nas duas peças de fundo escuro */
+  --noite-950: oklch(0.1661 0.0607 257.7); /* fundo da página */
+  --noite-900: oklch(0.2059 0.0826 259.7); /* corpo da placa */
+  --noite-850: oklch(0.2420 0.0760 258.5); /* linha da placa, superfície alta */
+  --noite-800: oklch(0.2900 0.0700 258.0); /* vinco da pá */
+  --noite-700: oklch(0.3600 0.0620 257.0); /* vinco forte, separador visível */
+  /* 0.505 e não 0.44, e a diferença NÃO é gosto: em 0.44 a borda do botão de
+     contorno media 2.32:1 sobre a placa, abaixo do 3:1 que a WCAG 1.4.11 exige
+     para limite de componente interativo. O logos/contraste.mjs reprovou esse
+     par antes de a página existir; 0.505 mede 3.07:1. */
+  --noite-600: oklch(0.5050 0.0520 256.0); /* limite de componente interativo */
+
+  /* laranja — #f88400, o de "AGORA!" e do botão BUSCAR da peça */
+  --laranja-500: oklch(0.7285 0.1774 56.4);
+  --laranja-400: oklch(0.7970 0.1535 65.4); /* ponta clara, só em realce */
+
+  /* ── papéis ─────────────────────────────────────────────────────────────
+     Medidos por logos/contraste.mjs, que falha com código 1 se um par
+     reprovar. Os números no comentário são o que ele mediu, não estimativa. */
+  --fundo: var(--noite-950);
+  --placa: var(--noite-900);
+  --placa-linha: var(--noite-850);
+  --vinco: var(--noite-800);
+  --borda: var(--noite-700);
+  --borda-forte: var(--noite-600);
+
+  --texto: oklch(0.9600 0.0080 250); /* 15.3:1 sobre --fundo */
+  --texto-2: oklch(0.7600 0.0180 250); /* 8.5:1 — corpo secundário */
+  --texto-3: oklch(0.6300 0.0220 250); /* 5.2:1 — o mínimo que ainda é texto */
+
+  --marca: var(--laranja-500); /* 8.1:1 sobre --fundo */
+  --marca-alta: var(--laranja-400);
+  --tinta-sobre-marca: oklch(0.2000 0.0400 60); /* rótulo escuro sobre laranja: 6.9:1 */
+
+  /* Anel de foco. É custom property porque MUDA DE COR conforme a superfície:
+     laranja sobre navy é ótimo (8.1:1) e sobre o botão laranja seria 1.0:1 —
+     sumiria exatamente no controle mais importante da página. Sobre laranja o
+     anel troca para a mesma tinta escura do rótulo. */
+  --foco: var(--laranja-400);
+
+  /* ── tipografia ─────────────────────────────────────────────────────────
+     Duas famílias com contraste real de função, não de gosto:
+       mono   → display, códigos, números, tudo que mora numa célula da placa
+       corpo  → prosa, e é a pilha do sistema (0kb baixados)
+     Salto do corpo (1rem) ao H1 (4.25rem) = 4.25×. */
+  --mono: "Plex Mono", "Placa fallback", ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", monospace;
+  --corpo: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --t-xs: 0.75rem;
+  --t-sm: 0.875rem;
+  --t-base: 1rem;
+  --t-lg: 1.125rem;
+  --t-xl: 1.375rem;
+  --t-2xl: clamp(1.5rem, 1.1rem + 1.8vw, 2.125rem);
+  --t-3xl: clamp(1.75rem, 1.2rem + 2.6vw, 2.75rem);
+  --t-placa: clamp(2.15rem, 1.15rem + 4.6vw, 4.25rem); /* o H1 — 3 linhas curtas */
+
+  /* ── espaço ─────────────────────────────────────────────────────────────
+     Escala de 4px. A placa usa uma unidade própria (--celula) porque a linha
+     da placa é uma célula de altura fixa, não um bloco que cresce com o
+     conteúdo — é isso que faz a lista ler como placa e não como tabela. */
+  --e-2: 0.5rem;
+  --e-3: 0.75rem;
+  --e-4: 1rem;
+  --e-5: 1.5rem;
+  --e-6: 2rem;
+  --e-8: 3rem;
+  --e-10: 4.5rem;
+
+  --celula: 4.5rem; /* altura da linha da placa em ≥720px */
+  --celula-mobile: 3.75rem;
+
+  --largura: 74rem;
+  --leitura: 62ch;
+
+  /* Raio quase zero: pá de placa é retângulo. 2px só para a serrilha do
+     antialiasing não aparecer no canto. Isto NÃO é o "corte seco" recusado no
+     site de seguro — lá o problema era a banda clara e a sombra zero; aqui a
+     banda é escura e o vinco da pá é a sombra. */
+  --r-1: 2px;
+
+  /* ── movimento ──────────────────────────────────────────────────────────
+     Uma ideia, quatro expressões. `--dur-pa` é o único tempo novo: é quanto
+     leva uma pá para girar e travar. Abaixo de 320ms o giro não é lido como
+     giro; acima de 520ms o H1 demora a assentar e atrapalha a leitura. */
+  --dur-instante: 100ms;
+  --dur-rapida: 160ms;
+  --dur-base: 240ms;
+  --dur-pa: 420ms;
+
+  /* A curva da pá: cai rápido e trava seco, com um resto mínimo de assentar.
+     Não é `ease-out` (isso é software) nem spring (isso é borracha, e pá de
+     alumínio não quica). */
+  --ease-pa: cubic-bezier(0.28, 0.86, 0.12, 1);
+  --ease-saida: cubic-bezier(0, 0, 0.2, 1);
+
+  /* Quanto tempo cada destino fica parado antes de a pá virar para o próximo,
+     quanto dura o giro, e quantos destinos existem. Os três entram na conta
+     do keyframe `ciclo` em global.css — mexer num sem refazer a conta
+     dessincroniza a placa. */
+  --pa-parada: 2.2s;
+  --pa-giro: 0.176s; /* 1% do ciclo — o tempo de uma pá cair e travar */
+  --pa-total: 17.6s; /* --pa-parada × 8 destinos */
+}
+
+/* Métrica do fallback, medida com logos/metricas-fonte.mjs contra a pilha mono
+   do sistema. Sem isto, a placa reflui quando a Plex chega — e refluxo numa
+   grade de célula fixa é justamente o defeito mais visível desta direção. */
+@font-face {
+  font-family: "Placa fallback";
+  src: local("Cascadia Mono"), local("Consolas"), local("Menlo"), local("DejaVu Sans Mono"), local("monospace");
+  size-adjust: 100%;
+  ascent-override: 92%;
+  descent-override: 24%;
+  line-gap-override: 0%;
+}

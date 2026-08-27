@@ -1,0 +1,65 @@
+---
+import Base from "../layouts/Base.astro";
+import { EXTERNOS } from "../consts";
+
+/* A placa também serve para dizer que o voo não existe. Mesma grade, mesmo
+ * vinco, sem inventar uma ilustração para a ocasião. */
+const BUSCA = EXTERNOS.busca;
+---
+
+<Base
+  titulo="Página não encontrada | Autogestor Viagens"
+  descricao="Esta página não existe neste site."
+  noindex
+>
+  <section class="placa">
+    <div class="container">
+      <div class="placa__topo">
+        <h1 class="placa__titulo">Rota<br /><em>não operada.</em></h1>
+        <p class="placa__chamada">
+          A página que você tentou abrir não existe aqui — ou existia num endereço antigo e mudou de lugar. A busca
+          continua no ar.
+        </p>
+      </div>
+
+      <ol class="linhas">
+        <li>
+          <a class="linha" href="/">
+            <span class="linha__codigo">INI</span>
+            <span>
+              <span class="linha__nome">Voltar ao início</span>
+              <span class="linha__nota">Os quatro produtos e as perguntas frequentes</span>
+            </span>
+            <span class="linha__onde">Este site</span>
+            <span class="status"><span class="status__a">Ir</span></span>
+          </a>
+        </li>
+        <li>
+          <a class="linha" href={BUSCA} target="_blank" rel="noopener">
+            <span class="linha__codigo">BSC</span>
+            <span>
+              <span class="linha__nome">Ir direto para a busca</span>
+              <span class="linha__nota">Voos, hotéis, pacotes e carros, em até 12x</span>
+            </span>
+            <span class="linha__onde">Plataforma</span>
+            <span class="status">
+              <span class="status__a">Abrir</span>
+              <span class="visualmente-oculto"> — abre em nova aba</span>
+            </span>
+          </a>
+        </li>
+        <li>
+          <a class="linha" href="/sobre">
+            <span class="linha__codigo">SOB</span>
+            <span>
+              <span class="linha__nome">Quem opera este site</span>
+              <span class="linha__nota">Quem emite a reserva e onde conferir os registros</span>
+            </span>
+            <span class="linha__onde">Este site</span>
+            <span class="status"><span class="status__a">Ir</span></span>
+          </a>
+        </li>
+      </ol>
+    </div>
+  </section>
+</Base>
