@@ -39,7 +39,8 @@ quatro ferramentas existem, e nenhuma dependência entra (FR-040).
 - [ ] **T001** Rodar a sequência inteira do `quickstart.md` no estado atual
       (`npm test`, `npm run check`, `npm run contraste`, `npm run build`,
       `npm run verificar`) e anotar os números de partida: pares de contraste
-      medidos (hoje 37), URLs no sitemap (hoje 4), rotas verificadas (hoje 5),
+      medidos (hoje 37), URLs no sitemap (hoje 4), rotas verificadas (hoje **1** —
+      `verificar.mjs` visita a capa e só ela; ver T053),
       LCP e CLS por rota. É contra estes números que SC-001, SC-011 e SC-002 vão
       ser lidos no fim — sem a linha de base, "subiu de 37 para ≥45" não é
       verificável.
@@ -362,7 +363,53 @@ transição, sem erro no console, sem perda de conteúdo.
       `vt-pct`, `vt-car`) na coluna de destino de cada linha da capa e no objeto
       da cabeça do portão correspondente. O nome precisa existir nos **dois**
       documentos e ser único dentro de cada um — por isso é por código de
-      produto e não um nome genérico (FR-025).
+      produto e não um nome genérico (FR-025). Sem hífen duplo: é `vt-aer`, não
+      `--vt-aer` (A2 — `research.md` §R5 corrigido para casar com o contrato).
+- [ ] **T047a** [US3] **Os três sem par** (G4, decidido em 2026-08-28 — ver
+      `contracts/coreografia.md` §3, "Cláusula dos três sem par"). A capa tem
+      quatro nomes e o portão tem um; os outros três recebem o
+      `-ua-view-transition-fade-out` do navegador e ficam **parados, retos e
+      nítidos** sobre a página de destino depois que o `corpo` já saiu (medido:
+      op 0,14 e `transform: none` em t=140ms, contra op 0,02 do `corpo`). Isso é
+      fade puro, proibido, e é consequência de `main { view-transition-name:
+      corpo }` — nome próprio retira o elemento do snapshot do ancestral.
+      Escrever, dentro do bloco `no-preference` já existente em
+      `global.css:242`:
+
+      ```css
+      ::view-transition-old(vt-aer), ::view-transition-old(vt-htl),
+      ::view-transition-old(vt-pct), ::view-transition-old(vt-car) {
+        animation: pa-sai var(--dur-base) var(--ease-pa) both;
+      }
+      ::view-transition-new(vt-aer), ::view-transition-new(vt-htl),
+      ::view-transition-new(vt-pct), ::view-transition-new(vt-car) {
+        animation: pa-entra var(--dur-pa) var(--ease-pa) both;
+      }
+      ```
+
+      Os quatro nomes, não três: não existe seletor que distinga o par do órfão,
+      e a regra certa para os três é a mesma do quarto. 0 byte enviado ao
+      cliente. **Não** tentar nomear só a linha ativada: não existe sem JS
+      (`@view-transition { types }` é estático por documento, `:target` não tem
+      fragmento, `:focus-visible` não dispara em clique de ponteiro).
+- [ ] **T047b** [US3] **Desligar a transição sob movimento reduzido** (G4,
+      achado colateral). FR-028 contrata "transição de rota desligada" e hoje o
+      CSS não entrega: as regras de `::view-transition-*(corpo)` moram dentro de
+      `@media (prefers-reduced-motion: no-preference)`, então sob `reduce` sobra
+      o **cross-fade padrão do navegador** nos cinco nomes, com os grupos ainda
+      transladando — o caminho de acessibilidade é hoje a versão mais cheia de
+      fade da página. Acrescentar ao bloco `reduce` de `global.css:267`:
+
+      ```css
+      ::view-transition-group(*),
+      ::view-transition-old(*),
+      ::view-transition-new(*) {
+        animation: none !important;
+      }
+      ```
+
+      Medido depois da regra: zero animação de pseudo-elemento, página de
+      destino inteira no primeiro quadro.
 - [ ] **T048** [US3] Confirmar que `view-transition-name: faixa` continua e que
       o nome novo **se soma** a ele, não substitui (FR-026): a faixa atravessa,
       o objeto vira — duas partes do mesmo gesto.
@@ -373,9 +420,40 @@ transição, sem erro no console, sem perda de conteúdo.
 - [ ] **T050** [US3] Degradação: navegador sem View Transitions navega normal,
       sem erro no console e sem perda de conteúdo (FR-027); em
       `prefers-reduced-motion: reduce` toda transição de rota é desligada e a
-      navegação continua (FR-028).
-- [ ] **T051** [US3] Em `logos/verificar.mjs`, o quadro da transição
-      capa→portão (SC-009) e o quadro do caminho de degradação limpa.
+      navegação continua (FR-028). O desligamento sob `reduce` **não é
+      automático** — é a regra de T047b; sem ela o navegador aplica o cross-fade
+      padrão e FR-028 fica por escrito e não no CSS. O engine da prova é o
+      Firefox, e o porquê está em T051.
+- [ ] **T051** [US3] Em `logos/verificar.mjs`, o quadro da transição capa→portão
+      **e a prova da degradação** (SC-009). Os dois têm método fixado, porque
+      critério medível sem método de medição é caixa marcada no olho.
+
+      **O quadro da transição** (chromium, o engine que suporta): congelar pela
+      Web Animations API, como o quadro da queda da pá já faz. O gancho é
+      `pagereveal` no documento **novo** — é o único ponto que roda antes de a
+      transição começar. Dentro dele, `e.viewTransition.ready.then(…)`, pausar
+      toda animação cujo `effect.pseudoElement` comece com `::view-transition` e
+      pôr `currentTime` no instante desejado. Dois quadros bastam: **60ms**
+      (o corpo virando) e **140ms** (o corpo praticamente fora — é onde um órfão
+      parado aparece). Falhar se qualquer `::view-transition-old(vt-*)` estiver
+      rodando `-ua-view-transition-fade-out`: esse nome de animação **é** o bug
+      do G4 voltando. Um contexto novo por quadro — o documento congelado fica
+      com uma transição ativa que nunca termina, e navegar para fora dele faz o
+      Chromium pular a transição seguinte.
+
+      **A prova da degradação**: importar `firefox` de `playwright` (o engine já
+      está no cache local, `firefox-1497`) e rodar **só a passagem capa → um
+      portão** nele. Confirmado em 2026-08-28, Firefox 144: nenhum `pagereveal`,
+      nenhum `pageswap`, navegação normal, console limpo, conteúdo inteiro do
+      outro lado. **A pegadinha**: o Firefox suporta `view-transition-name` e
+      `document.startViewTransition` (transição *same-document*) — um teste de
+      suporte por `CSS.supports` dá falso positivo ali. O que separa os engines
+      é `"onpagereveal" in window`, e é isso que a asserção lê. WebKit 26 **faz**
+      VT cross-document e por isso não serve de prova; se um dia o Firefox
+      passar a fazer, o engine da prova muda — a asserção `onpagereveal === false`
+      quebra sozinha e avisa. Assertivas: `onpagereveal` ausente, zero evento de
+      transição, console limpo, e o `h1` + o objeto da cabeça do portão
+      presentes no destino.
 
 **Checkpoint**: as quatro camadas da coreografia de pé, 0 byte de JavaScript.
 
@@ -394,14 +472,54 @@ nunca contra o `astro dev`, que injeta ~1,8 MB de JS que não existe em produç�
       0 reprovados** (SC-001, FR-034), e que nenhum par tenha entrado no CSS sem
       o valor medido em comentário ao lado. O script continua **lendo
       `tokens.css`** — nenhuma cópia da paleta em hex entra nele.
-- [ ] **T053** [P] Em `logos/verificar.mjs`, iterar **9 rotas × 3 larguras × 4
-      posições de rolagem** (correção 3 do `plan.md`: SC-002 diz 5, que é a
-      contagem de antes desta feature), mais os quadros especiais: um
-      reduced-motion por rota, hover no painel, 360px por portão.
+- [ ] **T053** [P] **Criar o laço de rota em `logos/verificar.mjs`. Não é
+      parametrizar um laço — é criar um.** A linha de base é **1**, não 5: hoje
+      o script visita a capa e só ela (`:77`, `pagina.goto(base, …)`, sem laço de
+      rota), e os quatro quadros especiais (`:101` hover, `:135` queda da pá,
+      `:180` reduced-motion, `:200` teclado) estão todos amarrados à capa em
+      1440×900. O `5` da redação original de SC-002 nunca correspondeu a nada
+      medido. Chegar a **9 rotas × 3 larguras × 4 posições de rolagem** (SC-002).
+      As quatro decisões que a tarefa toma:
+
+      1. **Quais especiais valem por rota.** `reduced-motion` é **por rota**
+         (SC-008 é por rota — cada portão tem que sobreviver parado). `hover` e
+         `queda da pá` só onde existe coluna girando: **capa + as quatro cabeças
+         de portão**, 5 rotas, não 9. `teclado` é por rota (T055 já pede as
+         nove). O quadro da transição e o da degradação são de T051 e não
+         entram neste laço.
+      2. **Nome do arquivo.** Hoje é `{largura}-{pct}.png` e com 9 rotas colide.
+         Passa a `{rota}-{largura}-{pct}.png`, com `rota` = o slug (`capa` para
+         `/`, `404` para `/404`). Os especiais viram `{rota}-{largura}-{quadro}`
+         (`capa-1440-hover`, `hoteis-1440-reduzido`).
+      3. **`ORCAMENTO` passa a ser por rota.** SC-003 diz "LCP mediano ≤ 800ms
+         **por rota**" e um número global não prova isso — a capa pode segurar a
+         mediana de um portão lento. Ver T054.
+      4. **Vai ficar lento, e a saída não é cortar cobertura.** O `plan.md` já
+         decidiu: *"é custo de ferramenta, não de página; se incomodar, a saída é
+         paralelizar, **não** reduzir a cobertura."* Paralelizar por rota, com um
+         `newContext` por trabalhador e um teto pequeno (4) para não estrangular
+         a própria máquina que está medindo LCP — **medida sob contenção não é
+         medida**, então o bloco de LCP/CLS de `:226` roda serial mesmo com o
+         resto paralelo.
+
+      Dois ajustes que cabem na mesma passada, porque são o mesmo laço:
+
+      - **I6** — FR-011 e T042 nomeiam **360×640** como o caso a provar (quarta
+        linha visível ou meio-visível); o laço mede 360×**780**. Os 140px de
+        diferença são exatamente onde a quarta linha some. A largura 360 passa a
+        ter **duas alturas**, 640 e 780, ou o FR muda de número — 640 é o que
+        está contratado, então é o laço que se ajusta.
+      - **I8** — o breakpoint de FR-013 é `46rem` = **736px** e o laço mede 768.
+        A faixa 736–767 (o lado largo logo acima da virada) nunca é fotografada.
+        Acrescentar **736** à lista de larguras.
 - [ ] **T054** Orçamento na constante `ORCAMENTO` de `logos/verificar.mjs`,
-      falhando com código 1 se estourar: LCP mediano ≤ 800ms por rota (5
-      amostras, CPU 4× estrangulada), CLS ≤ 0,01 nas nove rotas, **0 byte de
-      JS** em `.vercel/output/static` (SC-003, SC-004, SC-005).
+      falhando com código 1 se estourar: LCP mediano ≤ 800ms **por rota** (5
+      amostras por rota, CPU 4× estrangulada), CLS ≤ 0,01 nas nove rotas, **0
+      byte de JS** em `.vercel/output/static` (SC-003, SC-004, SC-005). `ORCAMENTO`
+      deixa de ser um número global (`:29`, hoje `{ lcp: 1500, cls: 0.05, js: 0 }`
+      para uma página só) e passa a ser lido por rota, com o alvo declarado uma
+      vez e a leitura registrada nove vezes. A mensagem de falha nomeia **qual
+      rota** estourou — "LCP 940ms" sem a rota não diz onde mexer.
 - [ ] **T055** Passagem de teclado completa nas nove rotas: 0 paradas sem anel
       de foco visível, contraste do anel ≥ 3:1 contra a superfície onde aparece
       (SC-007, FR-035).

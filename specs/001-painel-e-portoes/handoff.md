@@ -1,15 +1,25 @@
-# Handoff — três pendências abertas de `001-painel-e-portoes`
+# Handoff — três pendências de `001-painel-e-portoes` · **FECHADAS**
 
 **Criado**: 2026-08-28 · **Origem**: `/speckit-analyze` da feature
-**Estado**: `spec.md` e `tasks.md` já corrigidos e no `main` (commit `bd9602a`).
-Estas três **não** foram tocadas porque nenhuma é edição mecânica.
+**Fechado**: 2026-08-28 · **Estado**: as três resolvidas. `/speckit-implement`
+está **liberado**.
 
-> **Não rodar `/speckit-implement` antes de fechar a C2 e a G4.** A G1/G3 pode ser
-> fechada em paralelo com a implementação, mas antes da Phase 6.
+| # | O que era | Onde ficou a resolução |
+|---|---|---|
+| **C2** | a constituição afirmava que a feature estava implementada e isenta do gate | emenda PATCH **1.0.0 → 1.0.1** em `.specify/memory/constitution.md` |
+| **G4** | os três nomes de transição sem par desbotavam | **opção 2**, medida em quadro congelado. `contracts/coreografia.md` §3 · T047a · T047b · FR-025 · FR-028 |
+| **G1/G3** | `verificar.mjs` cobre 1 rota; SC-009 sem método | `plan.md` correção 3 · T001 · T053 · T054 · T051 · SC-009 |
 
-**Como retomar**: ler este arquivo, `spec.md`, `plan.md` e `tasks.md` da mesma
-pasta. O relatório completo do `/speckit-analyze` não foi salvo — o que sobreviveu
-dele é o que está aqui e as correções já commitadas.
+Ajustes vizinhos que entraram junto, porque a tarefa deles foi tocada: **A2**
+(`--vt-aer` → `vt-aer` em `research.md` §R5), **I6** (360×**640** no laço) e
+**I8** (largura **736**, o breakpoint real de `46rem`).
+
+O que **não** foi feito, de propósito: nenhuma linha de `src/`. A feature
+continua não implementada — as três pendências eram decisões e contratos, e o
+código delas é T047a/T047b/T051/T053/T054 nas Phases 5 e 6.
+
+O registro original das três, com o diagnóstico completo, segue abaixo — com o
+veredito de cada uma no fim da seção.
 
 ---
 
@@ -57,6 +67,21 @@ substituir o ⚠:
 
 Registrar na própria emenda por que o PATCH existe: uma constituição que erra
 sobre o estado do repositório é pior que uma sem a nota.
+
+### Fechada em 2026-08-28
+
+As quatro afirmações da tabela foram re-verificadas antes de escrever a emenda:
+`src/pages/` tem 7 arquivos e **nenhuma** das quatro rotas; `DESTINOS` continua em
+`conteudo.ts:57`; `global.css` tem **um** `@keyframes ciclo`; `dist/sitemap-0.xml`
+tem 4 `<loc>`.
+
+Feito: `.specify/memory/constitution.md` em **1.0.1**. O aviso virou confirmação,
+com a redação sugerida; o Sync Impact Report ganhou o bloco do PATCH dizendo o que
+era falso, o que foi verificado, por que a emenda existe (*"uma constituição que
+erra sobre o estado do repositório é pior que uma sem a nota"*) e que **nada passa
+a ser permitido em consequência** — a governança exige isso de toda emenda. O
+1.0.0 virou linha de histórico em vez de ser sobrescrito. Rodapé em
+`**Version**: 1.0.1`.
 
 ---
 
@@ -118,6 +143,53 @@ buracos no snapshot `corpo` da capa, e as quatro passam a animar por fora do
 **Método**: construir a opção 2 primeiro (é uma dúzia de linhas de CSS), olhar a
 transição nas duas direções, e só então decidir. `logos/verificar.mjs` já sabe
 congelar quadro pela Web Animations API — é o mesmo instrumento.
+
+### Fechada em 2026-08-28 — **opção 2**, e ela não é o consolo
+
+O método foi seguido: protótipo de dois documentos (capa com as quatro colunas
+nomeadas + portão com uma), servido contra o `global.css` real, transição
+congelada pela Web Animations API a partir de `pagereveal`. Duas variantes lado a
+lado — sem regra (o estado contratado hoje) e com a opção 2.
+
+**O que o quadro mostrou, e é pior do que "desbotam":**
+
+| t | `::view-transition-old(corpo)` | os três sem par |
+|---|---|---|
+| 60 ms | op 0,22 · `matrix3d`, girando | op 0,61 · **`transform: none`** |
+| 140 ms | op 0,02 — já saiu | op 0,14 · ainda **nítidos, retos, legíveis** |
+
+Sem `::view-transition-group`, os três não herdam nada do `corpo`. No quadro de
+140ms o corpo da capa já saiu e LISBOA, PORTO SEGURO e SANTIAGO continuam de pé,
+sozinhos, sobre a página do portão. Não é um fade indevido — é um rasgo, e são as
+últimas coisas a sair.
+
+**A opção 1 não existe sem JS**, e a investigação fechou os três caminhos: as
+`types` de `@view-transition` são estáticas por documento (iguais para os quatro
+links), `:target` precisa de um fragmento que não há, e `:focus-visible` não
+dispara em clique de ponteiro. FR-039 mandaria cortar o requisito — mas não
+precisou.
+
+**A opção 2 não lê como ruído**, e a razão é o inverso do que o receio supunha: os
+três não *ganham* um giro, eles **param de ficar para trás**. Com `pa-sai` neles,
+saem em lockstep com o corpo de onde foram recortados e no quadro congelado ficam
+indistinguíveis dele. E ela consertou mais do que os três: o par (`vt-aer`) também
+saía com `-ua-view-transition-fade-out` + `plus-lighter` — o fade estava no
+elemento principal do gesto também. Agora o `::view-transition-group` segue
+morfando a posição (712 px → 121 px, medido) enquanto a peça **vira**.
+
+**Achado colateral, e é uma falha contratada:** sob `prefers-reduced-motion:
+reduce` a transição de rota **não está desligada**. As regras do `corpo` moram
+dentro de `@media (prefers-reduced-motion: no-preference)`, então sob `reduce`
+elas não se aplicam e sobra o cross-fade **padrão do navegador** nos cinco nomes,
+com os grupos ainda transladando. O caminho de acessibilidade é hoje a versão
+*mais* cheia de fade da página, e FR-028 diz o contrário. Corrigido por regra
+própria (`::view-transition-*(*) { animation: none !important }`, com o `*`
+confirmado suportado): medido depois, **zero** animação de pseudo-elemento e a
+página de destino inteira no primeiro quadro.
+
+Escrito em: `contracts/coreografia.md` §3 (as duas cláusulas + a tabela de
+engines), **T047a** e **T047b** (novas), FR-025 e FR-028 (aditados), `research.md`
+§R5. Custo do conjunto: **0 byte** enviado ao cliente.
 
 ---
 
@@ -182,20 +254,66 @@ Escrever o mecanismo escolhido dentro de T051. Critério medível sem método de
 medição é caixa marcada no olho, que é o que esta spec inteira existe para não
 fazer.
 
+### Fechadas em 2026-08-28
+
+**G1.** `plan.md` correção 3 reescrita: o `5` não era a contagem de antes da
+feature nem de coisa nenhuma — **a linha de base é 1**. T001 corrigido no mesmo
+sentido ("rotas verificadas (hoje **1**)"). **T053 reescrito**: é criar o laço,
+não parametrizá-lo, com as quatro decisões tomadas por escrito —
+
+1. *quais especiais por rota*: `reduced-motion` e teclado por rota (9); `hover` e
+   `queda da pá` só onde há coluna girando — capa + as quatro cabeças (5). O
+   quadro da transição e o da degradação saem para T051.
+2. *nomenclatura*: `{rota}-{largura}-{pct}.png`, com `capa` para `/` e `404` para
+   `/404`; especiais em `{rota}-{largura}-{quadro}`.
+3. *`ORCAMENTO` por rota* — SC-003 diz "por rota" e um número global deixa a capa
+   segurar a mediana de um portão lento. T054 reescrito junto, e a mensagem de
+   falha passa a nomear **qual** rota estourou.
+4. *lentidão*: paralelizar por rota com teto de 4 — **menos** o bloco de LCP/CLS,
+   que roda serial, porque medida sob contenção não é medida.
+
+**I6** e **I8** entraram no mesmo laço: 360 ganha as duas alturas (**640**, que é
+o que FR-011 contrata, e 780), e **736** entra na lista de larguras — é o
+breakpoint real de `46rem`, e a faixa 736–767 nunca era fotografada.
+
+**G3.** O engine foi **confirmado, não suposto** — e a suposição do handoff estava
+meio certa:
+
+| Engine | `view-transition-name` | `startViewTransition` | `onpagereveal` | VT cross-document |
+|---|---|---|---|---|
+| Chromium 143 | sim | sim | sim | **sim** |
+| WebKit 26 | sim | sim | sim | **sim** — não serve de prova |
+| Firefox 144 | **sim** | **sim** | não | **não** — é a prova |
+
+O Firefox é a prova: navegação normal, nenhum `pagereveal`, nenhum `pageswap`,
+console limpo, `h1` e objeto da cabeça inteiros do outro lado. **A pegadinha que
+entrou em T051**: ele suporta `view-transition-name` e
+`document.startViewTransition` — um teste de suporte por `CSS.supports` dá **falso
+positivo** ali. O que separa os dois grupos é `"onpagereveal" in window`, e é isso
+que a asserção lê; se o Firefox um dia passar a fazer VT cross-document, essa
+asserção quebra sozinha e avisa que o engine da prova mudou. T051 também ganhou o
+método do quadro congelado (gancho `pagereveal` → `viewTransition.ready` → pausar
+e rebobinar; **um contexto novo por quadro**, porque o documento congelado fica
+com uma transição ativa que nunca termina e faz o Chromium pular a transição
+seguinte) e a asserção que faz o G4 falhar se voltar: nenhum
+`::view-transition-old(vt-*)` pode estar rodando `-ua-view-transition-fade-out`.
+SC-009 no `spec.md` carrega o método.
+
 ---
 
-## Ordem sugerida
+## Ordem sugerida — cumprida nesta ordem
 
-1. **C2** primeiro — é meia hora e destrava a autoridade de todo o resto.
-2. **G4** — precisa de decisão do dono, e é a única que pode mudar o desenho.
-   Construir a opção 2, olhar, decidir.
-3. **G1/G3** — corrigir a "correção 3" do `plan.md`, reescrever T053/T054 com as
-   quatro decisões acima, e fixar o engine de T051. Pode andar em paralelo com a
-   US1.
+1. ~~**C2** primeiro~~ — feita. Emenda 1.0.1.
+2. ~~**G4**~~ — feita. Opção 2 construída, congelada, olhada e escrita. Mais o
+   desligamento sob `reduce`, que ninguém tinha visto.
+3. ~~**G1/G3**~~ — feitas. `plan.md`, T001, T053, T054, T051, SC-009, mais I6, I8
+   e A2.
 
 ## Achados MEDIUM/LOW que ficaram registrados e não viraram tarefa
 
-Nenhum bloqueia; entram quando a tarefa vizinha for tocada.
+Nenhum bloqueia; entram quando a tarefa vizinha for tocada. **A2, I6 e I8 saíram
+desta lista** — a tarefa vizinha deles foi tocada agora e eles entraram junto. O
+resto continua aberto.
 
 - **I4** — FR-041, T034 e `contracts/rotas.md` §4 mandam pôr as quatro rotas no
   `robots.txt`. O arquivo (`src/pages/robots.txt.ts`) é `User-agent: * / Allow: /
@@ -222,8 +340,7 @@ Nenhum bloqueia; entram quando a tarefa vizinha for tocada.
   `global.css` contra a fórmula — os dois documentos podem divergir em silêncio.
 - **A1** — FR-009 ("`--fundo` respirando fora da moldura") é a única regra
   geométrica sem número na spec. T041 já ganhou a nota; falta o valor.
-- **A2** — `research.md` §R5 escreve `--vt-aer`; contrato e T047 escrevem
-  `vt-aer`. Os dois são ident válido, mas o nome precisa **casar entre os dois
-  documentos** para o par existir. Fixar `vt-aer`.
+- ~~**A2**~~ — feito. Fixado `vt-aer` em `research.md` §R5 e nomeado em T047. Os
+  dois são ident válido, e é por isso que a divergência passaria calada.
 - **G6** — FR-033 (FAQ visível e `FAQPage` da mesma lista) é o único FR sem
   tarefa. Inerte: nenhum portão ganha FAQ nesta feature.

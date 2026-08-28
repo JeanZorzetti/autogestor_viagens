@@ -241,12 +241,21 @@ produto atribuído em CSS a partir de um atributo no elemento.
 O par que atravessa é: a **coluna de destino da linha ativada** na capa → o
 **objeto da cabeça** do portão. Para o par existir, o mesmo nome de transição
 precisa estar nas duas páginas, e nomes precisam ser únicos por documento — daí
-o nome ser por produto (`--vt-aer`, `--vt-htl`, `--vt-pct`, `--vt-car`) e não um
-nome genérico.
+o nome ser por produto (`vt-aer`, `vt-htl`, `vt-pct`, `vt-car`) e não um
+nome genérico. **Sem hífen duplo** (A2, corrigido em 2026-08-28): `--vt-aer` é
+nome de custom property, `vt-aer` é o valor de `view-transition-name` que o
+contrato e T047 escrevem. Os dois são ident válido, e é por isso que a divergência
+passaria calada — mas o par só existe se o nome casar entre os dois documentos.
 
 `view-transition-name: faixa` continua onde está: FR-026 diz que o nome novo se
 **soma**, não substitui. A faixa atravessa, o objeto vira. São duas partes do
 mesmo gesto.
+
+**Os três sem par** (G4, resolvido em 2026-08-28): a capa tem quatro nomes e o
+portão de destino tem um, então três ficam órfãos e recebem o fade padrão do
+navegador. O rationale acima não previu isso. A decisão, medida e escrita, está
+em `contracts/coreografia.md` §3 e em T047a/T047b — a saída dos quatro nomes vira
+`pa-sai`, e o `reduce` ganha regra própria de desligamento.
 
 Degradação (FR-027): navegador sem suporte ignora a regra inteira e navega
 normalmente. Nada a detectar, nada a poligonar, zero bytes. Sob

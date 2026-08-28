@@ -106,7 +106,7 @@ aqui.**
 |---|---|---|---|---|
 | 1 | FR-016 (bloco 5), FR-023 | portão abre a busca "já filtrada" por produto | a plataforma não aceita link profundo utilizável; selecionar produto não muda a URL, e as rotas de resultado afirmam "nenhum voo foi encontrado" a quem não buscou | os 4 portões apontam para a mesma busca; o CTA para de prometer filtro e passa a dizer que a aba de produto se escolhe do outro lado |
 | 2 | SC-011 | "Sitemap com 9 URLs" | 4 hoje + 4 portões = **8**; `/404` não entra em sitemap | critério medível vira **8** |
-| 3 | SC-002 | "5 rotas × 3 larguras × 4 rolagens" | 5 é a contagem *antes* da feature; depois são 8 públicas + `/404` = **9** | `verificar.mjs` cobre **9 rotas** |
+| 3 | SC-002 | "5 rotas × 3 larguras × 4 rolagens" | O `5` não é a contagem de antes da feature nem de coisa nenhuma — **a linha de base é 1**: `verificar.mjs` visita a capa e só ela (`:77`, sem laço de rota), e os quatro quadros especiais estão amarrados a ela. Depois da feature são 8 públicas + `/404` = **9** | `verificar.mjs` cobre **9 rotas** — e chegar lá é **criar** o laço, não parametrizá-lo (T053) |
 | 4 | FR-007 | "não pode estourar a janela" (sem número) | `"BUENOS AIRES"` (12 caracteres) ocupa 79% da janela de 18ch — teto já provado em `global.css` | regra numérica: **≤ 12 caracteres**, verificada por teste |
 
 Correções 2 e 3 têm a mesma raiz: o autor contou 5 + 4 = 9 rotas e usou o 9 no

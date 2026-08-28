@@ -149,10 +149,10 @@ Uma pessoa em Goiânia pesquisa "passagem aérea parcelada" no celular às 22h. 
 
 ### A transição
 
-- **FR-025** — A célula ativada no painel vira o objeto da cabeça do portão, via View Transitions cross-document, com nome de transição por código de produto. É a quarta camada da coreografia e a única entrega que exige A e B juntos.
+- **FR-025** — A célula ativada no painel vira o objeto da cabeça do portão, via View Transitions cross-document, com nome de transição por código de produto. É a quarta camada da coreografia e a única entrega que exige A e B juntos. *(Aditado em 2026-08-28, G4:* os **três nomes sem par** no documento de destino não podem receber o fade padrão do navegador — eles saem com o mesmo gesto do `corpo`. Sem essa regra eles ficam parados, retos e nítidos sobre a página nova depois que o corpo já saiu; medido, e é fade puro, que a constituição proíbe. Decisão e medida em `contracts/coreografia.md` §3.*)*
 - **FR-026** — A faixa de estado continua atravessando (`view-transition-name` já existente) — o novo nome por produto se soma, não substitui.
 - **FR-027** — Sem suporte a View Transitions, a navegação acontece sem transição, sem erro e sem perda de conteúdo. Nunca sem conteúdo.
-- **FR-028** — Em `prefers-reduced-motion: reduce`, toda transição de rota é desligada.
+- **FR-028** — Em `prefers-reduced-motion: reduce`, toda transição de rota é desligada — **por regra explícita**, não por omissão. *(Aditado em 2026-08-28, G4:* as regras de `::view-transition-*(corpo)` moram dentro de `@media (prefers-reduced-motion: no-preference)`, então sob `reduce` elas não se aplicam e sobra o cross-fade padrão do navegador. Hoje o caminho de acessibilidade é a versão mais cheia de fade da página. Medido.*)*
 
 ### Conteúdo e verdade
 
@@ -195,7 +195,7 @@ Todo critério abaixo é medido pelas ferramentas que já existem no repositóri
 - **SC-006** — `npm test` falha se qualquer conteúdo servido contiver preço, hora de voo ou número de voo.
 - **SC-007** — Passagem de teclado completa nas cinco rotas: 0 paradas sem anel de foco visível.
 - **SC-008** — Um quadro com `prefers-reduced-motion: reduce` por rota, provando o painel completo e parado com um destino visível por linha.
-- **SC-009** — Um quadro da transição capa→portão provando a célula virando no objeto do portão, e um caminho de degradação limpa provado em navegador sem View Transitions.
+- **SC-009** — Um quadro da transição capa→portão provando a célula virando no objeto do portão, e um caminho de degradação limpa provado em navegador sem View Transitions. *(Método fixado em 2026-08-28, G3:* o quadro é congelado pela Web Animations API a partir de `pagereveal` no documento novo; o navegador da prova é o **Firefox** (144 medido: sem `pagereveal`, sem `pageswap`, console limpo, conteúdo inteiro), e **não** o WebKit, que faz VT cross-document. O teste de suporte é `"onpagereveal" in window` — `CSS.supports("view-transition-name", …)` dá falso positivo no Firefox. Ver T051.*)*
 - **SC-010** — Um quadro de hover no painel e um quadro em 360px por portão, provando que nenhum rótulo quebra em duas linhas.
 - **SC-011** — Sitemap com **8 URLs**; `astro check` com 0 erros. *(Corrigido em 2026-08-28: a redação original dizia 9. São 4 de hoje + 4 portões = 8; `/404` nunca entra em sitemap.)*
 - **SC-012** — Observação de 2 minutos do painel ocioso sem repetição de combinação das quatro colunas.

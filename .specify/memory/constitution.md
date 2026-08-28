@@ -1,10 +1,24 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Versão: (template não ratificado) → 1.0.0
-Tipo de bump: MAJOR — ratificação inicial. O arquivo anterior era o scaffold do
-Spec Kit com todos os placeholders intactos; nenhum princípio existia para ser
-alterado ou removido.
+Versão: 1.0.0 → 1.0.1
+Tipo de bump: PATCH — correção de fato no Sync Impact Report, sem tocar em
+princípio, seção ou regra de governança. A ratificação 1.0.0 afirmava que
+`specs/001-painel-e-portoes` estava "implementada e verificada" e que o portão de
+conformidade só valeria da próxima `/speckit-plan` em diante. As duas metades são
+falsas, e foi verificado no repositório em 2026-08-28: nenhuma das quatro rotas
+existe, e o `plan.md` já traz a seção "Constitution Check". Esta emenda existe
+porque uma constituição que erra sobre o estado do repositório é pior que uma sem
+a nota: enquanto a linha estivesse escrita, ela isentava a feature do gate — que é
+exatamente o tipo de afirmação sem lastro que o Princípio IV proíbe as telas de
+fazer — e nenhum Constitution Check deste repo teria autoridade. Nada passa a ser
+permitido em consequência; o que muda é que o portão vale desta feature em diante,
+e ela já o cumpriu.
+
+Histórico:
+  1.0.0 — MAJOR, ratificação inicial. O arquivo anterior era o scaffold do Spec
+  Kit com todos os placeholders intactos; nenhum princípio existia para ser
+  alterado ou removido.
 
 Princípios adicionados (6):
   I.   HTML estático primeiro — aqui, zero JavaScript
@@ -44,9 +58,12 @@ Artefatos dependentes revisados:
      válidas; nenhum tipo novo dirigido por princípio.
   ✅ .claude/skills/speckit-*/SKILL.md — sem referência a agente específico que
      precise virar orientação genérica.
-  ⚠ specs/001-painel-e-portoes/spec.md — escrito antes desta ratificação e sem
-     "Constitution Check". Não há ação retroativa: a feature está implementada e
-     verificada. O portão vale da próxima `/speckit-plan` em diante.
+  ✅ specs/001-painel-e-portoes/spec.md — escrita em 2026-08-27, antes desta
+     ratificação. A spec em si não tem seção "Constitution Check", mas o
+     `plan.md` de 2026-08-28 avaliou os seis princípios antes da Phase 0 e
+     depois da Phase 1, com veredito de passagem sem violação. A feature **não
+     está implementada**: nenhuma das quatro rotas existe. O portão vale desta
+     feature em diante, e ela já o cumpriu.
 
 Nenhum TODO deferido; nenhum placeholder mantido.
 -->
@@ -333,4 +350,4 @@ registro ou marca de terceiro.
 pegadinhas de ambiente e as decisões já tomadas. Esta constituição diz o que não
 se negocia; o README diz como o trabalho é feito.
 
-**Version**: 1.0.0 | **Ratified**: 2026-08-28 | **Last Amended**: 2026-08-28
+**Version**: 1.0.1 | **Ratified**: 2026-08-28 | **Last Amended**: 2026-08-28

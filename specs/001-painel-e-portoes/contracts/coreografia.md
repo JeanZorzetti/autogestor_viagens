@@ -79,11 +79,108 @@ O par que atravessa: **coluna de destino da linha ativada** (capa) →
 O nome novo **se soma** ao da faixa, não substitui (FR-026): a faixa atravessa,
 o objeto vira. Duas partes do mesmo gesto.
 
+### Cláusula dos três sem par (G4, decidida em 2026-08-28)
+
+A capa tem **quatro** nomes; o portão de destino tem **um**. Numa navegação
+capa → `/passagens-aereas`, `vt-htl`, `vt-pct` e `vt-car` existem no documento
+velho e não têm par no novo. O navegador aplica neles o
+`-ua-view-transition-fade-out` padrão — **fade puro, sozinho, sem giro**, que é
+exatamente o que a constituição proíbe.
+
+E é pior que desbotar. Medido em quadro congelado (Chromium 143, protótipo dos
+dois documentos, Web Animations API):
+
+| t | `corpo` (velho) | os três sem par |
+|---|---|---|
+| 60 ms | op 0,22, `rotateX` em curso | op 0,61, **`transform: none`** |
+| 140 ms | op 0,02 — praticamente saiu | op 0,14, ainda nítidos e **de pé** |
+
+Os três não têm `::view-transition-group`, então não herdam nada do `corpo`:
+ficam parados, retos e legíveis flutuando sobre a página de destino depois que o
+corpo de onde foram recortados já saiu. Não é um fade indevido — é um rasgo.
+
+A causa é `main { view-transition-name: corpo }` (`global.css:1096`): elemento
+com nome próprio é **retirado do snapshot do ancestral**, então dar nome às
+quatro colunas abre quatro buracos no snapshot `corpo` e as quatro passam a
+animar por fora do `pa-sai`.
+
+**Contratado:** os quatro nomes existem, e a saída dos quatro é o gesto do
+`corpo`, não o fade do navegador. Não há seletor que distinga o par do órfão —
+e não precisa haver: a regra certa para os três é a mesma do quarto.
+
+```css
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(vt-aer), ::view-transition-old(vt-htl),
+  ::view-transition-old(vt-pct), ::view-transition-old(vt-car) {
+    animation: pa-sai var(--dur-base) var(--ease-pa) both;
+  }
+  ::view-transition-new(vt-aer), ::view-transition-new(vt-htl),
+  ::view-transition-new(vt-pct), ::view-transition-new(vt-car) {
+    animation: pa-entra var(--dur-pa) var(--ease-pa) both;
+  }
+}
+```
+
+Custo: 0 byte enviado ao cliente. Os três órfãos passam a sair **em lockstep com
+o corpo** — no quadro congelado eles ficam indistinguíveis da matéria de onde
+saíram, que é o oposto de ruído. O par (`vt-aer`) ganha a mesma troca: o
+`::view-transition-group` continua morfando a posição (712 px → 121 px, medido),
+e o que era cross-fade `plus-lighter` do navegador vira o giro. A célula voa
+para a cabeça do portão **virando**, em uma língua só.
+
+Opção recusada: nomear só a linha ativada. É o correto no conceito e não existe
+sem JavaScript — o nome tem que estar no CSS do documento de **origem** antes de
+a navegação começar, e nem `@view-transition { types }` (estático por documento,
+igual para os quatro links) nem `:target` (não há fragmento) nem `:focus-visible`
+(clique de ponteiro não o dispara) distinguem qual das quatro linhas foi
+acionada. FR-039 manda cortar o requisito, não o orçamento — e aqui não é
+preciso cortar nada: a opção que cabe em 0 byte entrega o mesmo verbo.
+
+### Cláusula do movimento reduzido (G4, achado colateral)
+
+FR-028 e a tabela abaixo contratam "transição de rota desligada" sob
+`prefers-reduced-motion: reduce`. **Hoje o CSS não entrega isso**, e foi medido:
+as regras de `::view-transition-*(corpo)` moram dentro de
+`@media (prefers-reduced-motion: no-preference)` (`global.css:242`), então sob
+`reduce` elas simplesmente não se aplicam — e o que sobra é o **cross-fade padrão
+do navegador** em `corpo`, `faixa`, `vt-aer` e nos três órfãos, com os grupos
+ainda transladando. O caminho de acessibilidade é hoje a versão **mais** cheia de
+fade da página. Desligar exige regra própria:
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+```
+
+Medido depois da regra: **zero** animação de pseudo-elemento de transição, página
+de destino inteira e correta no primeiro quadro. O `*` é suportado no engine
+alvo — confirmado, não suposto.
+
 | Situação | Comportamento contratado |
 |---|---|
-| Suporte a View Transitions | célula vira no objeto do portão |
+| Suporte a View Transitions | célula vira no objeto do portão; os quatro nomes saem com `pa-sai`, nenhum com fade puro |
 | Sem suporte | navegação normal, sem transição, **sem erro no console**, sem perda de conteúdo |
-| `prefers-reduced-motion: reduce` | transição desligada; a navegação continua |
+| `prefers-reduced-motion: reduce` | transição desligada **por regra explícita** — não por omissão, que é o que existe hoje |
+
+**Qual engine prova o "sem suporte" (G3).** Medido em 2026-08-28 com os engines
+já instalados no cache local do Playwright:
+
+| Engine | `view-transition-name` | `document.startViewTransition` | `onpagereveal` | VT cross-document |
+|---|---|---|---|---|
+| Chromium 143 | sim | sim | sim | **sim** |
+| WebKit 26 (Safari) | sim | sim | sim | **sim** — não serve de prova |
+| Firefox 144 | **sim** | **sim** | não | **não** |
+
+A prova de SC-009 é o **Firefox**, e a pegadinha está na primeira coluna: ele
+suporta `view-transition-name` e `document.startViewTransition` (transição
+*same-document*) e mesmo assim não faz a transição entre documentos. Qualquer
+teste de suporte por `CSS.supports("view-transition-name", …)` dá **falso
+positivo** ali. O que separa os dois grupos é `"onpagereveal" in window`.
 
 ## 4. O piso: como cada camada morre
 
