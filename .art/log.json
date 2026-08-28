@@ -1,5 +1,69 @@
 [
  {
+  "data": "2026-08-28",
+  "projeto": "viagens",
+  "pagina": "/ (a capa; os 4 portoes e as legais intocados)",
+  "direcao": "solari + saguao",
+  "tipo": "camada nova de materia — a fotografia vira FIGURA",
+  "base": "a entrada anterior deste log (a parede fotografica dos 4 portoes)",
+  "eixos": {
+   "materia": "geometria + volume + gravura + fotografia-parede + FOTOGRAFIA-FIGURA (eixo novo)",
+   "motor": "autonomo, herdado — a faixa NAO anima, e a ausencia e declarada",
+   "banda": "escura"
+  },
+  "pedido": "Dono pediu 'imagens de banco de imagens gratuitas, avioes, pessoas, lugares bonitos, principalmente na hero-section da capa'. Propus tres direcoes (A: janela dentro da pa que vira / B: faixa fotografica no topo / C: retrato de pessoa em coluna alta) e ele escolheu B, que era a recomendacao — a unica das tres que entrega foto LEGIVEL, que era o pedido literal.",
+  "diagnostico": "O site JA tinha 4 fotos do Unsplash rodando, e nenhuma delas era visivel: entram a 16% de opacidade atras de tudo. A capa nao tinha nenhuma, por decisao MEDIDA do dia anterior (mapa gravado + foto nao cabem na mesma parede: 4.73:1 cai para 3.73:1). Ou seja, o pedido do dono batia de frente com um numero escrito no repositorio. A brecha e geometrica e estava na cara: o teto de --foto-luz existe porque a parede e `fixed` cobrindo a viewport, com --texto-3 correndo por cima em toda parte. Uma REGIAO DELIMITADA sem texto por cima nao tem par de contraste e nao paga teto nenhum. E ai a fotografia pode finalmente ser vista neste site.",
+  "o_que_mudou": [
+   "A FAIXA DO SAGUAO: uma fotografia em letterbox no topo da primeira tela da capa, a luz cheia, com a placa pousando por cima da borda de baixo dela. Saguao de terminal cuja grade de janela e a MESMA grade da placa — e e literalmente a candidata que o comentario de baixar-fotos.mjs dizia ter sido escolhida e derrubada pela medicao, nao pelo olho. ~15 silhuetas anonimas, zero rosto identificavel, zero marca de companhia.",
+   "DUOTONE COZIDO NO ENCODER, invertendo a regra da parede de que quem poe cor e o CSS. A inversao foi medida: `mix-blend-mode: luminosity` sobre navy devolve um ceu CINZA-LAVANDA quase branco (luminancia alta nao cabe no croma do navy, entao a alta escapa para o branco), e `soft-light` da marca na opacidade cheia lava a faixa inteira de sepia — poster de agencia, que e o risco que a direcao B assinou por escrito. Mapa de gradiente de dois pontos (um `linear()` por canal) resolve, e ainda custa ZERO camada de composicao contra as duas de blend que substitui.",
+   "A FAIXA E FRIA E ISSO E A DECISAO: navy nas sombras, azul-claro nas altas. A janela e o lado de fora (frio) e a placa e o objeto (navy com laranja). Forcar o --marca dentro da foto era o caminho do poster; quatro pares de extremos foram olhados na tela, com a placa montada embaixo, antes de escolher.",
+   "A ALTURA TEM DOIS TERMOS, e o segundo so existiu depois de olhar o quadro de verificacao: `max(reta-de-largura, sobra-de-altura)`. So com a largura, um celular de 360x780 — o tamanho comum, nao o aperto — recebia os mesmos 44px de um 360x640 e a foto virava tarja escura, com 68px de folga sobrando embaixo da quarta linha. O que aperta o telefone e ALTURA, e o conteudo da placa mede o mesmo em qualquer tela.",
+   "PROVA PROPRIA: logos/contraste-saguao.mjs (`npm run contraste-saguao`). A dispensa do teto de contraste depende de uma invariante — nao corre texto sobre a faixa — e invariante que sustenta uma decisao de acessibilidade nao mora em comentario, mora em script que falha.",
+   "BUG DO HARNESS CORRIGIDO: logos/verificar.mjs servia na porta 4321, a mesma porta padrao do `astro dev`. Ver a secao propria abaixo."
+  ],
+  "correcoes_encontradas_olhando": [
+   "A primeira tinta foi um `mix-blend-mode` numa camada separada e saiu VERDE. O `color` blend deste site e composicao INTERNA do elemento (`background-blend-mode`), nao mistura entre camadas — nao era equivalente, e a tela disse isso na primeira olhada.",
+   "As silhuetas batiam em PRETO PURO e o ceu em 255. Numa pagina cuja regra escrita e que sombra tem matiz, a faixa entregava o unico preto absoluto do site — e um ceu que brilhava MAIS QUE A PLACA, invertendo a hierarquia da pagina. Clamp dos dois lados no encoder (piso 12, teto 200).",
+   "O arquivo saiu em 3.06:1 quando a faixa mais quadrada que existe e 4.77:1 — 36% de altura que o `cover` descartava em TODA largura, e que a CPU decodificava no elemento de LCP. Recortado para a razao da faixa: 22,3kb -> 14,2kb.",
+   "O degrade do pe em 38% seco funcionava nos 302px do desktop e apagava a fresta de 44px do telefone. Virou `min(38%, 72px)`."
+  ],
+  "construido_e_removido": [
+   "PARALLAX. A direcao B foi PROPOSTA com 'scroll: a banda sai por parallax curto (~40px)', e o parallax foi cortado antes de existir. O verbo deste site e VIRAR; deslocar e um segundo verbo, e ele entraria exatamente no ponto da pagina onde o primeiro precisa ser percebido. A regra ja estava escrita no `body::before`: parede que rola junto com o que esta parafusado nela e papel de parede. A faixa e a janela; o que vira e a placa. G10 fechado por declaracao, nao por silencio.",
+   "PRELOAD DA IMAGEM NO <head>, junto com o slot nomeado que foi criado para hospeda-lo. Boa pratica de manual, e a medicao REPROVOU: a mediana de LCP subiu de 856ms para 1276ms. Em CPU 4x estrangulada, adiantar o decode da imagem rouba CPU do parse do CSS. Os dois foram removidos — o slot era infra para um caso so, e o caso nao se sustentou."
+  ],
+  "bug_do_harness": "logos/verificar.mjs servia o build na PORTA 4321, que e a porta padrao do `astro dev`. Com um dev server aberto na maquina — o caso normal de quem esta editando o site — os dois coexistiam em silencio: o Astro escuta em [::1] (IPv6), o `listen` do harness pegava 0.0.0.0 (IPv4), nenhum dos dois falhava, e o Playwright navegava para `localhost`, que no Windows resolve IPv6 primeiro. Resultado: a varredura fotografava e cronometrava O DEV SERVER, com a barra de ferramentas do Astro na tela e ~1,8 MB de JS que nao existem em producao — exatamente o que o comentario no topo do arquivo manda evitar, acontecendo por baixo dele. Os sintomas eram LCP alto e erratico na capa e cinco erros de 'console sujo' na /404 que nao se reproduziam fora do harness. Descoberto porque a barra do Astro apareceu num screenshot. Corrigido em tres pontos: porta 4331, `listen` em 127.0.0.1 com handler de EADDRINUSE que PARA a varredura, e o Playwright navegando para 127.0.0.1 em vez de `localhost`.",
+  "custo": {
+   "faixa": "captacao",
+   "js_gzip_kb": 0,
+   "deps_novas": [],
+   "peso_novo_kb": {
+    "saguao_avif": 14.2,
+    "saguao_webp": 23.6
+   },
+   "lcp": {
+    "metodo": "A/B PAREADO, e o metodo foi imposto pela maquina: as medianas desta sessao derivaram de 856ms para 1692ms na MESMA pagina sem mudanca nenhuma (o Chrome do dono estava com ~2,8h de CPU num processo). Medida sequencial de duas versoes nao e comparacao. Alternando A/B/A/B na mesma sessao, a deriva cancela porque as duas versoes pegam a mesma degradacao.",
+    "com_faixa_ms": 752,
+    "sem_faixa_ms": 836,
+    "delta_ms": -84,
+    "leitura": "A faixa NAO piorou o LCP: ela VIROU o elemento de LCP e pinta antes do que ela substituiu. Sem faixa o LCP e o H1, que espera a fonte web chegar; com faixa e um AVIF de 14kb. O verificar.mjs acusa a capa em 816-896ms contra o teto de 800, mas na mesma rodada acusou /passagens-aereas em 880ms — uma rota que esta mudanca nao tocou. O estouro e carga de maquina, nao a fotografia. Vale remedir num momento de maquina ociosa antes de mexer em qualquer coisa por causa desse numero."
+   },
+   "cls": 0,
+   "console": "limpo nas 9 rotas. Os 5 erros de /404 das rodadas anteriores eram a barra do astro dev, pelo bug de porta acima — sumiram junto com ele.",
+   "teclado": "26 paradas na capa, 0 sem anel. A faixa nao adiciona parada, e nao deve mesmo."
+  },
+  "gates": {
+   "G7_carimbo": "atualizado — o eixo FOTOGRAFIA-FIGURA e os 14,2kb da faixa entraram no orcamento declarado.",
+   "G10_quatro_camadas": "fechado por DECLARACAO: a faixa nao tem camada propria de entrada, scroll, ponteiro nem transicao, e o motivo esta escrito na camada em global.css. Ela e materia parada, como a parede e o grao.",
+   "G11_uma_ideia": "e o gate que matou o parallax. A pagina continua com um verbo so.",
+   "G18_sombra_com_cor": "fechado — o clamp de piso em 12 existe justamente para a silhueta ter navy dentro dela em vez de preto puro.",
+   "G22_contraste": "fechado POR MEDICAO, nao por argumento: logos/contraste-saguao.mjs prova em 10 quadros (5 larguras x com/sem o link de pular focado) que nenhum texto desprotegido cruza a faixa. O script conta EMPILHAMENTO, nao geometria — checar so o retangulo dava tres falsos positivos no link de pular, que tem --marca solido de fundo.",
+   "G24_fallback_composto": "fechado — se a foto nao chegar, a faixa e o metal do trilho (--moldura) com a aresta acesa: continua uma peca do painel, nao um rasgo branco na primeira tela.",
+   "G26_sem_shift": "CLS 0.0000 nas 9 rotas. Quem reserva a altura e o container em tokens.css, nao os atributos do <img>.",
+   "G32_difere_do_log": "eixo novo de materia (fotografia como FIGURA, nao como parede) contra as tres ultimas entradas, que sao todas fotografia-parede ou gravura.",
+   "G33_estrutura_nao_repete": "N/A DECLARADO: a macroestrutura (Indice) e a mesma de proposito — nao e landing nova, e a mesma capa ganhando uma camada. Trocar o ritmo de secoes para satisfazer um gate de variedade seria refazer uma pagina que ja esta no ar e funciona."
+  }
+ },
+ {
   "data": "2026-08-27",
   "projeto": "viagens",
   "pagina": "/ + fecho + FAQ (capa inteira; paginas .doc intocadas de proposito)",

@@ -82,6 +82,7 @@ const TETO_ALTA = 130;
 
 await mkdir("public/img", { recursive: true });
 const creditos = [];
+let saguao;
 
 for (const [nome, meta] of Object.entries(FOTOS)) {
   const api = await (await fetch(`https://unsplash.com/napi/photos/${meta.id}`)).json();
@@ -149,6 +150,184 @@ for (const [nome, meta] of Object.entries(FOTOS)) {
   );
 }
 
+/* ═══ O SAGUÃO ══════════════════════════════════════════════════════════════════════════
+   A quinta fotografia, e a única que NÃO é parede.
+
+   As quatro de cima são matéria: entram a 16% atrás de tudo, e o que sobrevive
+   delas é forma. Esta é FIGURA — uma faixa em letterbox no topo da primeira
+   tela, à luz cheia, olhada de frente. Por isso ela tem pipeline próprio em
+   vez de um `if` dentro do laço acima: as duas decisões que definem a parede
+   (equalizar todas para a mesma média, e cortar o pico em 130) existem para
+   caber embaixo de texto, e aqui não corre texto nenhum por cima. Aplicá-las
+   aqui seria apagar a foto para resolver um problema que esta camada não tem.
+
+   O TETO DE CONTRASTE NÃO VALE AQUI, e o motivo é geométrico, não de gosto:
+   --foto-luz: 0.16 é o teto da parede porque `--texto-3` corre por cima dela em
+   TODA a viewport (ela é `position: fixed`). A faixa do saguão é uma região
+   delimitada, sem uma única linha de texto por cima — nem a faixa de status,
+   que fica ACIMA dela, no trilho de metal. Sem par de contraste, não há piso a
+   respeitar. É a mesma conta de tokens.css com a variável que importa mudada.
+
+   POR QUE ESTA FOTO. É o candidato que o comentário da capa diz ter sido
+   escolhido e derrubado pela medição, não pelo olho: a grade de janela do
+   terminal é a MESMA grade da placa, o céu já é o --noite e o horizonte já é o
+   --marca. Gente aparece só como silhueta anônima de saguão — nenhum rosto
+   identificável fazendo papel de cliente satisfeito, que é a regra escrita lá
+   em cima e que uma foto de FIGURA tinha toda chance de quebrar. */
+/* Sem `autor` escrito à mão: o nome vem do que a API devolve. As quatro de
+   cima carregam o nome no código e três delas já divergem do `autorLink` que
+   o FOTOS.json gravou — crédito digitado é crédito que envelhece calado. */
+const SAGUAO = { id: "jhX-rAPVmn0", foco: "50% 52%" };
+
+/* 1440 e não 1200: esta é a única foto do site que é olhada de perto, e 1440
+   é a largura em que a faixa é medida (logos/verificar.mjs). Já foi 1600, pela
+   folga de um parallax — o parallax foi cortado (a faixa é a janela, e a
+   janela não se mexe: ver o comentário da camada em global.css), então a folga
+   virou 160px de largura que ninguém via e que o decodificador pagava no LCP,
+   que é justamente o que esta imagem decide. */
+const LARGURA_SAGUAO = 1440;
+
+/* O RECORTE. O arquivo é a FAIXA, não a foto: a origem é 16:9 e o `cover`
+   jogaria fora quase tudo o que vem nela.
+
+   A RAZÃO SAI DA GEOMETRIA DA FAIXA, e é uma conta, não um gosto. A altura da
+   faixa é `calc(23.9vw - 42px)` travada em 302px (tokens.css), então a razão
+   largura/altura CRESCE conforme a tela estreita: 4.77:1 em 1440px, 5.5:1 em
+   736px, 8.2:1 em 360px. O caso mais QUADRADO é o de 1440, e é ele que decide
+   o arquivo: uma imagem em 4.77:1 cobre todas as outras cortando altura, e
+   qualquer pixel além disso é pixel que o `cover` descarta em toda largura.
+
+   Isto não é economia de disco, é o LCP: a faixa é o maior elemento pintado da
+   primeira tela, então é ELA que a métrica cronometra, e o que a CPU paga é
+   decodificar pixel. A primeira versão foi em 3.06:1 e carregava 36% de altura
+   que nunca apareceu em tela nenhuma. Medido em 1440×900 com CPU 4× estrangulada:
+   mediana de 960ms com o arquivo gordo. */
+const RAZAO_FAIXA = 1440 / 302;
+
+/* Onde o recorte se centra, em fração da altura da origem. 0.55 e não 0.50: o
+   que precisa sobreviver é a linha do horizonte com as pessoas em pé contra
+   ela, e ela fica logo abaixo do meio do quadro. Centrado no meio, a faixa
+   pegava vidro e forro. */
+const CENTRO_FAIXA = 0.55;
+
+/* Ganho de contraste, e ele é o OPOSTO do que a parede leva. A parede COMPRIME
+   (0.72) porque vai para trás de texto; a figura ABRE (1.12) porque a leitura
+   dela é a silhueta contra a janela, e silhueta é justamente o que uma curva
+   comprimida achata. */
+const GANHO_SAGUAO = 1.12;
+
+/* PISO E TETO, e os dois saíram de OLHAR a faixa tingida, não de uma tabela.
+   O ganho sozinho jogava a foto contra as duas pontas e as duas doíam:
+
+   · No pé, as silhuetas batiam em 0 e viravam PRETO PURO. Numa página cuja
+     regra é que sombra tem matiz (nenhum preto puro sobre objeto azul), a
+     faixa entregava o único preto absoluto do site. 12 é onde a silhueta ainda
+     lê como recorte e já tem o navy dentro dela.
+   · No topo, o céu batia em 255 e a faixa ficava MAIS CLARA QUE A PLACA. A
+     placa é o objeto da página; uma parede de fundo que brilha mais que ele
+     inverte a hierarquia inteira. 200 é onde o céu ainda é céu e já assenta
+     abaixo do painel.
+
+   É o mesmo `darken` contra plano chapado que a parede usa no teto, agora com
+   um `lighten` no piso — clamp dos dois lados, nada entre eles é tocado. */
+const PISO_SAGUAO = 12;
+const TETO_SAGUAO = 200;
+
+/* Os dois extremos do duotone, em sRGB. A conta de por que são estes está no
+   comentário do encode, embaixo. */
+const SAGUAO_SOMBRA = [18, 28, 56];
+const SAGUAO_ALTA = [206, 215, 236];
+
+{
+  const api = await (await fetch(`https://unsplash.com/napi/photos/${SAGUAO.id}`)).json();
+  if (!api.urls) throw new Error(`Unsplash não devolveu ${SAGUAO.id}`);
+
+  const bruto = Buffer.from(
+    await (await fetch(`${api.urls.raw}&w=${LARGURA_SAGUAO}&q=90&fm=jpg&fit=max`)).arrayBuffer(),
+  );
+
+  const { height } = await sharp(bruto).metadata();
+  const altura = Math.round(LARGURA_SAGUAO / RAZAO_FAIXA);
+  /* O `clamp` do topo não é paranoia: se um dia a foto trocar por uma mais
+     quadrada, `centro - altura/2` fica negativo e o `extract` estoura com um
+     erro do sharp que não diz qual foto é. */
+  const topo = Math.max(0, Math.min(height - altura, Math.round(height * CENTRO_FAIXA - altura / 2)));
+
+  /* O DUOTONE SAI DAQUI, E NÃO DO CSS — e esta é a única regra da parede que a
+     figura inverte de propósito. Está escrito em tokens.css que quem põe cor é
+     o CSS (`color` de --noite-950 sobre a foto cinza, `soft-light` de --marca
+     por cima). Isso funciona A 16%, onde o navy do fundo domina a mistura.
+     A 100% não funciona, e o próprio comentário de lá já dizia por quê: "a foto
+     já vem cinza, o `color` quase não trabalha". Foi medido de novo aqui, com a
+     faixa na tela: `mix-blend-mode: luminosity` sobre navy devolvia um céu
+     CINZA-LAVANDA quase branco — luminância alta não cabe no croma do navy,
+     então a alta escapa para o branco por mais tinta que se ponha. E o
+     `soft-light` da marca por cima, na opacidade cheia da figura, lavava a
+     faixa inteira de sépia: pôster de agência, que é o risco que esta direção
+     assinou por escrito ao escolher a fotografia como figura.
+
+     O que resolve é mapa de gradiente de dois pontos, que é o duotone de
+     verdade: cada canal recebe sua própria reta, então L=0 vira NAVY e L=255
+     vira o azul-claro do céu, com todo o meio interpolado entre os dois. Sai um
+     `linear()` por canal no encoder, zero camada de composição no navegador —
+     mais barato que as duas de blend que ele substitui, e é a única forma de a
+     sombra da foto ser navy DE VERDADE em vez de preto com tinta por cima.
+
+     OS DOIS EXTREMOS saíram de olhar quatro pares na tela, com a placa montada
+     embaixo da faixa em cada um:
+       navy → creme .............. quente e pálido; o bege não é tinta da casa
+       navy → creme quente ....... sépia; foto antiga, não janela
+       navy → âmbar .............. a mais bonita sozinha, e a que mais briga:
+                                   o âmbar duela com o --marca do H1 ao lado
+       navy → azul-claro ......... o site. É esta.
+     E o teto do azul foi escolhido com a placa como régua: em 233,238,252 a
+     faixa brilhava MAIS que o painel e invertia a hierarquia da página; em
+     182,194,222 as nuvens já tinham apagado. 206,215,236 é onde as duas coisas
+     ainda estão de pé.
+
+     A FAIXA É FRIA E ISSO É A DECISÃO, não uma sobra: a janela é o lado de
+     fora (frio) e a placa é o objeto (navy com laranja). Forçar o --marca dentro
+     da fotografia era o caminho para o pôster; deixar o quente aparecer só no
+     que é da casa — o H1, os códigos, o status — é o que faz a faixa ler como
+     vidro e não como capa de catálogo. */
+  const clampe = (blend, nivel) => ({
+    input: { create: { width: LARGURA_SAGUAO, height: 1, channels: 3, background: { r: nivel, g: nivel, b: nivel } } },
+    tile: true,
+    blend,
+  });
+
+  const cinza = await sharp(bruto)
+    .extract({ left: 0, top: topo, width: LARGURA_SAGUAO, height: altura })
+    .grayscale()
+    .linear(GANHO_SAGUAO, 0)
+    .composite([clampe("darken", TETO_SAGUAO), clampe("lighten", PISO_SAGUAO)])
+    .toBuffer();
+
+  /* A reta de cada canal: saida = ((alta - sombra) / 255) * entrada + sombra.
+     Aplicada sobre o cinza JÁ clampado em [12, 200] — o clamp é o que dá
+     headroom para o mapa não achatar as nuvens no topo da rampa. */
+  const base = sharp(cinza)
+    .toColourspace("srgb")
+    .linear(
+      SAGUAO_ALTA.map((canal, i) => (canal - SAGUAO_SOMBRA[i]) / 255),
+      SAGUAO_SOMBRA,
+    );
+
+  const avif = await base.clone().avif({ quality: 42, effort: 9 }).toBuffer();
+  const webp = await base.clone().webp({ quality: 62 }).toBuffer();
+
+  await writeFile("public/img/saguao.avif", avif);
+  await writeFile("public/img/saguao.webp", webp);
+
+  const autor = api.user?.name ?? "(sem nome na API)";
+  creditos.push({ nome: "saguao", ...SAGUAO, autor, autorLink: api.user?.links?.html, pagina: api.links?.html });
+  saguao = { largura: LARGURA_SAGUAO, altura };
+  console.log(
+    `saguão      avif ${(avif.length / 1024).toFixed(1)}kb  webp ${(webp.length / 1024).toFixed(1)}kb  ` +
+      `${LARGURA_SAGUAO}×${altura} (${(LARGURA_SAGUAO / altura).toFixed(2)}:1) — ${autor}`,
+  );
+}
+
 await writeFile("public/img/FOTOS.json", JSON.stringify(creditos, null, 2) + "\n");
 /* A ponte para o layout, no mesmo formato que gerar-mapas.mjs usa: o
    componente NÃO monta nome de arquivo nem ponto focal em runtime, ele lê uma
@@ -165,6 +344,14 @@ export const FOTO_FOCO: Record<string, string> = {
   creditos.map((c) => `  "${c.nome}": "${c.foco}",`).join("\n") +
   `
 };
+
+/* As dimensões REAIS do recorte, para os atributos width/height do <img>.
+   Quem segura o CLS aqui é a altura fixa do container (--saguao-h, em
+   tokens.css), não estes números — mas um <img> que declara um tamanho
+   diferente do arquivo é uma mentira no HTML que custa zero para não contar.
+   Saem do recorte feito no encoder, não de uma conta à mão que envelhece na
+   primeira troca de foto. */
+export const SAGUAO = { largura: ${saguao.largura}, altura: ${saguao.altura} } as const;
 `;
 await writeFile("src/data/fotos.ts", ts);
 

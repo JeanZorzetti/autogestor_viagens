@@ -3,6 +3,7 @@ import Base from "../layouts/Base.astro";
 import Linha from "../components/Linha.astro";
 import { CONCORRENTES, PASSOS, PERGUNTAS, PRODUTOS, RAZOES } from "../data/conteudo";
 import { ATENDIMENTO, EMPRESA, EXTERNOS, whatsapp } from "../consts";
+import { FOTO_FOCO, SAGUAO } from "../data/fotos";
 
 const BUSCA = EXTERNOS.busca;
 const AJUDA = whatsapp("Olá! Estou comprando pelo site de viagens e preciso de ajuda.");
@@ -26,6 +27,42 @@ const faqSchema = {
 ---
 
 <Base titulo={titulo} descricao={descricao} schema={[faqSchema]}>
+  {/* ══ O SAGUÃO ═══════════════════════════════════════════════════════════
+      A faixa fotográfica, e a única figura do site — as outras quatro fotos
+      são parede, a 16% atrás de tudo. Só a capa tem: nos quatro portões a
+      fotografia continua sendo parede, porque lá a primeira tela já é a cabeça
+      do portão com a coluna girando, e duas figuras na mesma tela é o começo
+      da página de catálogo que esta direção recusa.
+
+      Fica FORA da <section class="placa"> de propósito: ela não é conteúdo da
+      placa, é a parede em que a placa está parafusada. O CSS as amarra pelo
+      seletor `.saguao + .placa`, que é o que garante que a conta de altura de
+      FR-011 só valha onde as duas existem juntas.
+
+      `alt=""` e não uma descrição: a foto não carrega informação que o texto
+      ao lado já não dê. Um alt de "pessoas olhando aviões pela janela do
+      aeroporto" seria ruído lido em voz alta antes do H1 — decoração descrita
+      é pior para leitor de tela do que decoração declarada como tal.
+
+      Crédito do autor em public/img/FOTOS.json (Unsplash License não exige
+      atribuição; o arquivo existe porque este site aponta a origem de tudo que
+      publica). */}
+  <div class="saguao" style={`--saguao-foco: ${FOTO_FOCO.saguao}`}>
+    <picture>
+      <source srcset="/img/saguao.avif" type="image/avif" />
+      {/* O WebP é o <img>, não um segundo <source>: quem não tem AVIF tem
+          WebP desde 2020, e um terceiro formato seria um fallback para um
+          navegador que este site já não atende em mais nada. */}
+      <img
+        src="/img/saguao.webp"
+        alt=""
+        width={SAGUAO.largura}
+        height={SAGUAO.altura}
+        fetchpriority="high"
+      />
+    </picture>
+  </div>
+
   {/* ══ A PLACA ═════════════════════════════════════════════════════════════
       Primeira tela. O H1 NÃO anima: ele é o elemento de LCP e já está no
       primeiro quadro pintado. O que vira em volta dele é a placa — é a regra

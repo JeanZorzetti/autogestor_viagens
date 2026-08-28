@@ -41,7 +41,18 @@ import { extname, join, normalize } from "node:path";
 
 const RAIZ = ".vercel/output/static";
 const SAIDA = "logos/_verificacao";
-const PORTA = 4321;
+/* 4331 e NÃO 4321, e a troca veio de um harness que mentiu por uma sessão
+   inteira. 4321 é a porta padrão do `astro dev`. Com um dev server aberto na
+   máquina — o caso normal de quem está editando o site — os dois coexistem em
+   silêncio: o dev do Astro escuta em `[::1]` (IPv6) e este `listen` pega o
+   `0.0.0.0` (IPv4), nenhum dos dois falha, e aí o Playwright navega para
+   `localhost`, que no Windows resolve IPv6 primeiro. Resultado: esta varredura
+   fotografa e cronometra O DEV SERVER, com a barra de ferramentas do Astro na
+   tela e ~1,8 MB de JavaScript que não existem em produção — exatamente o que
+   o comentário no topo deste arquivo manda evitar, acontecendo por baixo dele.
+   O sintoma era LCP alto e errático na capa e "console sujo" que não se
+   reproduzia fora daqui. */
+const PORTA = 4331;
 
 // SC-003/SC-004: 800ms e 0,01 são os números que a spec mede de fato; 1500ms
 // é só o teto declarado da faixa Captação (contexto, não o gate).
@@ -95,11 +106,26 @@ const servidor = createServer(async (req, res) => {
   res.end(await readFile(join(RAIZ, "404.html")).catch(() => "404"));
 });
 
-await new Promise((r) => servidor.listen(PORTA, r));
+/* E se a porta nova também estiver ocupada, esta varredura PARA. Sem este
+   handler o `listen` emite 'error' sem ouvinte e o processo morre com um
+   stack de rede; com ele, morre dizendo o que fazer. O que não pode voltar a
+   acontecer é medir em silêncio o que não é o build. */
+servidor.once("error", (e) => {
+  console.error(
+    e.code === "EADDRINUSE"
+      ? `porta ${PORTA} ocupada — feche o que está nela e rode de novo (esta varredura precisa servir o BUILD, não outro servidor)`
+      : e,
+  );
+  process.exit(1);
+});
+await new Promise((r) => servidor.listen(PORTA, "127.0.0.1", r));
 await rm(SAIDA, { recursive: true, force: true });
 await mkdir(SAIDA, { recursive: true });
 
-const base = `http://localhost:${PORTA}`;
+/* 127.0.0.1 e não `localhost`: é o mesmo bug pela outra ponta — `localhost`
+   resolve IPv6 primeiro no Windows, e basta qualquer coisa escutando em
+   `[::1]` na mesma porta para a varredura sair medindo outro servidor. */
+const base = `http://127.0.0.1:${PORTA}`;
 const navegador = await chromium.launch();
 const problemas = [];
 

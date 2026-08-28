@@ -422,6 +422,106 @@ p {
   }
 }
 
+/* ═══ 2.5 · O SAGUÃO (a faixa fotográfica da capa) ══════════════════════════
+
+   A quinta camada de matéria, e a primeira que é FIGURA. As quatro anteriores
+   (volume, grão, gravura, fotografia-parede) existem para a superfície parecer
+   feita de alguma coisa; esta existe para ser olhada. É a janela do saguão
+   contra a qual a placa está parafusada.
+
+   ELA NÃO SE MEXE, e a ausência é declarada, não esquecida. O verbo deste site
+   é VIRAR — as quatro pás, os códigos, o status, tudo gira em torno da mesma
+   ideia. Um parallax aqui seria um segundo gesto (deslocar) competindo com o
+   primeiro no exato ponto da página onde o primeiro precisa ser percebido. E a
+   regra já estava escrita no `body::before`: parede que rola junto com o que
+   está parafusado nela não é parede, é papel de parede. A faixa é a janela; o
+   que vira é a placa.
+
+   `<img>` E NÃO `background-image`, invertendo a regra da parede, e por um
+   motivo medido: esta é a maior área pintada da primeira tela, então ela É o
+   elemento de LCP. Como `<img>` no HTML o pré-varredor do navegador acha o
+   arquivo antes de o CSS existir, e `fetchpriority="high"` põe ele na frente
+   da fila. Como `background-image` de pseudo-elemento, o navegador só descobre
+   a foto depois de baixar e casar o CSS — atrasando exatamente o que decide o
+   LCP da página. A parede pode ser pseudo-elemento porque ela é a última coisa
+   que importa pintar; a figura é a primeira. */
+.saguao {
+  height: var(--saguao-h);
+  overflow: hidden;
+  position: relative;
+  /* O metal do trilho por baixo: se a foto não chegar (rede ruim, formato sem
+     suporte), a faixa continua sendo uma peça do painel e não um rasgo branco
+     na primeira tela. É o fallback estático, e ele é composição, não vazio. */
+  background: var(--moldura);
+  /* A mesma aresta acesa do topo da placa, pela mesma luz de 200°: a faixa é
+     mais uma superfície parafusada na parede, não uma imagem colada. */
+  box-shadow:
+    inset 0 1px 0 var(--aresta-luz),
+    inset 0 -1px 0 color-mix(in oklch, var(--sombra-cor) 60%, transparent);
+}
+
+.saguao img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* 52% e não 50%: o que precisa sobreviver ao corte é a linha do horizonte
+     com as pessoas em pé contra ela, e ela fica logo abaixo do meio do
+     quadro. Centrado, a faixa de 96px do celular pegava só vidro. O número
+     vem da tabela gerada em src/data/fotos.ts, não escrito aqui. */
+  object-position: var(--saguao-foco, 50% 52%);
+}
+
+/* O PÉ DA FAIXA. Sem isto a fotografia termina num corte seco no meio da
+   primeira tela, e corte seco em foto lê como imagem cortada, não como janela
+   acabando. O degradê é --fundo, o mesmo plano em que a placa flutua: a foto
+   AFUNDA na página em vez de parar. 38% porque abaixo disso o degradê come o
+   horizonte, que é a única linha da foto que precisa sobreviver. */
+.saguao::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  /* `min` e não 38% seco: numa faixa de 302px o degradê é 115px e some na
+     foto; nos 44px do telefone os mesmos 38% são 17px sobre uma faixa que já
+     é fresta, e o pouco que restava de fotografia virava tarja. O teto em
+     percentual segura o desktop, o teto em px segura o telefone. */
+  height: min(38%, 72px);
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--fundo));
+}
+
+/* A PLACA POUSANDO NA FAIXA. Duas contas, e as duas são obrigatórias:
+
+   1. O recobrimento. A placa sobe meio respiro por cima da borda de baixo da
+      foto para que a rampa de sombra que ela já projeta caia DENTRO da
+      fotografia. É a diferença entre painel parafusado na janela e painel
+      empilhado embaixo de uma imagem.
+   2. A altura. `min-height` da placa é a primeira tela menos o trilho; agora
+      a faixa também ocupa primeira tela, então ela sai da conta — senão a
+      soma das duas passa de 100svh e a quarta linha do painel cai para fora
+      da dobra, que é o que FR-011 proíbe e o que logos/verificar.mjs mede em
+      360×640. O `+ recobre` devolve o que a sobreposição já economizou. */
+.saguao + .placa {
+  margin-top: calc(var(--saguao-recobre) * -1);
+  min-height: calc(100vh - 3.5rem - var(--saguao-h) + var(--saguao-recobre));
+  min-height: calc(100svh - 3.5rem - var(--saguao-h) + var(--saguao-recobre));
+}
+
+/* OS 24px QUE FALTAVAM, e eles saem de RESPIRO, nunca de conteúdo. Com a
+   faixa em 44px a quarta linha ainda parava 33px abaixo da dobra em 360×640.
+   O caminho fácil era cortar a `.placa__chamada` de três linhas para duas — e
+   seria pagar a fotografia com o argumento de venda da página, que é
+   exatamente a troca que não se faz. Estes 24px são o respiro de cima do
+   painel e o padding interno dele: espaço vazio, no único lugar da primeira
+   tela onde ainda havia. Só abaixo de 46rem; do breakpoint para cima a folga
+   volta inteira. */
+@media (max-width: 45.99rem) {
+  .saguao + .placa {
+    margin-top: calc((var(--saguao-recobre) + var(--e-2)) * -1);
+    padding-block-start: var(--e-2);
+  }
+}
+
 /* ═══ 3 · A PLACA (a primeira tela) ═════════════════════════════════════════ */
 
 /* A placa é um PAINEL PARAFUSADO NUMA PAREDE, e a parede é o --fundo. Antes

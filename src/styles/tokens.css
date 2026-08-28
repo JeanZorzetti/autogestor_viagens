@@ -1,4 +1,4 @@
-/* art-direction · solari + cartografia + vidro fumê · eixos: geometria+volume+gravura+fotografia/autônomo/escura · orçamento: 0kb de JS + 10,4kb de gravura + 27,6kb de fotografia na pior rota · 2026-08-28 */
+/* art-direction · solari + cartografia + vidro fumê + saguão · eixos: geometria+volume+gravura+fotografia-parede+FOTOGRAFIA-FIGURA/autônomo/escura · orçamento: 0kb de JS + 10,4kb de gravura + 27,6kb de fotografia-parede na pior rota + 14,2kb da faixa do saguão na capa · 2026-08-28 */
 
 /* ═══ A DIREÇÃO, EM UMA FRASE ═══════════════════════════════════════════════
    A página é uma placa de embarque. O verbo é VIRAR: uma pá gira no eixo
@@ -279,6 +279,75 @@
      Acima de ~0.22 seria pôster de agência de qualquer jeito, que é
      exatamente o que esta direção não é — mas quem fecha o número é a WCAG,
      não o olho. */
+
+  /* ── o saguão ───────────────────────────────────────────────────────────
+     A FAIXA. Uma fotografia à luz cheia no topo da primeira tela, e a única
+     do site que é FIGURA: as outras quatro são parede, entram a 16% atrás de
+     tudo e o que sobra delas é forma. Esta é olhada de frente.
+
+     POR QUE ELA NÃO PAGA O TETO DE --foto-luz. O 0.16 lá em cima é o teto da
+     PAREDE, e ele existe porque a parede é `position: fixed` cobrindo a
+     viewport inteira: `--texto-3` corre por cima dela em toda parte, e o par
+     mais fraco decide o número. A faixa é uma região delimitada com zero
+     linha de texto por cima — a faixa de status fica ACIMA dela, no trilho de
+     metal, e a placa começa ABAIXO. Sem par de contraste, não há piso de WCAG
+     a respeitar. É a mesma conta com a variável que importa trocada, e é o
+     motivo de a fotografia poder finalmente ser vista neste site.
+
+     A ALTURA VEM DA LARGURA (`vw`), não da altura (`svh`), e o desempate foi
+     FR-011: em `svh` a faixa cresce junto com telas altas, e um celular de
+     360×640 recebia 218px de foto empurrando a quarta linha do painel para
+     fora da dobra — que é justamente o que a spec proíbe. Em `vw` o celular
+     recebe o piso (96px) e o desktop os 302px, que é o que se quer nos dois:
+     uma fresta em letterbox no telefone, uma janela de saguão no monitor.
+
+     A RETA, e ela foi MEDIDA em 360×640 antes de ser escrita. Com 96px de
+     faixa a quarta linha do painel caía 57px abaixo da dobra, e a medição
+     mostrou por que: mesmo SEM faixa nenhuma essa linha já vivia a 31px da
+     dobra. Não há folga a tomar em 360px — o telefone não perde a fotografia
+     por gosto, ele perde por não haver pixel sobrando. Então a faixa é uma
+     FRESTA no telefone e uma janela de saguão no monitor:
+
+       360px ....  44px  (8.2:1 — a fresta)
+       736px ... 134px  (5.5:1)
+      1440px ... 302px  (4.8:1 — a janela)
+
+     `calc(23.9vw - 42px)` é a reta que passa por 44 em 360 e 302 em 1440.
+
+     E O SEGUNDO TERMO EXISTE PORQUE A LARGURA SOZINHA ERRAVA O TELEFONE. Com
+     só a reta, um celular de 360×780 — que é o tamanho comum, não o aperto —
+     recebia os mesmos 44px de um 360×640, e o quadro de verificação mostrou o
+     resultado: uma tarja escura entre o trilho e a placa, com 68px de folga
+     sobrando embaixo da quarta linha. A faixa perdia a fotografia por uma
+     restrição que aquela tela não tinha.
+
+     O que aperta o telefone é ALTURA, não largura: o conteúdo da placa mede o
+     mesmo em qualquer tela e termina por volta de 668px do topo. Então o
+     segundo termo é a sobra real de altura, `100svh - 700px`, e o `max` deixa
+     a faixa usar o que for maior — a largura manda no monitor, a altura manda
+     no telefone:
+
+       360×640 ...  44px  (8.2:1)  o aperto: não há folga, e a faixa é fresta
+       360×780 ...  80px  (4.5:1)  o celular comum
+       360×900 ...  96px  (3.8:1)  o celular alto
+       736 ....... 134px  (5.5:1)
+      1440 ....... 302px  (4.8:1)  a janela de saguão
+
+     O TETO DE 96px NO TERMO DE ALTURA não é arredondamento: o arquivo é
+     4.77:1 e o `cover` só corta altura enquanto a faixa for MAIS LARGA que
+     ele. Sem teto, uma tela estreita e muito alta pedia uma faixa de 2.7:1,
+     mais quadrada que a foto — e aí o corte vira na largura, jogando fora as
+     pontas da janela, que são o que dá o panorama. 96px é onde 360px de tela
+     ainda produz 3.8:1 e o corte de largura fica em 21%, que a simetria da
+     foto absorve. */
+  --saguao-h: clamp(44px, max(calc(23.9vw - 42px), min(calc(100svh - 700px), 96px)), 302px);
+  /* Quanto a placa SOBE por cima da borda de baixo da foto. Não é para
+     esconder foto: é para a sombra do painel cair DENTRO da fotografia, que é
+     o que faz a placa ler como parafusada na janela em vez de empilhada
+     embaixo dela. Um respiro inteiro (--e-4) some atrás do painel; meio
+     respiro deixa a sombra visível e a foto quase toda. */
+  --saguao-recobre: 0.5rem;
+
   --parede-luz: 0.115;
   /* A figura sangra para fora da pá em vez de caber inteira dentro dela: peça
      gravada continua atrás da borda, adesivo acaba na borda. 132% da altura
