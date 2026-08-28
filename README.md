@@ -22,6 +22,7 @@ npm run contraste # mede os 45 pares de cor DOS TOKENS; falha com código 1
 npm run contraste-gravura # mede os pares que só existem em PIXEL (ver abaixo)
 npm run verificar # prova no navegador: 3 larguras × 4 rolagens, teclado, LCP
 npm run mapas     # regera os contornos a partir do dado geográfico (ver abaixo)
+npm run fotos     # rebaixa as 4 fotografias de parede do Unsplash (ver abaixo)
 node logos/gerar-og.mjs   # regera a imagem de compartilhamento
 ```
 
@@ -135,10 +136,27 @@ Chile recortados no paralelo 39°S, um recorte geométrico declarado no código.
 É a mesma regra que proíbe preço inventado na placa, aplicada à imagem: um
 contorno "parecido com a Argentina" seria a versão gráfica do mesmo defeito.
 
-Cada portão carrega a parede da PRÓPRIA cobertura (`parede-aer.svg` e
-companhia): o portão do carro enquadra o Brasil em cinco regiões, o de passagem
-enquadra três continentes. É assim que a figura varia por rota, pelo mesmo
-motivo que o objeto da cabeça varia.
+**Uma figura por parede, e a divisão foi medida.** A parede da CAPA é o mapa
+dos 19 destinos; a dos QUATRO PORTÕES é uma fotografia (`npm run fotos` baixa
+do Unsplash, dessatura, equaliza e converte para AVIF/WebP — a procedência de
+cada uma fica na tabela do próprio script, e o crédito em
+`public/img/FOTOS.json`). As duas camadas não coexistem, e o motivo é
+aritmético, não estético: o mapa a `--parede-luz: 0.115` já media 4.73:1 no par
+`--texto-3` × pixel mais claro da parede, contra um piso de 4.5. Somar a foto
+por baixo derrubava para **3.73:1**; dividir o orçamento entre as duas
+(0.07 + 0.07) passava em 4.51:1 entregando duas figuras apagadas. Então
+`Base.astro` apaga uma quando acende a outra — com `--parede: none`, não com
+opacidade zero, senão o SVG ainda seria baixado. A gravura das PÁS não entra
+nessa conta e continua em todas as rotas: ela mora dentro da peça.
+
+A fotografia é MATÉRIA, não assunto: entra a 16% de opacidade, em escala de
+cinza, retingida pelas duas tintas da casa (`color` com o navy troca o matiz
+preservando a luminância; `soft-light` com o laranja levanta o quente só onde
+a foto já era clara). Ela não é o LCP (240ms, num `<p>`), não tem `alt`, não
+entra na ordem de leitura e nenhuma delas mostra rosto identificável ou marca
+de companhia aérea — pessoa aqui é silhueta anônima de saguão, porque modelo
+de banco posando de cliente satisfeito seria a versão fotográfica do preço
+inventado que esta placa recusa.
 
 **Existem dois checadores de contraste, e o segundo não é redundância.**
 `logos/contraste.mjs` lê os TOKENS e resolve OKLCH → sRGB; ele não consegue ver
@@ -153,7 +171,14 @@ antes de a direção fechar:
 - o próprio medidor mentiu antes disso, acusando 3.35:1 em todas as pás — o
   pixel culpado era o antialiasing da letra laranja, não a superfície. Filtrar
   por faixa de cor não resolve (a suavização é um degradê contínuo); apagar a
-  tinta e medir a peça, sim.
+  tinta e medir a peça, sim;
+- e ele reprovou a fotografia de parede duas vezes antes de ela virar o que é
+  hoje: **3.41:1** com o pico solto e **3.68:1** com o pico cortado em 168.
+  Foi o que forçou a regra de uma figura por parede. O checador também mudou
+  junto: ele media a parede só na capa (bastava, quando os cinco SVG saíam do
+  mesmo gerador com o mesmo teto de alfa) e não servia AVIF, o que faria a
+  medição passar por um motivo falso — imagem recusada não pinta. Agora varre
+  as cinco rotas e nomeia a pior.
 
 **A "emenda" verde foi construída e depois removida.** A plataforma de destino
 (OnerTravel) tem header verde e este site é navy; a primeira versão avisava

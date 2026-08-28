@@ -1,4 +1,4 @@
-/* art-direction · solari + cartografia · eixos: geometria+volume+gravura/autônomo/escura · orçamento: 0kb de JS + 10,4kb de figura gzip na pior rota · 2026-08-28 */
+/* art-direction · solari + cartografia + vidro fumê · eixos: geometria+volume+gravura+fotografia/autônomo/escura · orçamento: 0kb de JS + 10,4kb de gravura + 27,6kb de fotografia na pior rota · 2026-08-28 */
 
 /* ═══ A DIREÇÃO, EM UMA FRASE ═══════════════════════════════════════════════
    A página é uma placa de embarque. O verbo é VIRAR: uma pá gira no eixo
@@ -200,6 +200,67 @@
      rebaixo, que a luz de 200° não alcança) e CLAREAR (a quina do sulco, que
      ela alcança). Quem decide o matiz continua sendo o token da peça embaixo.
      Custa zero elemento, zero máscara, zero filtro. */
+
+  /* ── fotografia ─────────────────────────────────────────────────────────
+     A QUARTA camada de matéria, depois do volume, do grão e da gravura — e,
+     como a gravura, ela é MATÉRIA e não um quinto gesto: a foto não anima,
+     não rola e não tem legenda. Ela é do que a parede do saguão é feita.
+
+     POR QUE A PAREDE E NÃO O CONTEÚDO. Foto de viagem em site de agência mora
+     em card, e card com foto de praia em cima é exatamente a página que esta
+     direção recusou desde a primeira entrada do log. Aqui a fotografia entra
+     no único lugar em que ela não vira ilustração: atrás de tudo, embaixo do
+     mapa gravado, no plano em que a placa está parafusada. O assunto da tela
+     continua sendo a placa.
+
+     DUAS TINTAS, NÃO UMA. O asset chega em escala de cinza (logos/baixar-
+     fotos.mjs dessatura na origem), e o CSS repõe a cor com as tintas da casa:
+     `color` troca o matiz por --noite-950 preservando a luminância da foto, e
+     `soft-light` de --marca por cima levanta o quente só onde a foto já era
+     clara. Foi medido contra as alternativas antes de virar isto: o tint navy
+     sozinho e a foto crua rebaixada dão a MESMA tela (a foto já vem cinza, o
+     `color` quase não trabalha), e nenhuma das duas tem temperatura. A parede
+     tem que ser feita das duas tintas do site, senão é um plano escuro com
+     uma imagem apagada dentro.
+
+     ZERO JS, ZERO ELEMENTO. Uma camada `position: fixed` no `html::before` —
+     `body::before` já é o mapa e `body::after` já é o grão. Ela não rola pelo
+     mesmo motivo que as outras duas não rolam: parede que rola junto com o que
+     está parafusado nela é papel de parede. */
+
+  /* `image-set` e não `url`: AVIF onde há suporte, WebP no resto, e o navegador
+     baixa UM dos dois. Sem os dois, um Safari 15 fica sem parede fotográfica —
+     e a tela continua de pé, porque o mapa e o volume da placa são camadas
+     independentes desta. Degrada, não quebra. */
+  --foto: none;
+  /* Onde o corte de `cover` tem que cair. Numa foto de saguão o que precisa
+     sobreviver é a linha do horizonte da janela, não o piso. Cada rota
+     sobrescreve junto com a sua foto (Base.astro). */
+  --foto-foco: 50% 50%;
+  /* O TETO, e ele é medido, não escolhido: logos/contraste-gravura.mjs mede o
+     pixel mais claro que a parede produz contra --texto-3 nas cinco rotas e
+     falha com código 1 abaixo de 4.5:1. Varredura de 28/08, foto sozinha na
+     parede:
+
+       0.30 ......... 3.66:1  REPROVA
+       0.24 ......... 4.11:1  REPROVA
+       0.20 ......... 4.35:1  REPROVA
+       0.16 ......... 4.64:1  o valor daqui
+
+     UMA FIGURA POR PAREDE, e o número acima é o motivo. O mapa gravado a
+     0.115 já media 4.73:1 — ou seja, ele gastava sozinho quase todo o vão
+     entre o piso (4.50) e o que a parede aguenta. Somar a fotografia por
+     baixo dele derrubava o par para 3.73:1, e a saída de dividir o
+     orçamento em dois (mapa 0.07 + foto 0.07 = 4.51:1) passava raspando
+     entregando duas figuras apagadas, que é lama e não é camada.
+
+     Então a parede da CAPA é o mapa dos 19 destinos (informação: sai de
+     fonte primária e mostra o alcance real da busca) e a parede dos QUATRO
+     PORTÕES é a fotografia. Base.astro apaga uma quando acende a outra, e
+     apaga de verdade — `--parede: none`, não opacidade zero, senão o SVG
+     ainda seria baixado. A gravura nas PÁS não entra nessa conta e continua
+     em todas as rotas: ela mora dentro da peça, não na parede. */
+  --foto-luz: 0.16;
 
   /* A parede em que a placa está parafusada. `url()` e não um nome de arquivo
      solto porque cada portão troca a sua pelo mapa da própria cobertura

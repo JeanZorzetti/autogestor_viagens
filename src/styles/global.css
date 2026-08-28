@@ -35,6 +35,42 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* A FOTOGRAFIA DA PAREDE. Terceira e última camada fixa do site, e a de trás
+   de todas: `html::before` porque `body::before` já é o mapa e `body::after` já
+   é o grão, e porque a ordem de pintura importa — a gravura é gravada NA
+   parede, então o mapa vem por cima da foto, nunca o contrário.
+
+   z-index -2 e não -1: ela tem que ficar entre o fundo da tela e o mapa. Isso
+   funciona porque o `background` do body é propagado para o canvas (o html não
+   declara nenhum), e o canvas pinta abaixo de qualquer z-index negativo. Se
+   alguém der um `background` ao `html` um dia, esta camada some — está escrito
+   aqui e é o único acoplamento da regra.
+
+   AS DUAS TINTAS. `color` troca o matiz da foto pelo navy preservando a
+   luminância dela; `soft-light` do laranja por cima levanta o quente só onde a
+   foto já era clara. Duas camadas de blend numa superfície só — dentro do
+   limite de 1–2 elementos que `mix-blend-mode` comporta, e são
+   `background-blend-mode` (composição interna do próprio elemento), que não
+   cria camada nova como o `mix-blend-mode` cria.
+
+   `q` no lugar do grão: NÃO tem `mix-blend-mode` própria. O grão já roda por
+   cima de tudo no `body::after`, e é ele que devolve a textura que o blur do
+   encoder tirou da foto. */
+html::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background-image: linear-gradient(var(--marca), var(--marca)), linear-gradient(var(--noite-950), var(--noite-950)),
+    var(--foto);
+  background-blend-mode: soft-light, color, normal;
+  background-repeat: no-repeat;
+  background-position: var(--foto-foco);
+  background-size: cover;
+  opacity: var(--foto-luz);
+}
+
 /* A PAREDE. A placa está parafusada numa parede, e desde a materialização de
    27/08 a moldura existia mas a parede era um plano navy vazio. Agora ela é o
    que uma parede de saguão é: um mapa gravado.

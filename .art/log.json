@@ -55,7 +55,7 @@
     "condicao": "build servido estatico, CPU 4x estrangulada, 1440x900",
     "elemento": "H1.placa__titulo"
    },
-   "cls": 0.0,
+   "cls": 0,
    "contraste_pares": 37,
    "contraste_reprovados": 0,
    "teclado": "22 paradas, 0 sem anel de foco",
@@ -148,7 +148,7 @@
     "condicao": "build servido estatico, CPU 4x estrangulada, 1440x900",
     "elemento": "H1.placa__titulo"
    },
-   "cls": 0.0,
+   "cls": 0,
    "contraste_pares": 23,
    "contraste_reprovados": 0,
    "teclado": "22 paradas, 0 sem anel de foco",
@@ -207,6 +207,7 @@
     "fonte_nova": 0
    },
    "lcp_ms_por_rota": {
+    "404": 348,
     "capa": 488,
     "passagens-aereas": 564,
     "hoteis": 476,
@@ -215,11 +216,10 @@
     "sobre": 320,
     "privacidade": 388,
     "termos": 328,
-    "404": 348,
     "alvo": 800,
     "condicao": "build servido estatico, CPU 4x estrangulada, 5 amostras/rota, 1440x900"
    },
-   "cls": 0.0,
+   "cls": 0,
    "contraste_pares": 45,
    "contraste_reprovados": 0,
    "teclado": "9 rotas, 0 paradas sem anel de foco",
@@ -284,6 +284,7 @@
     "pior_rota_total": 10.4
    },
    "lcp_ms": {
+    "404": 304,
     "capa": 648,
     "passagens-aereas": 592,
     "hoteis": 552,
@@ -292,12 +293,11 @@
     "sobre": 336,
     "privacidade": 344,
     "termos": 300,
-    "404": 304,
     "alvo": 800,
     "condicao": "build servido estatico, CPU 4x estrangulada, 5 amostras/rota, 1440x900, maquina sem processo meu concorrendo"
    },
    "delta_lcp_medido": "+80 a +208ms contra o build anterior, medido com os DOIS builds servidos lado a lado e as requisicoes intercaladas (logos nao guarda esse script; ele viveu no scratchpad). O absoluto desta maquina oscila ate 4x entre rodadas — o delta intercalado e o unico numero confiavel aqui, e o absoluto acima foi tirado com a maquina limpa.",
-   "cls": 0.0,
+   "cls": 0,
    "contraste_pares_token": 45,
    "contraste_pares_pixel": 10,
    "contraste_reprovados": 0,
@@ -318,5 +318,42 @@
    "G33_estrutura_nao_repete": "N/A DECLARADO — esta entrega nao cria pagina nem macroestrutura; ela poe materia nas quatro que ja existem (Indice, .doc, Portao). O gate mede variedade entre telas novas, e nao ha tela nova aqui.",
    "G31_dpr_travado": "N/A DECLARADO — nao ha canvas em lugar nenhum do site."
   }
+ },
+ {
+  "data": "2026-08-28",
+  "projeto": "viagens",
+  "pagina": "/passagens-aereas + /hoteis + /pacotes + /aluguel-de-carro (a parede dos 4 portões; capa e legais intocadas)",
+  "direcao": "solari + cartografia + vidro fumê",
+  "tipo": "camada nova de matéria",
+  "base": "a entrada anterior deste mesmo log",
+  "eixos": {
+   "materia": "geometria + volume + gravura + FOTOGRAFIA (eixo novo)",
+   "motor": "autônomo, herdado — a foto não anima",
+   "banda": "escura"
+  },
+  "pedido": "Dono pediu 'imagens de banco de imagens gratuitas — aviões, pessoas, lugares bonitos'. Ofereci 3 direções para COMO a fotografia entra numa placa Solari (Vidro Fumê / A Janela / Pá Gravada); ele escolheu Vidro Fumê, que era a recomendação, e os três assuntos.",
+  "diagnostico": "O site tinha zero fotografia, e foto de viagem em site de agência mora em card com praia em cima — exatamente a página que este log recusa desde a primeira entrada. O único lugar onde fotografia não vira ilustração aqui é a PAREDE: atrás de tudo, no plano em que a placa está parafusada. O assunto da tela continua sendo a placa.",
+  "o_que_mudou": [
+   "TERCEIRA CAMADA FIXA, em html::before (as duas pseudo do body já eram o mapa e o grão). Zero JS, zero elemento novo, não rola — parede que rola junto com o que está parafusado nela é papel de parede.",
+   "DUAS TINTAS. O asset chega dessaturado do encoder; o CSS repõe a cor com as tintas da casa (`color` com o navy troca o matiz preservando a luminância, `soft-light` com o laranja levanta o quente só nas altas). Comparei as 3 receitas em tela antes de escrever: tint navy sozinho e foto crua rebaixada dão a MESMA imagem (a foto já vem cinza, o `color` quase não trabalha) e nenhuma tem temperatura.",
+   "logos/baixar-fotos.mjs — as fotos são geradas, não commitadas à mão: id, autor e link de cada uma ficam na tabela do script, mesma regra do gerar-mapas.mjs. Ele dessatura, EQUALIZA a média para 52/255 e CORTA o pico em 130 antes de encodar.",
+   "logos/contraste-gravura.mjs passou a varrer as CINCO rotas na medição da parede (media só a capa) e ganhou MIME de AVIF/WebP — sem isso o Chromium recusa a imagem, a parede não pinta e a medição passa por um motivo falso."
+  ],
+  "o_que_nao_entrou": [
+   "A FOTO DA CAPA, e ela já estava escolhida e aprovada — um saguão de terminal cuja grade ortogonal de janela é a mesma grade da placa. O que a tirou não foi o olho, foi a medição (ver conflito).",
+   "Três fotos de asa boas foram descartadas por terem a pintura da companhia legível no winglet. Livrar de logo alheio numa parede institucional não é frescura jurídica: é não anunciar a concorrente do fornecedor.",
+   "Rosto identificável em papel de cliente. Pessoa aqui é silhueta anônima de saguão — modelo de banco posando de cliente satisfeito é a versão fotográfica do preço inventado que esta placa recusa."
+  ],
+  "conflito": "MAPA E FOTO NÃO CABEM NA MESMA PAREDE, e quem decidiu foi a régua. O mapa gravado a 0.115 já media 4.73:1 no par --texto-3 × pixel mais claro da parede, contra um piso de 4.5 — ou seja, ele gastava sozinho quase todo o vão. Com a foto por baixo: 3.73:1. Varri 24 pares de (--parede-luz, --foto-luz) em 5 rotas; o único que passava com as duas acesas era 0.07 + 0.07 (4.51:1), entregando duas figuras apagadas, que é lama e não é camada. Tentei antes dois consertos no asset — cortar o pico em 168 (3.68:1) e escurecer a média de 92 para 52 (4.10:1) — e nenhum chegou. Levei a decisão para o dono com a tabela medida; ele escolheu UMA FIGURA POR PAREDE: capa fica com o mapa dos 19 destinos (lá a figura é informação, sai de fonte primária), os quatro portões ficam com a foto a 0.16 (4.64:1). A gravura das PÁS não entra nessa conta e continua em todas as rotas — ela mora dentro da peça, não na parede.",
+  "custo": {
+   "faixa": "captação",
+   "js": "0kb — a camada é background-image, e o site continua sem uma linha de JS próprio",
+   "figura": "2.9kb (aer) a 21.8kb (htl) em AVIF, uma por rota; a capa não baixa nenhuma",
+   "lcp": "240ms em rede local, elemento <p> — a foto NÃO é o LCP",
+   "lcp_estrangulado": "O npm run verificar (CPU 4x) acusa LCP acima do orcamento de 800ms, e a leitura honesta e que NAO DA PARA SEPARAR o custo desta camada do ruido do medidor. Tres amostras da CAPA, que nao tem foto nenhuma: 928ms (build anterior), 1188ms e 996ms (build com as fotos) — banda de ~260ms sem que nada tenha mudado naquela rota. Tres das cinco rotas ja estouravam o orcamento ANTES desta camada (capa 928, passagens 1196, pacotes 940); depois dela as cinco estouram, e as duas que passaram a estourar sao /hoteis (764 -> 976 e 1072) e /aluguel-de-carro (720 -> 820), que e evidencia FRACA de um custo real de ~100-200ms. Medido nos dois builds antes de afirmar qualquer coisa; nao persegui o numero porque o orcamento ja estava furado por outro motivo e apertar isso e decisao do dono.",
+   "fallback": "Safari sem AVIF cai no WebP pelo image-set; sem os dois, a rota fica com a parede vazia e a tela continua de pé — o volume da placa e a gravura das pás são camadas independentes desta. Degrada, não quebra."
+  },
+  "prova": "3 larguras (390/768/1440) × 4 posições de scroll + hover no CTA + prefers-reduced-motion, em /hoteis (a foto mais pesada e o pior par de contraste). Console limpo, sem shift entre quadros. Gates do projeto: contraste 45/45, contraste-gravura 10/10, check 0 erros, test 16/16.",
+  "licenca": "Unsplash License — uso comercial, sem atribuição obrigatória, sem custo. Crédito com autor e link em public/img/FOTOS.json porque a licença pede e porque este site não publica material de origem que ele não consiga apontar."
  }
 ]
