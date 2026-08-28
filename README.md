@@ -18,7 +18,7 @@ fala com banco nenhum (veja abaixo). Em produção só existe `SITE_URL`.
 npm test          # node --test test/*.test.mjs — a conta da placa
 npm run build
 npm run check     # astro check (tipos) — 0 erros
-npm run contraste # mede os 23 pares de cor; falha com código 1 se algum reprovar
+npm run contraste # mede os 37 pares de cor; falha com código 1 se algum reprovar
 npm run verificar # prova no navegador: 3 larguras × 4 rolagens, teclado, LCP
 node logos/gerar-og.mjs   # regera a imagem de compartilhamento
 ```
@@ -106,7 +106,7 @@ partida; encenar um percurso que o conteúdo não tem é pior que não encenar
 nenhum.
 
 **Contraste é medido, não estimado, e o checador lê o CSS.** `npm run contraste`
-roda 23 pares e falha com código 1. Diferente do mesmo script no site de
+roda 37 pares e falha com código 1. Diferente do mesmo script no site de
 seguro, ele **não tem uma cópia da paleta em hex**: lê `tokens.css`, resolve os
 aliases `var()` e converte OKLCH → sRGB na hora. Uma fonte da verdade só.
 
