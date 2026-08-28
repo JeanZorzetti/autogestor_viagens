@@ -1,6 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
-import { CONCORRENTES, DESTINOS, PASSOS, PERGUNTAS, PRODUTOS, RAZOES } from "../data/conteudo";
+import Linha from "../components/Linha.astro";
+import { CONCORRENTES, PASSOS, PERGUNTAS, PRODUTOS, RAZOES } from "../data/conteudo";
 import { ATENDIMENTO, EMPRESA, EXTERNOS, whatsapp } from "../consts";
 
 const BUSCA = EXTERNOS.busca;
@@ -42,55 +43,15 @@ const faqSchema = {
         </p>
       </div>
 
-      {/* O motor autônomo da direção: a pá que vira sozinha.
-          São DESTINOS, não preços. Ver o comentário no topo de
-          src/data/conteudo.ts para o porquê de não haver tarifa aqui. */}
-      <div class="destino">
-        <span class="destino__rotulo">Destino</span>
-        {/* O vinco mudou de dono e isso não é detalhe de classe: ele estava na
-            JANELA, então a dobra ficava parada enquanto a pá girava por trás
-            dela — uma dobra que não acompanha a peça é um risco no vidro, não
-            uma dobra. Agora cada pá carrega o próprio vinco e gira com ele. */}
-        <span class="destino__janela" aria-hidden="true">
-          {DESTINOS.map((d, i) => <span class="destino__pa vinco" style={`--i:${i}`}>{d}</span>)}
-        </span>
-        <span class="visualmente-oculto">
-          Destinos nacionais e internacionais, entre eles {DESTINOS.join(", ")}.
-        </span>
-      </div>
-
-      {/* As quatro linhas da placa. A linha INTEIRA é o link — não há botão
-          dentro dela. Isto substitui os quatro cards com ícone que a mesma
-          oferta tinha na página do hub: a estrutura aqui é Índice, e índice
-          não tem card. */}
+      {/* O painel inteiro: quatro linhas, cada uma com a própria coluna de
+          destino virando (FR-005, FR-006). O widget `.destino` que ficava ao
+          lado do H1 foi ABSORVIDO — não há mais um único motor autônomo, há
+          quatro, um por linha, em cascata de 120ms (contracts/coreografia.md
+          §2). A linha inteira é o link — não há botão dentro dela — e agora
+          aponta para o portão (rota interna), não para a busca externa
+          (FR-015, mudança de contrato registrada em contracts/rotas.md §3). */}
       <ol class="linhas">
-        {
-          PRODUTOS.map((p, i) => (
-            <li>
-              <a
-                class="linha entra"
-                style={`--atraso:${160 + i * 60}`}
-                href={BUSCA}
-                target="_blank"
-                rel="noopener"
-              >
-                <span class="linha__codigo">{p.codigo}</span>
-                <span>
-                  <span class="linha__nome">{p.nome}</span>
-                  <span class="linha__nota">{p.nota}</span>
-                </span>
-                <span class="linha__onde">{p.onde}</span>
-                <span class="status">
-                  <span class="status__a">24h</span>
-                  <span class="status__b" aria-hidden="true">
-                    Abrir
-                  </span>
-                  <span class="visualmente-oculto"> — buscar {p.nome.toLowerCase()}, abre em nova aba</span>
-                </span>
-              </a>
-            </li>
-          ))
-        }
+        {PRODUTOS.map((p, i) => <Linha produto={p} linha={i} />)}
       </ol>
 
       <p class="placa__nota">

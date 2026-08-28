@@ -1,0 +1,47 @@
+---
+/** A linha da placa, com a coluna de destino DENTRO dela — não mais um widget
+ *  à parte. Reusa o primitivo `.coluna-destino__*` (global.css, T009) e
+ *  recebe `linha` (0–3) para a cascata do giro (FR-006) e a entrada
+ *  escalonada que a placa já tinha. */
+import { PRODUTOS } from "../data/conteudo";
+
+interface Props {
+  produto: (typeof PRODUTOS)[number];
+  linha: number;
+}
+
+const { produto, linha } = Astro.props;
+const n = produto.destinos.length;
+const estilo = `--atraso:${160 + linha * 60}; --linha:${linha}; --n:${n}; --ciclo-nome:ciclo-${n}; --sombra-nome:sombra-pa-${n};`;
+---
+
+<li>
+  <a class="linha entra" style={estilo} href={produto.rota}>
+    <span class="linha__codigo">{produto.codigo}</span>
+    <span class="linha__nome-bloco">
+      <span class="linha__nome">{produto.nome}</span>
+      <span class="linha__nota">{produto.nota}</span>
+    </span>
+    {/* FR-025/T047: o par que atravessa a transição de rota é esta janela ↔
+        a janela homônima na cabeça do portão. Nome por CÓDIGO de produto,
+        não genérico — precisa ser único dentro de cada documento e existir
+        nos dois (contracts/coreografia.md §3). Sem hífen duplo: `vt-aer`,
+        não `--vt-aer` (A2). */}
+    <span
+      class="coluna-destino__janela linha__destino"
+      aria-hidden="true"
+      style={`view-transition-name: vt-${produto.codigo.toLowerCase()};`}
+    >
+      {produto.destinos.map((d, i) => <span class="coluna-destino__pa vinco" style={`--i:${i}`}>{d}</span>)}
+    </span>
+    <span class="linha__onde">{produto.onde}</span>
+    <span class="status">
+      <span class="status__a">24h</span>
+      <span class="status__b" aria-hidden="true"> Abrir</span>
+    </span>
+    <span class="visualmente-oculto">
+      {" "}— abrir o portão de {produto.nome.toLowerCase()}, {produto.onde.toLowerCase()}. Destinos que a busca cobre,
+      entre eles {produto.destinos.join(", ")}.
+    </span>
+  </a>
+</li>

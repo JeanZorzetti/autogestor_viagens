@@ -1,0 +1,152 @@
+---
+/** Bloco 1 do portão: o código do produto em escala de objeto, como uma pá
+ *  que acabou de travar, com a coluna de destino daquele produto ainda
+ *  virando. A FORMA varia por `produto.objeto` (FR-020) — reusa a coluna de
+ *  destino compartilhada (global.css, T009), usada 8× no site inteiro. */
+import { PRODUTOS, REGIMES_HTL, PACOTE_COBERTURA, AEROPORTOS_CAR } from "../data/conteudo";
+
+interface Props {
+  produto: (typeof PRODUTOS)[number];
+  titulo: string;
+  bluf: string;
+}
+
+const { produto, titulo, bluf } = Astro.props;
+const n = produto.destinos.length;
+
+// FR-025/T047: o par da transição de rota — a mesma janela do produto que
+// vira na linha do painel (Linha.astro) vira aqui, na cabeça do portão.
+const estiloColuna = `--n:${n}; --ciclo-nome:ciclo-${n}; --sombra-nome:sombra-pa-${n}; view-transition-name: vt-${produto.codigo.toLowerCase()};`;
+---
+
+<header class:list={["cabeca-portao", `cabeca-portao--${produto.objeto}`]}>
+  <div class="container">
+    <a class="cabeca-portao__volta linha" href="/">
+      <span class="linha__codigo">{"←"}</span>
+      <span>
+        <span class="linha__nome">Voltar ao painel</span>
+      </span>
+      <span class="linha__onde">{"o saguão"}</span>
+      <span class="visualmente-oculto">{" "}— volta para o painel de partidas, com os quatro produtos</span>
+    </a>
+
+    <div class="cabeca-portao__miolo">
+      <div>
+        <span class="cabeca-portao__codigo">{produto.codigo}</span>
+        <h1 class="cabeca-portao__h1">{titulo}</h1>
+        <p class="cabeca-portao__bluf">{bluf}</p>
+      </div>
+
+      <div class="cabeca-portao__objeto">
+        {
+          produto.objeto === "par" && (
+            <>
+              <div class="cabeca-portao__perna">
+                <span class="cabeca-portao__perna-rotulo">Ida</span>
+                <span
+                  class="coluna-destino__janela"
+                  aria-hidden="true"
+                  style={estiloColuna}
+                >
+                  {produto.destinos.map((d, i) => (
+                    <span class="coluna-destino__pa vinco" style={`--i:${i}`}>
+                      {d}
+                    </span>
+                  ))}
+                </span>
+              </div>
+              <div class="cabeca-portao__perna">
+                <span class="cabeca-portao__perna-rotulo">Volta</span>
+                <span class="cabeca-portao__codigo">{produto.codigo}</span>
+              </div>
+            </>
+          )
+        }
+
+        {
+          produto.objeto === "faixa" && (
+            <div>
+              <span
+                class="coluna-destino__janela"
+                aria-hidden="true"
+                style={estiloColuna}
+              >
+                {produto.destinos.map((d, i) => (
+                  <span class="coluna-destino__pa vinco" style={`--i:${i}`}>
+                    {d}
+                  </span>
+                ))}
+              </span>
+              <div class="cabeca-portao__faixa-noites" aria-hidden="true">
+                {REGIMES_HTL.map((_, i) => (
+                  <span class:list={["cabeca-portao__noite", i === 1 && "cabeca-portao__noite--acesa"]} />
+                ))}
+              </div>
+              <span class="visualmente-oculto">Faixa de noites de hospedagem</span>
+            </div>
+          )
+        }
+
+        {
+          produto.objeto === "duasMetades" && (
+            <>
+              <div class="cabeca-portao__pa-grande">
+                <div class="cabeca-portao__pa-metade cabeca-portao__pa-metade--cima">
+                  <span class="cabeca-portao__pa-rotulo">Voo</span>
+                  <span class="cabeca-portao__pa-valor">{produto.codigo}</span>
+                </div>
+                <div class="cabeca-portao__pa-metade cabeca-portao__pa-metade--baixo">
+                  <span class="cabeca-portao__pa-rotulo">Hotel</span>
+                  <span class="cabeca-portao__pa-valor">{PACOTE_COBERTURA.entra[1]}</span>
+                </div>
+              </div>
+              <span
+                class="coluna-destino__janela"
+                aria-hidden="true"
+                style={estiloColuna}
+              >
+                {produto.destinos.map((d, i) => (
+                  <span class="coluna-destino__pa vinco" style={`--i:${i}`}>
+                    {d}
+                  </span>
+                ))}
+              </span>
+            </>
+          )
+        }
+
+        {
+          produto.objeto === "campoUnico" && (
+            <>
+              <div class="cabeca-portao__campo">
+                <div class="cabeca-portao__campo-metade">
+                  <span class="cabeca-portao__campo-rotulo">Retirada</span>
+                  <span class="cabeca-portao__campo-valor">{AEROPORTOS_CAR[0].iata}</span>
+                </div>
+                <div class="cabeca-portao__campo-metade">
+                  <span class="cabeca-portao__campo-rotulo">Devolução</span>
+                  <span class="cabeca-portao__campo-valor">{AEROPORTOS_CAR[0].iata}</span>
+                </div>
+              </div>
+              <span
+                class="coluna-destino__janela"
+                aria-hidden="true"
+                style={estiloColuna}
+              >
+                {produto.destinos.map((d, i) => (
+                  <span class="coluna-destino__pa vinco" style={`--i:${i}`}>
+                    {d}
+                  </span>
+                ))}
+              </span>
+            </>
+          )
+        }
+
+        <span class="visualmente-oculto">
+          {produto.nome}: destinos que a busca cobre, entre eles {produto.destinos.join(", ")}.
+        </span>
+      </div>
+    </div>
+  </div>
+</header>

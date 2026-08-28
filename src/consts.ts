@@ -53,7 +53,16 @@ export function whatsapp(mensagem: string): string {
 export const EXTERNOS = {
   /** A busca. É o destino de TODO CTA deste site — a página inteira existe
    *  para produzir este clique. Fica numa constante porque aparece em ~12
-   *  lugares e trocar de operadora não pode virar caça a URL em 6 arquivos. */
+   *  lugares e trocar de operadora não pode virar caça a URL em 6 arquivos.
+   *
+   *  É UMA URL SÓ, MEDIDO, NÃO ESCOLHIDO (R1, 2026-08-28): a plataforma não
+   *  lê parâmetro de produto (varredura do bundle Angular, zero
+   *  `queryParamMap.get()` de chave de aplicação) e as rotas de resultado
+   *  abertas direto — `flight-list`, `car-list`, `combined` — afirmam "nenhum
+   *  resultado encontrado" a quem nunca buscou, o que violaria o Princípio IV.
+   *  Os quatro portões terminam todos aqui; o texto do CTA não promete
+   *  filtro, diz que o produto se escolhe do outro lado. Ver `research.md`
+   *  §R1 da feature 001-painel-e-portoes. */
   busca: "https://br.onertravel.com/autogestorviagens/home",
   /** Consulta pública de corretores da SUSEP. O FAQ afirma um registro; sem o
    *  caminho para conferir, é só um número na tela. */

@@ -1,24 +1,40 @@
 // Prova no navegador. Recomendação sem evidência não sai daqui.
 //   npm run build && node logos/verificar.mjs
 //
-// SOBE O BUILD, NÃO O DEV SERVER. O `astro dev` injeta a barra de ferramentas
-// do Astro: DOM extra e ~1,8 MB de JavaScript que não existem em produção.
-// Medir LCP contra isso é medir outra página.
+// SOBE O BUILD, NÃO O DEV SERVER. O `astro dev` injeta a barra de
+// ferramentas do Astro: DOM extra e ~1,8 MB de JavaScript que não existem em
+// produção. Medir LCP contra isso é medir outra página.
 //
-// O que ele prova, e por que cada um está aqui:
-//   · 3 larguras × 4 posições de rolagem — screenshot do topo não prova
-//     coreografia nenhuma; o gesto desta direção acontece descendo.
-//   · 1 quadro de hover na linha da placa — a camada de ponteiro é opcional e
-//     declarada, então precisa aparecer funcionando ou ser removida.
-//   · 3 quadros da pá NO MEIO DA QUEDA, congelados pela Web Animations API —
-//     a matéria desta direção é uma peça caindo, e peça caindo não aparece em
-//     quadro parado. Provam que a luz corre atrás do ângulo em vez de a pá
-//     aterrissar já acesa.
-//   · 1 quadro com prefers-reduced-motion — provando que a placa sobrevive
-//     parada. É o piso da direção, não um extra.
-//   · console limpo, e nenhum deslocamento de layout entre os quadros.
-//   · LCP e CLS medidos com CPU estrangulada, contra o orçamento declarado.
-import { chromium } from "playwright";
+// 001-painel-e-portoes (T053) reescreveu o laço: a linha de base era 1 rota
+// (só a capa, `:77` antigo — `pagina.goto(base, …)`, sem laço nenhum). Agora
+// são NOVE: `/`, os quatro portões, `/sobre`, `/privacidade`, `/termos` e
+// `/404`. Isto não é a mesma varredura parametrizada — é um laço novo, com
+// quatro decisões tomadas por escrito (ver handoff.md G1/G3 da feature):
+//
+//   1. Quais quadros especiais valem por rota. `reduced-motion` e teclado são
+//      POR ROTA (9) — cada portão precisa sobreviver parado e navegável.
+//      `hover` e a QUEDA DA PÁ só existem onde há coluna girando: a capa e as
+//      quatro cabeças de portão (5 rotas) — as quatro rotas de documento
+//      (`/sobre`, `/privacidade`, `/termos`, `/404`) não têm pá nenhuma.
+//      O quadro da TRANSIÇÃO e a prova de DEGRADAÇÃO (T051) são de uma
+//      passagem só (capa → um portão) e não entram neste laço.
+//   2. Nome do arquivo: `{rota}-{largura}-{pct}.png`, `rota` = o slug
+//      (`capa` para `/`, `404` para `/404`). Especiais:
+//      `{rota}-{largura}-{quadro}` (`capa-1440-hover`, `hoteis-1440-reduzido`).
+//   3. `ORCAMENTO` é por rota — SC-003 pede "LCP mediano ≤800ms POR ROTA", e
+//      um número global deixaria a capa seguar a mediana de um portão lento.
+//   4. Fica mais lento, e a saída não é cortar cobertura — é custo de
+//      ferramenta, não de página (plan.md). A varredura principal roda em
+//      paralelo por rota (teto de 4 workers, para não estrangular a própria
+//      máquina que está medindo LCP); o bloco de LCP/CLS roda SERIAL mesmo
+//      assim — medida sob contenção não é medida.
+//
+// Dois ajustes que entraram na mesma passada, porque são o mesmo laço:
+//   · I6 — FR-011/T042 provam 360×640 (a quarta linha visível/meio-visível);
+//     o laço antigo só tinha 360×780. Os dois ficam.
+//   · I8 — o breakpoint de FR-013 é 46rem = 736px; o laço antigo pulava
+//     direto de 360 para 768, e a faixa 736–767 nunca era fotografada.
+import { chromium, firefox } from "playwright";
 import { createServer } from "node:http";
 import { readFile, mkdir, rm } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
@@ -26,7 +42,32 @@ import { extname, join, normalize } from "node:path";
 const RAIZ = ".vercel/output/static";
 const SAIDA = "logos/_verificacao";
 const PORTA = 4321;
-const ORCAMENTO = { lcp: 1500, cls: 0.05, js: 0 }; // faixa Captação — ver o manifesto no README
+
+// SC-003/SC-004: 800ms e 0,01 são os números que a spec mede de fato; 1500ms
+// é só o teto declarado da faixa Captação (contexto, não o gate).
+const ORCAMENTO = { lcp: 800, cls: 0.01, js: 0 };
+
+const ROTAS = [
+  { slug: "capa", caminho: "/" },
+  { slug: "passagens-aereas", caminho: "/passagens-aereas" },
+  { slug: "hoteis", caminho: "/hoteis" },
+  { slug: "pacotes", caminho: "/pacotes" },
+  { slug: "aluguel-de-carro", caminho: "/aluguel-de-carro" },
+  { slug: "sobre", caminho: "/sobre" },
+  { slug: "privacidade", caminho: "/privacidade" },
+  { slug: "termos", caminho: "/termos" },
+  { slug: "404", caminho: "/404" },
+];
+
+// Onde existe coluna girando: a capa (4 linhas) e as 4 cabeças de portão.
+const ROTAS_COM_GIRO = new Set(["capa", "passagens-aereas", "hoteis", "pacotes", "aluguel-de-carro"]);
+
+const LARGURAS = [
+  { nome: "360", largura: 360, altura: 780 }, // I6 soma 360×640 à parte, abaixo
+  { nome: "736", largura: 736, altura: 1024 }, // I8 — o breakpoint real de 46rem
+  { nome: "768", largura: 768, altura: 1024 },
+  { nome: "1440", largura: 1440, altura: 900 },
+];
 
 const TIPOS = {
   ".html": "text/html; charset=utf-8",
@@ -62,77 +103,105 @@ const base = `http://localhost:${PORTA}`;
 const navegador = await chromium.launch();
 const problemas = [];
 
-// ── 3 larguras × 4 posições de rolagem ──────────────────────────────────────
-for (const [nome, largura, altura] of [
-  ["360", 360, 780],
-  ["768", 768, 1024],
-  ["1440", 1440, 900],
-]) {
-  const ctx = await navegador.newContext({ viewport: { width: largura, height: altura } });
-  const pagina = await ctx.newPage();
-  const console_ = [];
-  pagina.on("console", (m) => m.type() === "error" && console_.push(m.text()));
-  pagina.on("pageerror", (e) => console_.push(`pageerror: ${e.message}`));
+/** Teto pequeno de propósito (decisão 4): mais que isso estrangula a própria
+ *  máquina que está medindo LCP no bloco final, que roda depois e serial. */
+async function emLotes(itens, teto, tarefa) {
+  const fila = [...itens];
+  const resultados = [];
+  await Promise.all(
+    Array.from({ length: teto }, async () => {
+      while (fila.length) {
+        const item = fila.shift();
+        resultados.push(await tarefa(item));
+      }
+    })
+  );
+  return resultados;
+}
 
-  await pagina.goto(base, { waitUntil: "networkidle" });
-  await pagina.evaluate(() => document.fonts.ready);
+// ── varredura principal: 9 rotas × 4 larguras × 4 posições de rolagem ───────
+async function varrerRota(rota) {
+  const locais = [];
+  for (const L of LARGURAS) {
+    const ctx = await navegador.newContext({ viewport: { width: L.largura, height: L.altura } });
+    const pagina = await ctx.newPage();
+    const consoleMsgs = [];
+    pagina.on("console", (m) => m.type() === "error" && consoleMsgs.push(m.text()));
+    pagina.on("pageerror", (e) => consoleMsgs.push(`pageerror: ${e.message}`));
 
-  const alturaTotal = await pagina.evaluate(() => document.documentElement.scrollHeight);
-  for (const pct of [0, 33, 66, 100]) {
-    await pagina.evaluate((p) => {
-      const max = document.documentElement.scrollHeight - innerHeight;
-      scrollTo({ top: (max * p) / 100, behavior: "instant" });
-    }, pct);
-    await pagina.waitForTimeout(700); // deixa a pá terminar de virar
-    await pagina.screenshot({ path: `${SAIDA}/${nome}-${String(pct).padStart(3, "0")}.png` });
+    await pagina.goto(base + rota.caminho, { waitUntil: "networkidle" });
+    await pagina.evaluate(() => document.fonts.ready);
+
+    for (const pct of [0, 33, 66, 100]) {
+      await pagina.evaluate((p) => {
+        const max = document.documentElement.scrollHeight - innerHeight;
+        scrollTo({ top: (max * p) / 100, behavior: "instant" });
+      }, pct);
+      await pagina.waitForTimeout(700); // deixa a pá terminar de virar
+      await pagina.screenshot({ path: `${SAIDA}/${rota.slug}-${L.nome}-${String(pct).padStart(3, "0")}.png` });
+    }
+
+    const estouro = await pagina.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+    );
+    if (estouro > 1) locais.push(`${rota.slug} @ ${L.nome}px: corpo rola ${estouro}px para o lado`);
+    if (consoleMsgs.length) locais.push(`${rota.slug} @ ${L.nome}px: console sujo — ${consoleMsgs.join(" | ")}`);
+    await ctx.close();
   }
 
-  // Estouro horizontal: o corpo nunca pode rolar para o lado.
-  const estouro = await pagina.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-  if (estouro > 1) problemas.push(`${nome}px: corpo rola ${estouro}px para o lado`);
-  if (console_.length) problemas.push(`${nome}px: console sujo — ${console_.join(" | ")}`);
+  // I6 — FR-011/T042: a quarta linha da capa visível ou meio-visível em
+  // 360×640 (nem sempre igual a 360×780, que é a largura da varredura acima).
+  if (rota.slug === "capa") {
+    const ctx = await navegador.newContext({ viewport: { width: 360, height: 640 } });
+    const pagina = await ctx.newPage();
+    await pagina.goto(base + rota.caminho, { waitUntil: "networkidle" });
+    await pagina.evaluate(() => document.fonts.ready);
+    await pagina.screenshot({ path: `${SAIDA}/capa-360x640-topo.png` });
+    const linhas = await pagina.locator(".linhas > li").count();
+    const quarta = pagina.locator(".linhas > li").nth(3);
+    const visivel = (await quarta.boundingBox())?.y < 640;
+    if (linhas !== 4) locais.push(`capa: painel tem ${linhas} linhas, deveria ter exatamente 4 (FR-008)`);
+    if (!visivel) locais.push("capa @ 360×640: a quarta linha está completamente abaixo da dobra (FR-011)");
+    await ctx.close();
+  }
 
-  console.log(`${nome}px  altura ${alturaTotal}px  console ${console_.length ? "SUJO" : "limpo"}  estouro ${estouro}px`);
-  await ctx.close();
+  console.log(`${rota.slug.padEnd(18)} varrido  ${locais.length ? `${locais.length} problema(s)` : "sem problemas"}`);
+  return locais;
 }
 
-// ── quadro de hover: a camada de ponteiro ───────────────────────────────────
-{
+problemas.push(...(await emLotes(ROTAS, 4, varrerRota)).flat());
+
+// ── quadro de hover: a camada de ponteiro, só onde há coluna girando ────────
+for (const slug of ROTAS_COM_GIRO) {
+  const rota = ROTAS.find((r) => r.slug === slug);
   const ctx = await navegador.newContext({ viewport: { width: 1440, height: 900 } });
   const pagina = await ctx.newPage();
-  await pagina.goto(base, { waitUntil: "networkidle" });
+  await pagina.goto(base + rota.caminho, { waitUntil: "networkidle" });
   await pagina.evaluate(() => document.fonts.ready);
-  await pagina.locator(".linha").first().hover();
+  const alvoHover = slug === "capa" ? ".linha" : ".cabeca-portao__volta";
+  await pagina.locator(alvoHover).first().hover();
   await pagina.waitForTimeout(600);
-  await pagina.screenshot({ path: `${SAIDA}/1440-hover.png`, clip: { x: 0, y: 0, width: 1440, height: 900 } });
-  const virou = await pagina.locator(".linha").first().locator(".status__b").isVisible();
-  if (!virou) problemas.push("hover: a face B do status não apareceu");
-  console.log(`hover   status virou: ${virou}`);
+  await pagina.screenshot({ path: `${SAIDA}/${slug}-1440-hover.png` });
+  if (slug === "capa") {
+    const virou = await pagina.locator(".linha").first().locator(".status__b").isVisible();
+    if (!virou) problemas.push("capa @ hover: a face B do status não apareceu");
+  }
   await ctx.close();
 }
+console.log(`hover   ${ROTAS_COM_GIRO.size} rota(s) com coluna girando`);
 
-// ── quadros da pá caindo: a matéria em movimento ────────────────────────────
+// ── quadros da pá caindo: a matéria em movimento, mesmas 5 rotas ────────────
 // Quadro parado não prova a peça. A pá tem corpo (duas metades, vinco, aresta
-// acesa) e uma camada de luz que acende conforme ela se vira para a fonte — se
+// acesa) e uma camada de luz que acende conforme se vira para a fonte — se
 // essa camada dessincronizar do giro, a peça acende antes de aterrissar e
-// ninguém percebe olhando a placa parada.
-//
-// Como o quadro é congelado sem gravar vídeo: pausa e rebobina pela Web
-// Animations API. NÃO dá para fazer isso trocando `--pa-giro` no CSS — o
-// `animation-delay` é resolvido quando a animação nasce e o Chromium não
-// reinicia uma animação em curso porque a custom property que alimenta o delay
-// mudou. Foi a primeira tentativa e ela media sombra 0.00 nos três quadros,
-// que é exatamente o que se veria se a camada estivesse quebrada: o falso
-// negativo mais perigoso que existe, porque parece um achado.
-//
-// Todas as pás vão para o MESMO ponto da linha do tempo. A pá 0 nasce com
-// delay negativo de um giro, então esse ponto cai dentro da queda dela; as
-// outras sete têm delay positivo, ainda não começaram, e o `both` as segura no
-// quadro 0 — que é a pá fora de vista. Uma peça caindo, sete guardadas.
-{
+// ninguém percebe olhando a placa parada. Congelado pela Web Animations API a
+// partir do primeiro `.coluna-destino__pa` de cada rota — funciona igual nas
+// 5, porque o primitivo é o mesmo (T009) em qualquer N.
+for (const slug of ROTAS_COM_GIRO) {
+  const rota = ROTAS.find((r) => r.slug === slug);
   const ctx = await navegador.newContext({ viewport: { width: 1440, height: 900 } });
   const pagina = await ctx.newPage();
-  await pagina.goto(base, { waitUntil: "networkidle" });
+  await pagina.goto(base + rota.caminho, { waitUntil: "networkidle" });
   await pagina.evaluate(() => document.fonts.ready);
 
   const lidas = [];
@@ -142,9 +211,7 @@ for (const [nome, largura, altura] of [
     ["queda-fim", 260],
   ]) {
     await pagina.evaluate((local) => {
-      const pas = document.getAnimations().filter((a) => a.effect?.target?.classList?.contains("destino__pa"));
-      // O delay é o mesmo para a pá 0 e para o ::before dela — os dois andam
-      // no mesmo ciclo, e é essa sincronia que o quadro está aqui para provar.
+      const pas = document.getAnimations().filter((a) => a.effect?.target?.classList?.contains("coluna-destino__pa"));
       const delay = pas[0].effect.getComputedTiming().delay;
       for (const a of pas) {
         a.pause();
@@ -152,54 +219,135 @@ for (const [nome, largura, altura] of [
       }
     }, local);
     await pagina.waitForTimeout(120);
-    const caixa = await pagina.locator(".destino").boundingBox();
+    const caixa = await pagina.locator(".coluna-destino__janela").first().boundingBox();
     await pagina.screenshot({
-      path: `${SAIDA}/1440-${nome}.png`,
+      path: `${SAIDA}/${slug}-1440-${nome}.png`,
       clip: { x: caixa.x - 8, y: caixa.y - 8, width: Math.min(760, caixa.width + 16), height: caixa.height + 16 },
     });
     lidas.push([
       nome,
-      await pagina.evaluate(
-        () => +getComputedStyle(document.querySelector(".destino__pa"), "::before").opacity
-      ),
+      await pagina.evaluate(() => +getComputedStyle(document.querySelector(".coluna-destino__pa"), "::before").opacity),
     ]);
   }
 
-  // A camada de luz tem que estar escura no começo da queda e ter APAGADO no
-  // fim. Medir só um ponto não prova sincronia: prova que existe uma sombra.
-  // O que prova é a rampa — escuro cedo, claro na aterrissagem.
   const [inicio, , fim] = lidas.map(([, v]) => v);
-  if (!(inicio > 0.5)) problemas.push(`queda: a peça começou o giro a ${inicio.toFixed(2)} de sombra, esperava > 0.5`);
-  if (!(fim < 0.1)) problemas.push(`queda: a peça aterrissou com ${fim.toFixed(2)} de sombra, esperava < 0.1`);
-  console.log(`queda   sombra ${lidas.map(([n, v]) => `${n.replace("queda-", "")} ${v.toFixed(2)}`).join(" → ")}`);
+  if (!(inicio > 0.5)) problemas.push(`${slug} @ queda: começou a ${inicio.toFixed(2)} de sombra, esperava > 0.5`);
+  if (!(fim < 0.1)) problemas.push(`${slug} @ queda: aterrissou com ${fim.toFixed(2)} de sombra, esperava < 0.1`);
+  console.log(`${slug.padEnd(18)} queda   sombra ${lidas.map(([n, v]) => `${n.replace("queda-", "")} ${v.toFixed(2)}`).join(" → ")}`);
   await ctx.close();
 }
 
-// ── quadro com movimento reduzido: o piso ───────────────────────────────────
-{
+// ── quadro com movimento reduzido: o piso, por rota ─────────────────────────
+for (const rota of ROTAS) {
   const ctx = await navegador.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
   const pagina = await ctx.newPage();
-  await pagina.goto(base, { waitUntil: "networkidle" });
+  const consoleMsgs = [];
+  pagina.on("console", (m) => m.type() === "error" && consoleMsgs.push(m.text()));
+  await pagina.goto(base + rota.caminho, { waitUntil: "networkidle" });
   await pagina.evaluate(() => document.fonts.ready);
   await pagina.waitForTimeout(400);
-  await pagina.screenshot({ path: `${SAIDA}/1440-reduzido.png` });
+  await pagina.screenshot({ path: `${SAIDA}/${rota.slug}-1440-reduzido.png` });
 
-  // A pá parada tem que mostrar UM destino, não zero e não oito.
-  const visiveis = await pagina.$$eval(".destino__pa", (ns) =>
-    ns.filter((n) => getComputedStyle(n).opacity !== "0").length
-  );
-  if (visiveis !== 1) problemas.push(`reduced-motion: ${visiveis} destinos visíveis, esperava 1`);
-  console.log(`reduzido  destinos visíveis: ${visiveis}`);
+  if (ROTAS_COM_GIRO.has(rota.slug)) {
+    // Cada COLUNA (não a página inteira) precisa mostrar exatamente 1 destino.
+    const porColuna = await pagina.$$eval(".coluna-destino__janela", (janelas) =>
+      janelas.map((j) => [...j.querySelectorAll(".coluna-destino__pa")].filter((n) => getComputedStyle(n).opacity !== "0").length)
+    );
+    const erradas = porColuna.filter((v) => v !== 1);
+    if (erradas.length) problemas.push(`${rota.slug} @ reduced-motion: ${erradas.length} coluna(s) sem exatamente 1 destino visível`);
+    console.log(`${rota.slug.padEnd(18)} reduzido  colunas: ${porColuna.join(", ")}`);
+  } else {
+    console.log(`${rota.slug.padEnd(18)} reduzido  (sem coluna girando)`);
+  }
+  if (consoleMsgs.length) problemas.push(`${rota.slug} @ reduced-motion: console sujo — ${consoleMsgs.join(" | ")}`);
   await ctx.close();
 }
 
-// ── passagem de teclado ─────────────────────────────────────────────────────
+// ── T051 · o quadro da transição capa → portão ──────────────────────────────
+// Congelado pela Web Animations API a partir de `pagereveal` no documento
+// NOVO — é o único ponto que roda antes de a transição começar. Dois
+// quadros: 60ms (o corpo virando) e 140ms (o corpo praticamente fora — é
+// onde um órfão parado denunciaria o G4 voltando). Falha se qualquer
+// `::view-transition-old(vt-*)` estiver rodando `-ua-view-transition-fade-out`
+// — esse nome de animação É o bug do G4.
 {
   const ctx = await navegador.newContext({ viewport: { width: 1440, height: 900 } });
   const pagina = await ctx.newPage();
-  await pagina.goto(base, { waitUntil: "networkidle" });
+  await pagina.goto(base + "/", { waitUntil: "networkidle" });
+  await pagina.evaluate(() => document.fonts.ready);
+
+  await pagina.evaluate(() => {
+    window.__quadros = [];
+    document.addEventListener("pagereveal", (e) => {
+      if (!e.viewTransition) return;
+      e.viewTransition.ready.then(() => {
+        for (const a of document.getAnimations()) {
+          const pe = a.effect?.pseudoElement ?? "";
+          if (pe.startsWith("::view-transition")) a.pause();
+        }
+      });
+    });
+  });
+  await pagina.locator(".linha").first().click();
+  await pagina.waitForURL(/passagens-aereas/, { timeout: 3000 }).catch(() => {});
+  await pagina.waitForTimeout(200);
+
+  for (const [nome, t] of [
+    ["60ms", 60],
+    ["140ms", 140],
+  ]) {
+    const fadeEncontrado = await pagina.evaluate((t) => {
+      let achado = false;
+      for (const a of document.getAnimations()) {
+        const pe = a.effect?.pseudoElement ?? "";
+        if (!pe.startsWith("::view-transition")) continue;
+        a.currentTime = t;
+        if (pe.includes("vt-") && pe.includes("old") && a.animationName === "-ua-view-transition-fade-out") achado = true;
+      }
+      return achado;
+    }, t);
+    await pagina.screenshot({ path: `${SAIDA}/transicao-capa-portao-${nome}.png` });
+    if (fadeEncontrado) problemas.push(`transição @ ${nome}: um vt-* órfão está rodando o fade padrão do navegador (G4 voltou)`);
+  }
+  console.log("transição   quadros de 60ms e 140ms congelados, ver logos/_verificacao/transicao-*.png");
+  await ctx.close();
+}
+
+// ── T051 · a prova da degradação, no engine que NÃO faz VT cross-document ───
+// Confirmado em 2026-08-28 (Firefox 144): suporta view-transition-name e
+// document.startViewTransition (same-document), mas NÃO onpagereveal — é essa
+// propriedade, e não CSS.supports, que separa os dois grupos de engine.
+{
+  const nav2 = await firefox.launch();
+  const ctx = await nav2.newContext({ viewport: { width: 1440, height: 900 } });
+  const pagina = await ctx.newPage();
+  const consoleMsgs = [];
+  pagina.on("console", (m) => m.type() === "error" && consoleMsgs.push(m.text()));
+  pagina.on("pageerror", (e) => consoleMsgs.push(`pageerror: ${e.message}`));
+
+  const suportaPageReveal = await pagina.evaluate(() => "onpagereveal" in window);
+  await pagina.goto(base + "/", { waitUntil: "networkidle" });
+  await pagina.locator(".linha").first().click();
+  await pagina.waitForURL(/passagens-aereas/, { timeout: 3000 }).catch(() => {});
+  const h1 = await pagina.locator("h1").first().isVisible();
+  const objeto = await pagina.locator(".cabeca-portao__objeto").isVisible();
+  await pagina.screenshot({ path: `${SAIDA}/degradacao-firefox-passagens-aereas.png` });
+
+  if (suportaPageReveal) problemas.push("degradação: Firefox agora suporta onpagereveal — o engine da prova mudou, revisar SC-009");
+  if (!h1 || !objeto) problemas.push("degradação (Firefox): conteúdo do portão incompleto após a navegação");
+  if (consoleMsgs.length) problemas.push(`degradação (Firefox): console sujo — ${consoleMsgs.join(" | ")}`);
+  console.log(`degradação  Firefox onpagereveal=${suportaPageReveal}  conteúdo completo=${h1 && objeto}`);
+  await ctx.close();
+  await nav2.close();
+}
+
+// ── passagem de teclado, por rota ────────────────────────────────────────────
+for (const rota of ROTAS) {
+  const ctx = await navegador.newContext({ viewport: { width: 1440, height: 900 } });
+  const pagina = await ctx.newPage();
+  await pagina.goto(base + rota.caminho, { waitUntil: "networkidle" });
   const parada = [];
-  for (let i = 0; i < 22; i++) {
+  for (let i = 0; i < 26; i++) {
     await pagina.keyboard.press("Tab");
     const alvo = await pagina.evaluate(() => {
       const a = document.activeElement;
@@ -217,14 +365,14 @@ for (const [nome, largura, altura] of [
     parada.push(alvo);
   }
   const semAnel = parada.filter((p) => !p.anel && p.visivel);
-  if (semAnel.length) problemas.push(`teclado: ${semAnel.length} parada(s) sem anel de foco`);
-  console.log(`teclado ${parada.length} paradas, ${semAnel.length} sem anel`);
-  parada.forEach((p, i) => console.log(`   ${String(i + 1).padStart(2)} ${p.anel ? "▣" : "▢"} <${p.tag}> ${p.texto}`));
+  if (semAnel.length) problemas.push(`${rota.slug} @ teclado: ${semAnel.length} parada(s) sem anel de foco`);
+  console.log(`${rota.slug.padEnd(18)} teclado ${parada.length} paradas, ${semAnel.length} sem anel`);
   await ctx.close();
 }
 
-// ── LCP, CLS e peso, com CPU 4× estrangulada ────────────────────────────────
-{
+// ── LCP, CLS e peso, com CPU 4× estrangulada — POR ROTA, SERIAL ─────────────
+// Medida sob contenção não é medida: este bloco não entra no `emLotes`.
+for (const rota of ROTAS) {
   const amostras = [];
   for (let i = 0; i < 5; i++) {
     const ctx = await navegador.newContext({ viewport: { width: 1440, height: 900 } });
@@ -235,7 +383,7 @@ for (const [nome, largura, altura] of [
     });
     const cdp = await ctx.newCDPSession(pagina);
     await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
-    await pagina.goto(base, { waitUntil: "load" });
+    await pagina.goto(base + rota.caminho, { waitUntil: "load" });
     await pagina.waitForTimeout(2500);
     const m = await pagina.evaluate(
       () =>
@@ -262,12 +410,12 @@ for (const [nome, largura, altura] of [
   const lcp = Math.round(mediana(amostras.map((a) => a.lcp)));
   const cls = Math.max(...amostras.map((a) => a.cls));
   const js = Math.max(...amostras.map((a) => a.bytesJs));
-  console.log(`\nLCP mediana ${lcp}ms (alvo ${ORCAMENTO.lcp})  amostras ${amostras.map((a) => Math.round(a.lcp)).join(", ")}`);
-  console.log(`elemento de LCP: ${amostras[0].alvo}`);
-  console.log(`CLS pior ${cls.toFixed(4)} (alvo ${ORCAMENTO.cls})   JS próprio ${js} bytes (orçamento ${ORCAMENTO.js})`);
-  if (lcp > ORCAMENTO.lcp) problemas.push(`LCP ${lcp}ms acima do orçamento (${ORCAMENTO.lcp}ms)`);
-  if (cls > ORCAMENTO.cls) problemas.push(`CLS ${cls.toFixed(4)} acima do orçamento (${ORCAMENTO.cls})`);
-  if (js > ORCAMENTO.js) problemas.push(`${js} bytes de JS, o orçamento declarado é ${ORCAMENTO.js}`);
+  console.log(
+    `${rota.slug.padEnd(18)} LCP ${lcp}ms (orçamento ${ORCAMENTO.lcp})  CLS ${cls.toFixed(4)} (orçamento ${ORCAMENTO.cls})  JS ${js}B  elemento ${amostras[0].alvo}`
+  );
+  if (lcp > ORCAMENTO.lcp) problemas.push(`${rota.slug}: LCP ${lcp}ms acima do orçamento (${ORCAMENTO.lcp}ms)`);
+  if (cls > ORCAMENTO.cls) problemas.push(`${rota.slug}: CLS ${cls.toFixed(4)} acima do orçamento (${ORCAMENTO.cls})`);
+  if (js > ORCAMENTO.js) problemas.push(`${rota.slug}: ${js} bytes de JS, o orçamento declarado é ${ORCAMENTO.js}`);
 }
 
 await navegador.close();

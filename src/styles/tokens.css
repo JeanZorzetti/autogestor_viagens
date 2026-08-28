@@ -120,6 +120,13 @@
   --celula: 4.5rem; /* altura da linha da placa em ≥720px */
   --celula-mobile: 3.75rem;
 
+  /* O painel é um objeto PARAFUSADO NUMA PAREDE (FR-009): a moldura precisa
+     ficar visível em toda a volta, com --fundo respirando fora dela. "Ele não
+     encosta nas quatro bordas do viewport" era a única regra geométrica desta
+     spec sem número (A1, achado do /speckit-analyze) — este token fecha o
+     número. */
+  --painel-respiro: var(--e-4);
+
   --largura: 74rem;
   --leitura: 62ch;
 
@@ -192,13 +199,19 @@
   --ease-pa: cubic-bezier(0.28, 0.86, 0.12, 1);
   --ease-saida: cubic-bezier(0, 0, 0.2, 1);
 
-  /* Quanto tempo cada destino fica parado antes de a pá virar para o próximo,
-     quanto dura o giro, e quantos destinos existem. Os três entram na conta
-     do keyframe `ciclo` em global.css — mexer num sem refazer a conta
-     dessincroniza a placa. */
+  /* Quanto tempo cada destino fica parado antes de a pá virar para o
+     próximo, e quanto dura o giro. Os dois entram na conta das quatro
+     tabelas de keyframe `ciclo-N` de `global.css` — mexer num sem refazer a
+     conta dessincroniza a placa. Não existe mais um `--pa-total` único: cada
+     coluna tem N diferente (5/7/8/11), então o ciclo (`N × --pa-parada`) é
+     calculado por coluna, não escrito aqui. */
   --pa-parada: 2.2s;
-  --pa-giro: 0.176s; /* 1% do ciclo — o tempo de uma pá cair e travar */
-  --pa-total: 17.6s; /* --pa-parada × 8 destinos */
+  --pa-giro: 0.176s; /* o tempo de uma pá cair e travar — IGUAL nas 4 colunas */
+  /* Atraso entre as quatro linhas do painel virando em cascata (FR-006).
+     Negativo quando aplicado: cada linha nasce adiantada na própria linha do
+     tempo, sem timer e sem JS. 120ms contra um giro de 176ms faz as pás se
+     sobreporem parcialmente — a cascata lê como UMA onda descendo o painel. */
+  --pa-cascata: 120ms;
 }
 
 /* Métrica do fallback, medida com logos/metricas-fonte.mjs contra a pilha mono

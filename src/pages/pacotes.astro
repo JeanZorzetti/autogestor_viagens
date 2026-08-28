@@ -1,0 +1,93 @@
+---
+import Base from "../layouts/Base.astro";
+import CabecaDePortao from "../components/CabecaDePortao.astro";
+import { AREA_SERVIDA, COBERTURA, FICHA, META_PORTAO, PACOTE_COBERTURA, PRODUTOS } from "../data/conteudo";
+import { EXTERNOS, SITE, whatsapp } from "../consts";
+
+const produto = PRODUTOS.find((p) => p.codigo === "PCT")!;
+const { titulo, descricao, bluf } = META_PORTAO.PCT;
+const AJUDA = whatsapp("Olá! Estou montando um pacote pelo site e preciso de ajuda.");
+
+const site = new URL(SITE.url);
+const abs = (p: string) => new URL(p, site).href;
+const servicoSchema = {
+  "@type": "Service",
+  "@id": `${abs(produto.rota)}#servico`,
+  serviceType: produto.nome,
+  name: titulo,
+  description: bluf,
+  provider: { "@id": abs("/#agencia") },
+  areaServed: AREA_SERVIDA,
+  url: abs(produto.rota),
+};
+---
+
+<Base titulo={titulo} descricao={descricao} schema={[servicoSchema]}>
+  <article class="portao">
+    <CabecaDePortao produto={produto} titulo={produto.nome} bluf={bluf} />
+
+    <div class="container">
+      <section class="portao__secao">
+        <h2 class="portao__secao-titulo">O que esta busca cobre</h2>
+        <ul class="cobertura">
+          {COBERTURA.PCT.map((item) => <li>{item}</li>)}
+        </ul>
+      </section>
+
+      <section class="portao__secao">
+        <h2 class="portao__secao-titulo">O que entra e o que não entra</h2>
+        <div class="detalhe--duas-colunas">
+          <div class="detalhe__coluna detalhe__coluna--entra">
+            <h3>Entra no mesmo preço</h3>
+            <ul>
+              {PACOTE_COBERTURA.entra.map((item) => <li>{item}</li>)}
+            </ul>
+          </div>
+          <div class="detalhe__coluna detalhe__coluna--nao-entra">
+            <h3>Não entra</h3>
+            <ul>
+              {PACOTE_COBERTURA.naoEntra.map((item) => <li>{item}</li>)}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="portao__secao">
+        <h2 class="portao__secao-titulo">Ficha</h2>
+        <ul class="ficha">
+          {
+            FICHA.PCT.map((item) => (
+              <li class="ficha__item">
+                <span class="ficha__rotulo">{item.rotulo}</span>
+                <span>
+                  <span class="ficha__valor">{item.valor}</span>
+                  {item.fonte && (
+                    <a class="ficha__fonte" href={item.fonte.href}>
+                      {item.fonte.texto}
+                    </a>
+                  )}
+                </span>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
+      <section class="portao__acao">
+        <p class="portao__acao-lead">
+          A busca abre numa aba nova, na plataforma de reservas — o visual muda, e é esperado. Lá dentro você escolhe
+          <strong> Pacotes (Voo + Hotel)</strong> e segue com a montagem.
+        </p>
+        <a class="btn btn--primario" href={EXTERNOS.busca} target="_blank" rel="noopener">
+          Abrir a busca<span class="visualmente-oculto"> — nova aba, na plataforma de reservas</span>
+        </a>
+        <p class="depois-do-btn">
+          Dúvida no meio da compra?
+          <a href={AJUDA} target="_blank" rel="noopener">
+            Chame no WhatsApp<span class="visualmente-oculto"> — abre em nova aba</span></a
+          >.
+        </p>
+      </section>
+    </div>
+  </article>
+</Base>

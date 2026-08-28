@@ -1,0 +1,85 @@
+---
+import Base from "../layouts/Base.astro";
+import CabecaDePortao from "../components/CabecaDePortao.astro";
+import { AREA_SERVIDA, COBERTURA, COMPANHIAS_AER, FICHA, META_PORTAO, PRODUTOS } from "../data/conteudo";
+import { EXTERNOS, SITE, whatsapp } from "../consts";
+
+const produto = PRODUTOS.find((p) => p.codigo === "AER")!;
+const { titulo, descricao, bluf } = META_PORTAO.AER;
+const AJUDA = whatsapp("Olá! Estou comprando passagem pelo site e preciso de ajuda.");
+
+// Nó de serviço do portão (contrato dados-estruturados.md §2): referencia a
+// organização já existente na capa, nunca a repete (Princípio II · S2).
+// Nenhum offers/price/priceRange — Princípio VI e S4.
+const site = new URL(SITE.url);
+const abs = (p: string) => new URL(p, site).href;
+const servicoSchema = {
+  "@type": "Service",
+  "@id": `${abs(produto.rota)}#servico`,
+  serviceType: produto.nome,
+  name: titulo,
+  description: bluf,
+  provider: { "@id": abs("/#agencia") },
+  areaServed: AREA_SERVIDA,
+  url: abs(produto.rota),
+};
+---
+
+<Base titulo={titulo} descricao={descricao} schema={[servicoSchema]}>
+  <article class="portao">
+    <CabecaDePortao produto={produto} titulo={produto.nome} bluf={bluf} />
+
+    <div class="container">
+      <section class="portao__secao">
+        <h2 class="portao__secao-titulo">O que esta busca cobre</h2>
+        <ul class="cobertura">
+          {COBERTURA.AER.map((item) => <li>{item}</li>)}
+        </ul>
+      </section>
+
+      <section class="portao__secao">
+        <h2 class="portao__secao-titulo">Companhias na mesma comparação</h2>
+        <ul class="detalhe--comparacao">
+          {COMPANHIAS_AER.map((c) => <li>{c}</li>)}
+        </ul>
+      </section>
+
+      <section class="portao__secao">
+        <h2 class="portao__secao-titulo">Ficha</h2>
+        <ul class="ficha">
+          {
+            FICHA.AER.map((item) => (
+              <li class="ficha__item">
+                <span class="ficha__rotulo">{item.rotulo}</span>
+                <span>
+                  <span class="ficha__valor">{item.valor}</span>
+                  {item.fonte && (
+                    <a class="ficha__fonte" href={item.fonte.href}>
+                      {item.fonte.texto}
+                    </a>
+                  )}
+                </span>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
+      <section class="portao__acao">
+        <p class="portao__acao-lead">
+          A busca abre numa aba nova, na plataforma de reservas — o visual muda, e é esperado. Lá dentro você escolhe
+          <strong> Voos</strong> e segue com a compra.
+        </p>
+        <a class="btn btn--primario" href={EXTERNOS.busca} target="_blank" rel="noopener">
+          Abrir a busca<span class="visualmente-oculto"> — nova aba, na plataforma de reservas</span>
+        </a>
+        <p class="depois-do-btn">
+          Dúvida no meio da compra?
+          <a href={AJUDA} target="_blank" rel="noopener">
+            Chame no WhatsApp<span class="visualmente-oculto"> — abre em nova aba</span></a
+          >.
+        </p>
+      </section>
+    </div>
+  </article>
+</Base>

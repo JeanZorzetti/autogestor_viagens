@@ -81,12 +81,20 @@ const PARES = {
     ["texto / placa-alto", "--texto", "--placa-alto", 4.5],
     ["texto / placa-baixo (o pé do painel)", "--texto", "--placa-baixo", 4.5],
     ["texto-2 / placa-baixo", "--texto-2", "--placa-baixo", 4.5],
+    // 001-painel-e-portoes: a cabeça do portão (H1 + bluf) é a MESMA matéria
+    // de gradiente que a placa da capa — os dois extremos precisam do par
+    // completo, não só um lado de cada. Fechando os dois que faltavam.
+    ["texto-2 (bluf da cabeça de portão) / placa-alto", "--texto-2", "--placa-alto", 4.5],
     ["texto-3 / placa-alto (o extremo claro)", "--texto-3", "--placa-alto", 4.5],
+    ["texto-3 (rótulo, cabeça de portão) / placa-baixo", "--texto-3", "--placa-baixo", 4.5],
     // O <header> virou trilho de metal recuado, mais escuro que tudo. Texto
     // sobre ele ficou MAIS legível, não menos — mas medido, não presumido.
     ["texto (marca na faixa) / moldura", "--texto", "--moldura", 4.5],
     ["texto-3 (GYN Goiânia) / moldura", "--texto-3", "--moldura", 4.5],
     ["marca (busca aberta 24h) / moldura", "--marca", "--moldura", 4.5],
+    // 001-painel-e-portoes: o campo único da cabeça do portão CAR (retirada
+    // ‖ devolução) é o mesmo recesso de moldura da janela de destino.
+    ["marca-alta (valor do campo, cabeça do CAR) / moldura", "--marca-alta", "--moldura", 4.5],
     ["anel de foco / moldura", "--foco", "--moldura", 3],
   ],
   "a pá — texto sobre as duas metades da peça": [
@@ -97,6 +105,11 @@ const PARES = {
     ["marca-alta (destino) / pá metade de baixo", "--marca-alta", "--pa-baixo", 4.5],
     ["marca (código AER/HTL) / pá metade de cima", "--marca", "--pa-cima", 4.5],
     ["marca (código AER/HTL) / pá metade de baixo", "--marca", "--pa-baixo", 4.5],
+    // 001-painel-e-portoes: o bloco 3 do portão PCT (duasMetades) rotula cada
+    // metade da pá grande ("VOO" / "HTL"). texto-3 reprovou a 4.43:1 sobre
+    // pa-cima (abaixo do 4.5 mínimo) — texto-2 é o que está no CSS.
+    ["texto-2 (rótulo VOO/HTL, cabeça do PCT) / pá metade de cima", "--texto-2", "--pa-cima", 4.5],
+    ["texto-2 (rótulo VOO/HTL, cabeça do PCT) / pá metade de baixo", "--texto-2", "--pa-baixo", 4.5],
   ],
   "marca — o laranja medido das peças de captação": [
     // #f88400 é o laranja exato de "AGORA!" e do botão BUSCAR nas peças de
@@ -121,6 +134,12 @@ const PARES = {
     // sobrescreve com a tinta escura. Os dois casos estão medidos.
     ["anel de foco / fundo", "--foco", "--fundo", 3],
     ["anel de foco / placa", "--foco", "--placa", 3],
+    // 001-painel-e-portoes: a linha do painel (e a linha de "voltar" reusada
+    // na cabeça do portão) troca de fundo no foco — o anel pode aparecer
+    // sobre placa-linha, ou sobre os dois extremos do gradiente da cabeça.
+    ["anel de foco / placa-linha (linha focada)", "--foco", "--placa-linha", 3],
+    ["anel de foco / placa-alto (cabeça de portão)", "--foco", "--placa-alto", 3],
+    ["anel de foco / placa-baixo (cabeça de portão)", "--foco", "--placa-baixo", 3],
     ["anel de foco DENTRO do botão (tinta) / marca", "--tinta-sobre-marca", "--marca", 3],
     ["borda-forte (contorno do btn) / fundo", "--borda-forte", "--fundo", 3],
     ["borda-forte / placa", "--borda-forte", "--placa", 3],

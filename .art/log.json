@@ -162,5 +162,77 @@
    "G27_ponteiro_exclusivo": "fechado — a camada de ponteiro so troca 24H por ABRIR; o link ja diz para onde vai e no toque a informacao continua visivel.",
    "G33_estrutura_repetida": "fechado — Indice, e nem o hub, nem o coopluz, nem o seguros usam. Nav e rodape tambem trocados (faixa de status / uma linha)."
   }
+ },
+ {
+  "data": "2026-08-28",
+  "projeto": "viagens",
+  "pagina": "/ (painel) + /passagens-aereas + /hoteis + /pacotes + /aluguel-de-carro (4 rotas novas)",
+  "direcao": "solari",
+  "tipo": "spec-kit: 001-painel-e-portoes",
+  "base": "as duas entradas anteriores deste log (materializacao da solari, 2026-08-27)",
+  "pedido": "Spec-kit completo: specify -> clarify -> plan -> tasks -> analyze -> implement. O pedido original foi 'mais /art-direction, grande o suficiente para uma spec via spec-kit', com o dono escolhendo A+B numa spec so: os quatro portoes de embarque (paginas de produto) e a escala de heroi do painel da capa.",
+  "eixos": {
+   "materia": "geometria + volume, herdada",
+   "motor": "autonomo, agora 4x em paralelo (cascata de 120ms)",
+   "banda": "escura"
+  },
+  "diagnostico": "O site era uma placa com uma pa: 5 rotas, das quais 1 vendia alguma coisa, e um widget giratorio ao lado do H1 mostrando 8 cidades. As quatro linhas da placa eram links diretos para fora do dominio -- nenhuma pagina propria sobre passagem, hotel, pacote ou carro existia. Rota de resultado aberta direto na OnerTravel (medido, R1) afirma 'nenhum voo foi encontrado' a quem nao buscou -- Principio IV proibiria mandar trafego organico para la sem uma pagina propria antes.",
+  "o_que_mudou": [
+   "DADO ANTES DE FORMA: DESTINOS (8 cidades) morreu. Cada produto ganhou a propria lista de destino (pais/regiao, nunca cidade -- R2, decisao do dono: 'a busca vende Orlando' e afirmacao sobre inventario de terceiro) com comprimentos COPRIMOS -- 11/8/7/5 -- para a combinacao visivel na tela nao se repetir antes de 1h52min56s (mmc x --pa-parada). SC-012 observa 2 minutos.",
+   "QUATRO TABELAS DE KEYFRAME em vez de uma: seletor de @keyframes nao aceita var(), entao ciclo-5/7/8/11 sao quatro tabelas escritas pela formula giro% = --pa-giro / (N x --pa-parada) x 100, com a mesma sobreposicao deliberada de sempre (a saida vaza alem do slot, senao a janela pisca em branco). O teste RECALCULA as quatro pela formula -- e a mitigacao do maior risco tecnico da feature.",
+   "A COLUNA DE DESTINO VIROU PRIMITIVO REUSAVEL (.coluna-destino__janela / __pa): animation-name e animation-duration lidos de custom properties (--ciclo-nome, --n) -- o que e proibido e var() dentro do SELETOR do keyframe, nao na propriedade que o invoca. 8 usos no site: as 4 linhas do painel e as 4 cabecas de portao.",
+   "O WIDGET .destino MORREU (T038): as 4 pas viraram as 4 colunas DENTRO das linhas do painel, em cascata -- animation-delay soma um segundo termo, --linha x -120ms, cada linha nascendo adiantada em relacao a anterior. Custo: 0 byte.",
+   "MUDANCA DE CONTRATO DA LINHA: href passou de EXTERNOS.busca (externo, nova aba) para produto.rota (interno, mesma aba). O aviso 'abre em nova aba' migrou do painel para o bloco 5 de cada portao, que e onde o link externo passou a existir -- anuncia-lo num link que nao abre e o Principio IV aplicado a leitor de tela.",
+   "O PAINEL VIROU OBJETO PARAFUSADO NA PAREDE (FR-009): margin (nao so padding) nas quatro direcoes -- --painel-respiro, o token que fecha o unico requisito geometrico da spec que nao tinha numero (A1). Mais min-height: 100svh com fallback 100vh, sem depender do 100vh sozinho (bug classico de mobile).",
+   "QUATRO PORTOES NOVOS, macroestrutura propria (5 blocos -- cabeca, cobertura, detalhe ampliado, ficha, acao), diferente do Indice da capa e do .doc das fichas legais. REGRA DE VARIACAO (FR-020): cada um amplia um objeto diferente na cabeca -- AER par de pas (ida / volta), HTL pa unica sobre uma faixa de noites, PCT pa de duas metades com o VINCO como a emenda voo+hotel (FR-022, a peca carrega o argumento), CAR um campo unico com retirada e devolucao lado a lado.",
+   "TRANSICAO CAPA -> PORTAO por View Transitions cross-document declarativas (@view-transition, 0 ClientRouter, 0 byte): view-transition-name: vt-<codigo> na coluna ativada e no objeto da cabeca correspondente. G4, achado no /speckit-analyze: os TRES nomes sem par no documento novo recebiam o fade puro padrao do navegador (medido: ainda nitidos e de pe em t=140ms, depois que o corpo ja saiu -- um RASGO, nao um fade). Corrigido dando aos quatro a mesma saida do corpo (pa-sai/pa-entra). Achado colateral: sob prefers-reduced-motion a transicao nao estava desligada -- so as regras de :corpo estavam dentro de no-preference, e sobrava cross-fade padrao nos 5 nomes. Regra propria de reduce fechou.",
+   "verificar.mjs deixou de visitar 1 rota (so a capa) para visitar 9 -- nao foi parametrizar um laco, foi criar um. Ganhou o quadro da transicao (congelado por Web Animations API a partir de pagereveal) e a prova de degradacao no Firefox (onpagereveal ausente e o teste certo -- CSS.supports da falso positivo la, porque o Firefox SUPORTA view-transition same-document e mesmo assim nao faz cross-document)."
+  ],
+  "correcoes_encontradas_olhando": [
+   "FR-011 dizia 'sem 100vh' mas nao dizia quanto sobrava de fato: medido com Playwright direto (nao so lido no CSS), a quarta linha do painel em 360x640 nascia em y=998px -- completamente fora da tela, com .placa medindo 1248px de altura so no mobile. A causa maior era .placa__chamada (o paragrafo do H1) chegando a 6-7 linhas por falta de largura, nao a altura das linhas do painel. Corrigido com -webkit-line-clamp:3 no mobile (o texto INTEIRO continua no DOM/leitor de tela) mais paddings mais enxutos; remedido: y=624px, a linha 4 fica meio-visivel, exatamente o que FR-011 pede.",
+   "logos/contraste.mjs reprovou um par antes de ele existir na tela pintada: o rotulo VOO/HTL na pa grande do PCT (texto-3 sobre --pa-cima) mediu 4.43:1, abaixo do 4.5 minimo. Trocado para texto-2 (que mede acima) nas duas metades -- e o script pegou os DOIS lados da pa, nao so o de cima.",
+   "O teste V7 (todo CTA aponta para EXTERNOS.busca) reprovava /sobre, /privacidade e /termos por conterem a palavra 'OnerTravel' em prosa -- mas a marca aparecer em texto e intencional (FR-023); o que nao pode e o DOMINIO escrito a mao. Regex trocada de /onertravel/i para /onertravel[.]com/i.",
+   "verificar.mjs pos-rewrite: o Firefox instalado no cache local (firefox-1497, citado no handoff do /speckit-analyze) nao batia com a versao que o playwright@1.62.1 deste repo pede (firefox-1538) -- o navegador nao subia. `npx playwright install firefox` resolveu; a prova de degradacao rodou no Firefox 153 real (onpagereveal ausente confirmado de novo, o engine da prova nao mudou)."
+  ],
+  "construido_e_removido": [
+   "Cogitado: nomear so a coluna ativada na transicao de rota (o correto conceitualmente). Investigado e descartado -- nao existe sem JavaScript: @view-transition{types} e estatico por documento (igual para as 4 linhas), :target nao tem fragmento, :focus-visible nao dispara em clique de ponteiro. FR-039 mandaria cortar o requisito; a opcao 2 (os 4 nomes saindo com pa-sai) coube em 0 byte e nao precisou cortar nada.",
+   "Cogitado: um --pa-assento novo (token de tempo) para a camada de luz da pa (::before) nas quatro colunas. Descartado por um numero mais simples que ja estava implicito no CSS original: o inicio da luz sempre foi 1.4x o giro% (1% vira 1.4% em N=8) -- generalizavel sem token novo, so multiplicando."
+  ],
+  "custo": {
+   "faixa": "captacao",
+   "js_gzip_kb": 0,
+   "deps_novas": [],
+   "peso_novo_kb": {
+    "imagens_novas": 0,
+    "fonte_nova": 0
+   },
+   "lcp_ms_por_rota": {
+    "capa": 488,
+    "passagens-aereas": 564,
+    "hoteis": 476,
+    "pacotes": 572,
+    "aluguel-de-carro": 348,
+    "sobre": 320,
+    "privacidade": 388,
+    "termos": 328,
+    "404": 348,
+    "alvo": 800,
+    "condicao": "build servido estatico, CPU 4x estrangulada, 5 amostras/rota, 1440x900"
+   },
+   "cls": 0.0,
+   "contraste_pares": 45,
+   "contraste_reprovados": 0,
+   "teclado": "9 rotas, 0 paradas sem anel de foco",
+   "console": "limpo nas 9 rotas x 4 larguras (360/736/768/1440)",
+   "estouro_horizontal": "nenhum",
+   "sitemap_urls": 8
+  },
+  "gates": {
+   "G9_dado_inventado": "fechado -- painel com exatamente 4 linhas (nenhuma decorativa), destinos pais/regiao verificados por teste contra lista fechada de excecoes de cidade.",
+   "G11_uma_ideia": "fechado -- o verbo continua VIRAR nas 4 camadas, incluindo a transicao de rota nova; nenhum fade isolado (G4 fechou exatamente essa violacao antes de entregar).",
+   "G33_macroestrutura_propria": "fechado -- Portao e a quarta macroestrutura do site (Indice, .doc, e agora Portao), diferente das duas e dos irmaos (pilha .secao do hub/coopluz, grade do seguros).",
+   "G4_fade_na_transicao": "achado e fechado durante o /speckit-analyze desta feature, ver handoff.md e contracts/coreografia.md secao 3 -- entra no log porque mudou o CSS servido, nao so a documentacao.",
+   "governanca_constitucional": "portao de conformidade cumprido: /speckit-analyze rodou antes do /speckit-implement (obrigatorio por esta feature tocar preco, registro e marca de terceiro), fechou 3 pendencias (C2 constituicao, G4 fade, G1/G3 verificar.mjs) antes do codigo comecar."
+  }
  }
 ]

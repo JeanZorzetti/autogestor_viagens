@@ -258,6 +258,53 @@ p {
       opacity: 0;
     }
   }
+
+  /* T047a — Cláusula dos três sem par (G4, contracts/coreografia.md §3).
+     A capa tem QUATRO nomes de transição (vt-aer, vt-htl, vt-pct, vt-car); o
+     documento de destino tem só UM (o portão correspondente). Os outros três
+     não têm par no documento novo e o navegador aplica neles, por padrão, o
+     `-ua-view-transition-fade-out` — fade puro, sozinho, sem giro, medido
+     como um RASGO (op 0,61 e `transform: none` em t=60ms, ainda nítidos e de
+     pé em t=140ms, depois que `::view-transition-old(corpo)` já saiu). Causa:
+     `main { view-transition-name: corpo }` retira do snapshot do ancestral
+     todo elemento com nome PRÓPRIO — nomear as quatro colunas abre quatro
+     buracos no snapshot `corpo` da capa.
+     Não existe seletor que distinga o par do órfão, e não precisa existir: a
+     saída certa para os três é a MESMA do quarto — saem em lockstep com o
+     corpo de onde foram recortados, em vez de ficar para trás. Nomear só a
+     linha ativada foi investigado e não existe sem JavaScript
+     (`@view-transition { types }` é estático por documento; `:target` não
+     tem fragmento; `:focus-visible` não dispara em clique de ponteiro) — ver
+     research.md §R5. Custo: 0 byte. */
+  ::view-transition-old(vt-aer),
+  ::view-transition-old(vt-htl),
+  ::view-transition-old(vt-pct),
+  ::view-transition-old(vt-car) {
+    animation: pa-sai var(--dur-base) var(--ease-pa) both;
+  }
+  ::view-transition-new(vt-aer),
+  ::view-transition-new(vt-htl),
+  ::view-transition-new(vt-pct),
+  ::view-transition-new(vt-car) {
+    animation: pa-entra var(--dur-pa) var(--ease-pa) both;
+  }
+}
+
+/* T047b — Desligar a transição sob movimento reduzido (G4, achado
+   colateral). FR-028 contrata "transição de rota desligada" sob
+   `prefers-reduced-motion: reduce`, e até aqui isso não era verdade: as
+   regras acima moram dentro de `no-preference`, então sob `reduce` elas
+   simplesmente não se aplicam e sobra o CROSS-FADE PADRÃO do navegador nos
+   cinco nomes (`corpo`, `faixa`, `vt-*`), com os grupos ainda transladando —
+   o caminho de acessibilidade virando a versão mais cheia de fade da página.
+   Medido depois desta regra: zero animação de pseudo-elemento de transição,
+   página de destino inteira e correta no primeiro quadro. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
 }
 
 /* ── o piso: sem movimento, a placa nasce inteira e legível ────────────────
@@ -267,14 +314,14 @@ p {
 @media (prefers-reduced-motion: reduce) {
   .entra,
   .vira-no-scroll,
-  .destino__pa {
+  .coluna-destino__pa {
     animation: none !important;
     transform: none !important;
   }
-  .destino__pa {
+  .coluna-destino__pa {
     opacity: 0;
   }
-  .destino__pa:first-child {
+  .coluna-destino__pa:first-child {
     opacity: 1;
   }
   /* A pá parada está TRAVADA, e pá travada está de frente para a luz: a
@@ -282,7 +329,7 @@ p {
      senão o destino nasce escuro atrás de um véu. Ela nasce acesa, e quem faz
      a peça continuar lendo como pá aqui é o corpo — vinco, duas metades,
      aresta —, não o movimento que não existe. */
-  .destino__pa::before {
+  .coluna-destino__pa::before {
     animation: none !important;
     opacity: 0;
   }
@@ -317,7 +364,25 @@ p {
     0 18px 36px -18px color-mix(in oklch, var(--sombra-cor) 45%, transparent);
 }
 .placa {
-  padding-block: var(--e-6) var(--e-10);
+  /* FR-009: o painel não encosta em nenhuma das quatro bordas do viewport —
+     margin nas quatro direções, não só padding interno, para --fundo
+     respirar em volta dele na primeira tela, nas três larguras. Um raio
+     pequeno porque agora ele é um retângulo FLUTUANDO na parede, não uma
+     faixa que sangra até a borda (mesma família de --r-1, um pouco maior —
+     a mesma proporção da janela de destino e do .fecho__caixa). */
+  margin: var(--painel-respiro);
+  border-radius: calc(var(--r-1) + 4px);
+  /* Compacto no mobile (T042/I6 medem 360×640): o bloco --e-8 e --e-4 volta
+     no breakpoint de 62rem, onde sobra altura. */
+  padding-block: var(--e-4) var(--e-6);
+  /* FR-011: a primeira tela sem `100vh` sozinho — `100vh` no mobile mede o
+     viewport MÁXIMO (antes de a barra de endereço recolher), maior que o que
+     a pessoa vê. `100vh` fica como FALLBACK (navegador sem `dvh`); `100svh`
+     é a unidade dinâmica que resolve o bug. O `- 3.5rem` aproxima a faixa de
+     status + a moldura do painel (T054/verificar.mjs mede o resultado real
+     nas três larguras e é o que decide se este número muda). */
+  min-height: calc(100vh - 3.5rem);
+  min-height: calc(100svh - 3.5rem);
 }
 
 /* A faixa de status: o que uma placa de aeroporto tem em cima. É também a
@@ -388,7 +453,7 @@ header {
 }
 
 .placa__topo {
-  padding-block: var(--e-8) var(--e-6);
+  padding-block: var(--e-4) var(--e-3);
 }
 
 h1.placa__titulo {
@@ -407,42 +472,45 @@ h1.placa__titulo em {
 }
 
 .placa__chamada {
-  margin-top: var(--e-5);
+  margin-top: var(--e-3);
   max-width: 48ch;
   font-size: var(--t-lg);
   color: var(--texto-2);
+  /* Abaixo de 46rem os 48ch não limitam nada — a coluna já tem ~30ch de
+     largura própria — e o parágrafo inteiro chegava a 6–7 linhas, sozinho
+     empurrando a quarta linha do painel para fora de 360×640 (FR-011). O
+     texto INTEIRO continua no DOM (leitor de tela e busca em página leem
+     tudo); só o QUADRO mostra três linhas. A "01" logo abaixo já completa o
+     argumento por extenso. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
 }
 .placa__chamada strong {
   color: var(--texto);
   font-weight: 600;
 }
 
-/* ── a célula que vira sozinha: o motor autônomo ───────────────────────────
-   São DESTINOS, não preços. Um nome de cidade é fato; uma tarifa sem consulta
-   seria número inventado, e a tarifa real mora na busca da OnerTravel, muda
-   por rota e por data e não tem como estar correta numa página estática.
-   Zero JS: oito pás no mesmo lugar da grade, cada uma com o mesmo keyframe e
-   um atraso de 1/8 do ciclo. */
-.destino {
-  margin-top: var(--e-6);
-  padding-top: var(--e-5);
-  border-top: 1px solid var(--vinco-sombra);
-  box-shadow: inset 0 1px 0 var(--vinco-luz);
-  font-family: var(--mono);
-}
-/* O rótulo saiu de ao lado e foi para CIMA da janela. Dois motivos, e o
-   segundo é o que decide: (1) é assim que um campo de painel é rotulado, e
-   (2) em 360px o rótulo ao lado deixava ~246px para a janela, e "BUENOS
-   AIRES" a 12 caracteres de mono no piso do --t-pa mede 202px mais folga —
-   cabia por 14px, o que é o mesmo que não caber. */
-.destino__rotulo {
-  display: block;
-  margin-bottom: var(--e-3);
-  font-size: var(--t-xs);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--texto-3);
-}
+/* ── a célula que vira sozinha: o motor autônomo, generalizado ─────────────
+   São DESTINOS, não preços. Um nome de país/região é fato; uma tarifa sem
+   consulta seria número inventado, e a tarifa real mora na busca da
+   OnerTravel, muda por rota e por data e não tem como estar correta numa
+   página estática. Zero JS: N pás no mesmo lugar da grade, cada uma com o
+   mesmo par de keyframes e um atraso de 1/N do ciclo.
+
+   ANTES havia UMA lista de 8 destinos, UM `@keyframes ciclo` e UM widget
+   `.destino` ao lado do H1. Agora há QUATRO listas de comprimento diferente
+   (5/7/8/11 — coprimos entre si, FR-005), a velocidade do giro (--pa-giro) é
+   a MESMA nas quatro colunas — uma pá não gira mais rápido porque a lista é
+   menor — e o widget foi ABSORVIDO: a coluna vive dentro de cada linha do
+   painel (Linha.astro) e dentro de cada cabeça de portão
+   (CabecaDePortao.astro). Seletor de keyframe não aceita `var()`, então são
+   QUATRO tabelas de porcentagem, uma por N.
+
+   `.coluna-destino__janela` e `.coluna-destino__pa` são a peça REUSÁVEL, 8
+   usos no site inteiro. O primitivo não decide o tamanho
+   (font-size/inline-size): cada contexto que o usa declara o próprio. */
 /* A janela reserva a altura da pá com `line-height` fixo, e NÃO com o texto
    dentro dela. As oito pás vivem na mesma célula da grade e todas menos uma
    estão giradas para fora — se a altura viesse do conteúdo, ela mudaria a cada
@@ -458,7 +526,7 @@ h1.placa__titulo em {
    sobrando é o que uma pá de placa real parece — o que não pode é sobrar
    METADE, que é onde 22ch caía e a peça lia como caixa vazia com uma palavra
    encostada na esquerda. Encolhe junto com a tela pelo min(). */
-.destino__janela {
+.coluna-destino__janela {
   display: inline-grid;
   align-items: center;
   perspective: 620px;
@@ -474,8 +542,16 @@ h1.placa__titulo em {
 }
 /* A PÁ, que agora tem corpo: duas metades de plástico dobradas no vinco. A de
    cima pega a luz, a de baixo vive na sombra da de cima — o corte é DURO em
-   50% (dois `hard stops`), porque plástico dobrado não tem degradê na dobra. */
-.destino__pa {
+   50% (dois `hard stops`), porque plástico dobrado não tem degradê na dobra.
+
+   `animation-name`, `-duration` e `-delay` vêm de CUSTOM PROPERTIES, lidas de
+   `var()` — o que é proibido é usar `var()` dentro de um SELETOR de
+   `@keyframes` (uma porcentagem), não numa propriedade de animação. É essa
+   distinção que deixa um primitivo só cobrir os quatro comprimentos: quem usa
+   a classe declara `--n`, `--ciclo-nome` e `--sombra-nome` (`ciclo-N` /
+   `sombra-pa-N`, N = tamanho da lista daquele produto) via `style`, e o CSS
+   deste bloco não muda por coluna. */
+.coluna-destino__pa {
   grid-area: 1 / 1;
   position: relative;
   transform-origin: 50% 0;
@@ -494,26 +570,74 @@ h1.placa__titulo em {
   white-space: nowrap;
   opacity: 0;
   will-change: transform, opacity;
-  animation: ciclo var(--pa-total) var(--ease-pa) infinite both;
+  animation-name: var(--ciclo-nome);
+  animation-duration: calc(var(--n) * var(--pa-parada));
+  animation-timing-function: var(--ease-pa);
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
   /* Atraso NEGATIVO de um giro, e ele resolve uma coisa só: no primeiro quadro
      a pá 0 já está travada, então a primeira tela não abre com o destino
      girando. Ele NÃO cria a sobreposição entre as pás — sendo uniforme, adianta
      todas igualmente e a distância entre elas não muda. Quem sobrepõe é o
-     keyframe abaixo. */
-  animation-delay: calc(var(--i) * var(--pa-parada) - var(--pa-giro));
+     keyframe abaixo.
+     O segundo termo (`--linha`) é a CASCATA entre linhas do painel (FR-006):
+     cada linha nasce `--pa-cascata` mais adiantada que a anterior. Fora do
+     painel (cabeça de portão, este widget) `--linha` não é declarada e o
+     fallback `0` não muda nada. */
+  animation-delay: calc((var(--i) * var(--pa-parada)) - var(--pa-giro) - (var(--linha, 0) * var(--pa-cascata)));
 }
 
-/* 12.5% = 1/8 do ciclo = --pa-parada = 2.2s. O giro ocupa 1% (--pa-giro,
-   176ms sobre 17.6s).
- *
- * A SAÍDA VAZA PARA ALÉM DOS 12.5% DE PROPÓSITO. A pá fica opaca até o fim do
- * próprio slot e só então começa a subir, de 12.5% a 13.5% — que é exatamente
- * a janela em que a pá seguinte está descendo. Com a saída dentro do slot
- * (11.5%→12.5%) as duas ficavam em sequência e sobravam 176ms com a janela
- * VAZIA: o gesto principal da página piscando em branco a cada 2,2s. Medido
- * quadro a quadro, não deduzido. Placa de verdade nunca fica vazia — a pá que
- * chega tapa a que sai. */
-@keyframes ciclo {
+/* AS QUATRO TABELAS. giro% = --pa-giro ÷ ciclo × 100 = 8/N% (`ciclo` = N ×
+   --pa-parada). A SAÍDA VAZA ALÉM DO SLOT DE PROPÓSITO: a pá fica opaca até o
+   fim do próprio slot (100/N%) e só então começa a subir, terminando em
+   (100/N + giro%)% — exatamente a janela em que a pá seguinte está descendo.
+   Com a saída contida no slot a janela ficaria VAZIA por um giro inteiro a
+   cada troca: o gesto principal da página piscando em branco. Medido quadro a
+   quadro na entrega anterior (N=8); a fórmula é a mesma para os quatro N. */
+@keyframes ciclo-5 {
+  /* N=5 · ciclo 11,0s · giro 1,600% */
+  0% {
+    transform: rotateX(-92deg);
+    opacity: 0;
+  }
+  1.6%,
+  20% {
+    transform: rotateX(0);
+    opacity: 1;
+  }
+  21.6% {
+    transform: rotateX(92deg);
+    opacity: 0;
+  }
+  21.7%,
+  100% {
+    transform: rotateX(-92deg);
+    opacity: 0;
+  }
+}
+@keyframes ciclo-7 {
+  /* N=7 · ciclo 15,4s · giro 1,143% */
+  0% {
+    transform: rotateX(-92deg);
+    opacity: 0;
+  }
+  1.143%,
+  14.286% {
+    transform: rotateX(0);
+    opacity: 1;
+  }
+  15.429% {
+    transform: rotateX(92deg);
+    opacity: 0;
+  }
+  15.529%,
+  100% {
+    transform: rotateX(-92deg);
+    opacity: 0;
+  }
+}
+@keyframes ciclo-8 {
+  /* N=8 · ciclo 17,6s · giro 1,000% */
   0% {
     transform: rotateX(-92deg);
     opacity: 0;
@@ -533,6 +657,27 @@ h1.placa__titulo em {
     opacity: 0;
   }
 }
+@keyframes ciclo-11 {
+  /* N=11 · ciclo 24,2s · giro 0,727% */
+  0% {
+    transform: rotateX(-92deg);
+    opacity: 0;
+  }
+  0.727%,
+  9.091% {
+    transform: rotateX(0);
+    opacity: 1;
+  }
+  9.818% {
+    transform: rotateX(92deg);
+    opacity: 0;
+  }
+  9.918%,
+  100% {
+    transform: rotateX(-92deg);
+    opacity: 0;
+  }
+}
 
 /* A LUZ NA PÁ QUE CAI. Sem isto o giro lê como texto girando: a face chegava
    com o mesmo brilho a 92° e a 0°, o que não acontece com nada físico. Uma
@@ -540,11 +685,11 @@ h1.placa__titulo em {
    vira para a fonte — é a única razão pela qual uma pá de verdade "aparece"
    em vez de simplesmente estar lá.
 
-   Anda no MESMO ciclo, com a MESMA curva e o MESMO atraso da pá: se
-   dessincronizar, a peça acende antes de terminar de cair. Fica acima do
-   vinco (z-index 2 contra 1) porque a dobra também está na sombra — sombra que
-   respeita um sulco de 1px é sombra desenhada. */
-.destino__pa::before {
+   Anda no MESMO ciclo (mesma `--n`, mesma `--pa-duracao`), com a MESMA curva
+   e o MESMO atraso da pá: se dessincronizar, a peça acende antes de terminar
+   de cair. Fica acima do vinco (z-index 2 contra 1) porque a dobra também
+   está na sombra — sombra que respeita um sulco de 1px é sombra desenhada. */
+.coluna-destino__pa::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -559,14 +704,48 @@ h1.placa__titulo em {
      acesa em ~40ms e a matéria não chega a ser vista. Em linear a luz fica
      PARA TRÁS do ângulo: a pá trava primeiro e termina de pegar a luz depois,
      que é o atraso que faz a superfície ler como superfície. */
-  animation: sombra-pa var(--pa-total) linear infinite both;
-  animation-delay: calc(var(--i) * var(--pa-parada) - var(--pa-giro));
+  animation-name: var(--sombra-nome);
+  animation-duration: calc(var(--n) * var(--pa-parada));
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+  animation-delay: calc((var(--i) * var(--pa-parada)) - var(--pa-giro) - (var(--linha, 0) * var(--pa-cascata)));
 }
 
-/* 1.4% e não 1%: a pá trava em 1% do ciclo (--pa-giro, 176ms) e a luz só
-   acaba de subir 70ms depois. Esse rabo é a peça assentando. Na saída não há
-   rabo nenhum — 12.5% → 13.5% é o giro exato: peça que sai não assenta, some. */
-@keyframes sombra-pa {
+/* AS QUATRO TABELAS DA LUZ. Início = 1,4 × giro% — não é número novo: é a
+   MESMA proporção que já valia para N=8 (giro 1% → luz sobe até 1,4%, os
+   0,4% restantes são a peça assentando, ~70ms). Generalizada para as quatro
+   colunas em vez de fixada em N=8. Fim do apagão e reacendimento seguem o
+   mesmo par (100/N)% e (100/N + giro%)% do keyframe `ciclo-N` correspondente
+   — as duas tabelas de cada N precisam concordar, e é por isso que moram lado
+   a lado. */
+@keyframes sombra-pa-5 {
+  0% {
+    opacity: 0.88;
+  }
+  2.24%,
+  20% {
+    opacity: 0;
+  }
+  21.6%,
+  100% {
+    opacity: 0.88;
+  }
+}
+@keyframes sombra-pa-7 {
+  0% {
+    opacity: 0.88;
+  }
+  1.6%,
+  14.286% {
+    opacity: 0;
+  }
+  15.429%,
+  100% {
+    opacity: 0.88;
+  }
+}
+@keyframes sombra-pa-8 {
   0% {
     opacity: 0.88;
   }
@@ -575,6 +754,19 @@ h1.placa__titulo em {
     opacity: 0;
   }
   13.5%,
+  100% {
+    opacity: 0.88;
+  }
+}
+@keyframes sombra-pa-11 {
+  0% {
+    opacity: 0.88;
+  }
+  1.018%,
+  9.091% {
+    opacity: 0;
+  }
+  9.818%,
   100% {
     opacity: 0.88;
   }
@@ -588,7 +780,7 @@ h1.placa__titulo em {
 
 .linhas {
   list-style: none;
-  margin: var(--e-6) 0 0;
+  margin: var(--e-4) 0 0;
   padding: 0;
   /* Mesmo sulco de dois fios da .linha, no topo da lista. Ver o comentário
      abaixo: o que separa duas células de um painel é uma FRESTA, e fresta tem
@@ -609,20 +801,21 @@ h1.placa__titulo em {
    200°. Dois fios em `background-image` e não em `border` de propósito — a
    borda de baixo de uma célula seria coberta pelo `background-color` que a
    célula seguinte pinta no hover, e a fresta sumiria justo debaixo do cursor. */
+/* Duas fileiras abaixo de 46rem (FR-013): código + nome numa, destino +
+   estado na outra — mantendo célula de altura fixa, fresta e moldura. Cinco
+   áreas nomeadas porque duas larguras diferentes reorganizam as MESMAS cinco
+   peças em formas diferentes (2 fileiras aqui, 1 fileira lá embaixo), e nome
+   de área é o que deixa as duas formas apontarem para o mesmo HTML. */
 .linha {
   display: grid;
-  /* `auto` e não 3.25rem na primeira coluna, e o padding lateral voltou para
-     --e-2: MEDIDO em 360px depois que o código virou pá. A pá do código mede
-     40px e a coluna fixa reservava 52; com o padding em --e-3 a coluna do nome
-     caía para 146px e "Passagens aéreas" a 16px de mono mede 154 — quebrava em
-     duas linhas e desalinhava a célula inteira. As duas correções somam 20px e
-     a coluna sobra 12. Grid iguala a largura de `auto` entre as linhas, então
-     as quatro pás continuam do mesmo tamanho. */
   grid-template-columns: auto 1fr auto;
+  grid-template-areas:
+    "codigo nome nome"
+    "destino destino status";
   align-items: center;
-  gap: var(--e-4);
+  gap: 2px var(--e-4);
   min-height: var(--celula-mobile);
-  padding: var(--e-3) var(--e-2);
+  padding: var(--e-2);
   color: var(--texto);
   text-decoration: none;
   background-color: transparent;
@@ -642,6 +835,7 @@ h1.placa__titulo em {
    que amarra a página numa ideia só. Um painel Solari é feito de pás; a maior
    mostra o destino e as pequenas mostram o código da linha. */
 .linha__codigo {
+  grid-area: codigo;
   justify-self: start;
   padding: 0.18em 0.4em;
   border-radius: var(--r-1);
@@ -654,10 +848,14 @@ h1.placa__titulo em {
   letter-spacing: 0.08em;
   color: var(--marca);
 }
+.linha__nome-bloco {
+  grid-area: nome;
+  min-width: 0;
+}
 .linha__nome {
   font-family: var(--mono);
   /* --t-base e não --t-lg: em 360px a coluna do nome tem ~172px e
-     "Passagens aéreas" a 18px de mono mede 173px — quebrava em duas linhas e
+     "Passagens aéreas" a 16px de mono mede 154 — quebrava em duas linhas e
      desalinhava o código da própria linha. A mono não perdoa 1px. */
   font-size: var(--t-base);
   font-weight: 600;
@@ -665,12 +863,27 @@ h1.placa__titulo em {
   display: block;
 }
 .linha__nota {
-  display: block;
+  /* Some abaixo de 46rem (junto com --linha__onde): FR-011 mede a placa
+     inteira em 360×640, e uma quinta linha de texto por célula era o que
+     mais custava — a coluna de destino já comunica "do que se trata"
+     enquanto vira. Volta no breakpoint em que sobra altura de sobra. */
+  display: none;
   font-size: var(--t-sm);
   color: var(--texto-3);
   line-height: 1.45;
 }
+/* A coluna de destino DENTRO da linha (T009/T037): a janela do primitivo
+   compartilhado, menor que os 18ch do widget de hoje — ela divide o espaço
+   com código, nome, abrangência e estado (risco nomeado no plan.md; medido
+   nas três larguras em T044). */
+.linha__destino {
+  grid-area: destino;
+  justify-self: start;
+  font-size: var(--t-lg);
+  inline-size: min(100%, 13ch);
+}
 .linha__onde {
+  grid-area: onde;
   font-family: var(--mono);
   font-size: var(--t-xs);
   letter-spacing: 0.1em;
@@ -679,6 +892,8 @@ h1.placa__titulo em {
   display: none;
 }
 .status {
+  grid-area: status;
+  justify-self: end;
   font-family: var(--mono);
   font-size: var(--t-xs);
   letter-spacing: 0.12em;
@@ -689,6 +904,11 @@ h1.placa__titulo em {
 }
 
 .placa__nota {
+  /* Mesmo raciocínio de .linha__nota: some abaixo de 46rem para caber em
+     360×640 (FR-011); o fato que ela carrega (grátis, sem tarifa aqui)
+     continua dito em /sobre, no rodapé e no llms.txt — não é a única
+     declaração do site. */
+  display: none;
   margin-top: var(--e-5);
   font-size: var(--t-sm);
   color: var(--texto-3);
@@ -1017,6 +1237,417 @@ h1.placa__titulo em {
   margin-top: var(--e-3);
 }
 
+/* ═══ 8.5 · OS PORTÕES (macroestrutura própria) ═════════════════════════════
+   FR-016/FR-017 · G33. Diferente do Índice da capa (`.placa`/`.estacao`) e do
+   `.doc` das fichas legais: cinco blocos — cabeça, cobertura, detalhe
+   ampliado, ficha, ação. O que é comum aos quatro portões está aqui; o que
+   VARIA (FR-020) mora em `.cabeca-portao--*` (bloco 1) e `.detalhe--*`
+   (bloco 3), abaixo. */
+
+.portao {
+  padding-block: 0 var(--e-10);
+}
+
+/* ── Bloco 1 · a cabeça ─────────────────────────────────────────────────── */
+.cabeca-portao {
+  position: relative;
+  background: linear-gradient(to bottom, var(--placa-alto) 0, var(--placa) 34%, var(--placa-baixo) 100%);
+  box-shadow:
+    inset 0 1px 0 var(--aresta-luz),
+    0 1px 0 var(--moldura),
+    0 6px 12px -6px color-mix(in oklch, var(--sombra-cor) 55%, transparent),
+    0 18px 36px -18px color-mix(in oklch, var(--sombra-cor) 45%, transparent);
+  padding-block: var(--e-6) var(--e-8);
+}
+.cabeca-portao .container {
+  display: grid;
+  gap: var(--e-8);
+}
+
+/* FR-019: uma LINHA DE PLACA de volta, não breadcrumb e não botão "voltar".
+   Reusa `.linha` (mesma matéria, mesmo anel de foco já medido) — não é
+   componente novo, é o mesmo elo que a lista da capa usa. */
+.cabeca-portao__volta {
+  margin-bottom: var(--e-6);
+}
+
+.cabeca-portao__miolo {
+  display: grid;
+  gap: var(--e-6);
+  align-items: end;
+}
+.cabeca-portao__objeto {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--e-6);
+}
+
+/* O código do produto em ESCALA DE OBJETO: mesma matéria de `.linha__codigo`
+   (pá pequena de duas metades), sem o teto de uma célula de tabela. */
+.cabeca-portao__codigo {
+  display: inline-block;
+  padding: 0.12em 0.32em;
+  border-radius: var(--r-1);
+  background: linear-gradient(to bottom, var(--pa-cima) 0 50%, var(--pa-baixo) 50% 100%);
+  box-shadow:
+    inset 0 1px 0 var(--aresta-luz),
+    inset 0 -1px 0 var(--vinco-sombra);
+  font-family: var(--mono);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--marca);
+  font-size: clamp(1.5rem, 1.1rem + 2vw, 2.25rem);
+}
+
+.cabeca-portao__h1 {
+  font-size: var(--t-3xl);
+  text-transform: uppercase;
+  max-width: 20ch;
+}
+.cabeca-portao__bluf {
+  margin-top: var(--e-4);
+  max-width: var(--leitura);
+  font-size: var(--t-lg);
+  color: var(--texto-2);
+}
+
+/* A coluna de destino do produto, DENTRO da cabeça: reusa o primitivo
+   compartilhado (T009), em escala maior que a da linha do painel — é o
+   "objeto ampliado" que dá nome à direção. */
+.cabeca-portao .coluna-destino__janela {
+  font-size: clamp(1.75rem, 1rem + 3.6vw, 3.25rem);
+  inline-size: min(100%, 14ch);
+}
+
+/* ── objeto: PAR (AER) — duas pás, ida ‖ volta ─────────────────────────────
+   Duas pernas da mesma viagem, lado a lado; a coluna de destino vira entre
+   as duas, porque o destino é o mesmo nas duas pernas. */
+.cabeca-portao--par .cabeca-portao__objeto {
+  align-items: stretch;
+}
+.cabeca-portao__perna {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-2);
+}
+.cabeca-portao__perna-rotulo {
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--texto-3);
+}
+
+/* ── objeto: FAIXA (HTL) — pá única sobre uma faixa de noites ──────────────
+   A faixa é o formulário de estadia virado matéria: cada célula é uma
+   noite, a acesa é a que está "selecionada" nesta demonstração. */
+.cabeca-portao__faixa-noites {
+  display: flex;
+  gap: 3px;
+  margin-top: var(--e-3);
+}
+.cabeca-portao__noite {
+  inline-size: var(--e-4);
+  block-size: var(--e-3);
+  background: var(--moldura);
+  box-shadow:
+    inset 0 1px 0 var(--vinco-sombra),
+    inset 0 -1px 0 var(--vinco-luz);
+  border-radius: 1px;
+}
+.cabeca-portao__noite--acesa {
+  background: var(--marca);
+  box-shadow: none;
+}
+
+/* ── objeto: DUAS METADES (PCT) — voo em cima, hotel embaixo, o vinco é a
+   emenda (FR-022). A pá de código já TEM duas metades com um vinco — aqui
+   ela cresce até virar o próprio argumento: a metade de cima rotulada VOO, a
+   de baixo HTL, e o mesmo sulco de dois fios que separa as pás da placa
+   inteira é a costura entre as duas partes do pacote. A peça carrega o
+   argumento; não há texto duplicando o que ela já diz. */
+.cabeca-portao__pa-grande {
+  position: relative;
+  display: grid;
+  min-inline-size: min(100%, 20rem);
+  border-radius: calc(var(--r-1) + 3px);
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 var(--aresta-luz),
+    inset 0 -1px 0 var(--vinco-sombra),
+    0 10px 20px -10px color-mix(in oklch, var(--sombra-cor) 60%, transparent);
+}
+.cabeca-portao__pa-metade {
+  padding: var(--e-4) var(--e-5);
+  font-family: var(--mono);
+}
+.cabeca-portao__pa-metade--cima {
+  background: var(--pa-cima);
+  border-bottom: 1px solid var(--vinco-sombra);
+  box-shadow: inset 0 -1px 0 var(--vinco-luz);
+}
+.cabeca-portao__pa-metade--baixo {
+  background: var(--pa-baixo);
+}
+.cabeca-portao__pa-rotulo {
+  display: block;
+  font-size: var(--t-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  /* --texto-2 e não --texto-3: medido a 4.43:1 sobre --pa-cima, abaixo do
+     4.5:1 que WCAG AA pede para texto normal (logos/contraste.mjs pegou
+     antes de a página existir — Princípio V). --texto-2 mede acima do
+     mínimo nas duas metades. */
+  color: var(--texto-2);
+}
+.cabeca-portao__pa-valor {
+  display: block;
+  margin-top: 0.2em;
+  font-size: var(--t-xl);
+  font-weight: 600;
+  color: var(--marca-alta);
+}
+
+/* ── objeto: CAMPO ÚNICO (CAR) — retirada e devolução no mesmo campo ───────
+   Um recesso só (a mesma matéria da janela de destino), dividido em duas
+   metades por um fio — não são dois campos, é UM campo com duas respostas,
+   que é literalmente o que o formulário de aluguel pede. */
+.cabeca-portao__campo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-inline-size: min(100%, 20rem);
+  padding: 3px;
+  background: var(--moldura);
+  border-radius: calc(var(--r-1) + 3px);
+  box-shadow:
+    inset 0 3px 6px -2px color-mix(in oklch, var(--sombra-cor) 80%, transparent),
+    inset 0 -1px 0 var(--vinco-luz);
+}
+.cabeca-portao__campo-metade {
+  padding: var(--e-3) var(--e-4);
+  font-family: var(--mono);
+}
+.cabeca-portao__campo-metade + .cabeca-portao__campo-metade {
+  border-left: 1px solid var(--vinco-sombra);
+  box-shadow: inset 1px 0 0 var(--vinco-luz);
+}
+.cabeca-portao__campo-rotulo {
+  display: block;
+  font-size: var(--t-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--texto-3);
+}
+.cabeca-portao__campo-valor {
+  display: block;
+  margin-top: 0.2em;
+  font-size: var(--t-lg);
+  font-weight: 600;
+  color: var(--marca-alta);
+}
+
+/* ── Bloco 2 · o que está atrás ─────────────────────────────────────────── */
+.portao__secao {
+  padding-block: var(--e-8);
+  border-bottom: 1px solid var(--vinco-sombra);
+  box-shadow: 0 1px 0 var(--vinco-luz);
+}
+.portao__secao-titulo {
+  font-size: var(--t-xl);
+  text-transform: uppercase;
+  margin-bottom: var(--e-5);
+}
+.cobertura {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--vinco-sombra);
+  box-shadow: inset 0 1px 0 var(--vinco-luz);
+  max-width: var(--leitura);
+}
+.cobertura li {
+  padding-block: var(--e-3);
+  border-bottom: 1px solid var(--vinco-sombra);
+  box-shadow: 0 1px 0 var(--vinco-luz);
+  color: var(--texto-2);
+}
+
+/* ── Bloco 3 · detalhe ampliado — único por portão (FR-020) ────────────────
+   `comparacao` (AER): companhias em tipografia, lado a lado, NUNCA logotipo
+   (FR-021). */
+.detalhe--comparacao {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-3) var(--e-6);
+  font-family: var(--mono);
+  font-size: var(--t-lg);
+  color: var(--texto);
+}
+.detalhe--comparacao li {
+  padding: var(--e-2) var(--e-4);
+  background: var(--placa-linha);
+  border-radius: var(--r-1);
+}
+
+/* `estados` (HTL): os regimes como quatro estados da mesma pá. */
+.detalhe--estados {
+  display: grid;
+  gap: 2px;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  background-image: linear-gradient(to bottom, var(--vinco-sombra) 0 1px, var(--vinco-luz) 1px 2px);
+  background-repeat: no-repeat;
+  background-position: top;
+  background-size: 100% 2px;
+  padding-top: 2px;
+}
+.detalhe--estados li {
+  padding: var(--e-4);
+  background: var(--placa-linha);
+}
+.detalhe--estados h3 {
+  font-family: var(--mono);
+  font-size: var(--t-base);
+  color: var(--marca);
+  text-transform: uppercase;
+}
+.detalhe--estados p {
+  margin-top: var(--e-2);
+  font-size: var(--t-sm);
+  color: var(--texto-3);
+}
+
+/* `duasColunas` (PCT): entra ‖ não entra, em FRESTA — a mesma matéria de
+   separação da placa, aplicada como divisor vertical entre as duas colunas. */
+.detalhe--duas-colunas {
+  display: grid;
+  gap: var(--e-8);
+}
+.detalhe__coluna h3 {
+  font-family: var(--mono);
+  font-size: var(--t-base);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.detalhe__coluna--entra h3 {
+  color: var(--marca);
+}
+.detalhe__coluna--nao-entra h3 {
+  color: var(--texto-3);
+}
+.detalhe__coluna ul {
+  list-style: none;
+  margin: var(--e-4) 0 0;
+  padding: 0;
+  border-top: 1px solid var(--vinco-sombra);
+  box-shadow: inset 0 1px 0 var(--vinco-luz);
+}
+.detalhe__coluna li {
+  padding-block: var(--e-3);
+  border-bottom: 1px solid var(--vinco-sombra);
+  box-shadow: 0 1px 0 var(--vinco-luz);
+  color: var(--texto-2);
+}
+
+/* `grade` (CAR): aeroportos de retirada em códigos IATA. */
+.detalhe--grade {
+  display: grid;
+  gap: 2px;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  background-image: linear-gradient(to bottom, var(--vinco-sombra) 0 1px, var(--vinco-luz) 1px 2px);
+  background-repeat: no-repeat;
+  background-position: top;
+  background-size: 100% 2px;
+  padding-top: 2px;
+}
+.detalhe--grade li {
+  padding: var(--e-3) var(--e-4);
+  background: var(--placa-linha);
+  font-family: var(--mono);
+}
+.detalhe__iata {
+  display: block;
+  font-size: var(--t-lg);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--marca);
+}
+.detalhe__cidade-iata {
+  display: block;
+  margin-top: 0.15em;
+  font-size: var(--t-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-3);
+}
+
+/* ── Bloco 4 · a ficha ──────────────────────────────────────────────────── */
+.ficha {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: var(--leitura);
+  border-top: 1px solid var(--vinco-sombra);
+  box-shadow: inset 0 1px 0 var(--vinco-luz);
+}
+.ficha__item {
+  display: grid;
+  grid-template-columns: 12rem 1fr;
+  gap: var(--e-4);
+  padding-block: var(--e-3);
+  border-bottom: 1px solid var(--vinco-sombra);
+  box-shadow: 0 1px 0 var(--vinco-luz);
+}
+.ficha__rotulo {
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-3);
+}
+.ficha__valor {
+  color: var(--texto-2);
+}
+.ficha__fonte {
+  display: block;
+  margin-top: var(--e-2);
+  font-size: var(--t-sm);
+}
+
+/* ── Bloco 5 · ação ─────────────────────────────────────────────────────── */
+.portao__acao {
+  padding-block: var(--e-8) var(--e-10);
+}
+.portao__acao-lead {
+  max-width: var(--leitura);
+  margin-bottom: var(--e-5);
+  color: var(--texto-2);
+}
+.portao__acao .depois-do-btn {
+  margin-top: var(--e-4);
+  max-width: var(--leitura);
+  color: var(--texto-3);
+  font-size: var(--t-sm);
+}
+
+@media (min-width: 46rem) {
+  .cabeca-portao .container {
+    grid-template-columns: 1fr;
+  }
+  .cabeca-portao__miolo {
+    grid-template-columns: 1.1fr 1fr;
+  }
+  .detalhe--duas-colunas {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--e-10);
+  }
+  .detalhe__coluna--entra {
+    border-right: 1px solid var(--vinco-sombra);
+    box-shadow: inset -1px 0 0 var(--vinco-luz);
+    padding-right: var(--e-8);
+  }
+}
+
 /* ═══ 9 · PÁGINAS DE DOCUMENTO ══════════════════════════════════════════════
    /sobre, /privacidade e /termos NÃO encenam a placa: são documentos, não
    painéis de partida. Encenar um percurso que o conteúdo não tem é pior que
@@ -1105,9 +1736,16 @@ main {
     display: inline;
   }
   .linha {
-    grid-template-columns: 3.25rem 1fr 12rem auto;
+    /* Uma fileira só: código, nome, destino, abrangência, estado. */
+    grid-template-columns: 3.25rem 1fr auto 9rem auto;
+    grid-template-areas: "codigo nome destino onde status";
     min-height: var(--celula);
     padding-inline: var(--e-3);
+  }
+  .placa__chamada {
+    display: block;
+    -webkit-line-clamp: unset;
+    overflow: visible;
   }
   .linha__nome {
     font-size: var(--t-lg);
@@ -1115,8 +1753,20 @@ main {
   .linha__onde {
     display: block;
   }
-  .destino {
-    margin-top: var(--e-8);
+  .linha__nota {
+    display: block;
+  }
+  .linha {
+    padding: var(--e-3) var(--e-3);
+  }
+  .linha__destino {
+    font-size: var(--t-xl);
+  }
+  .linhas {
+    margin-top: var(--e-6);
+  }
+  .placa__nota {
+    display: block;
   }
   .estacao__cabeca {
     grid-template-columns: 3.25rem 1fr;
@@ -1124,9 +1774,6 @@ main {
   .fecho__grade {
     grid-template-columns: 1.2fr 1fr;
     gap: var(--e-10);
-  }
-  .destino__janela {
-    font-size: var(--t-3xl);
   }
 }
 
@@ -1150,11 +1797,15 @@ main {
 }
 
 @media (min-width: 62rem) {
+  .placa {
+    padding-block: var(--e-6) var(--e-10);
+  }
   .placa__topo {
     display: grid;
     grid-template-columns: 1.15fr 1fr;
     gap: var(--e-10);
     align-items: end;
+    padding-block: var(--e-8) var(--e-6);
   }
   .placa__chamada {
     margin-top: 0;
