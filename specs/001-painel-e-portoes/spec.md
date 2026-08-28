@@ -112,7 +112,7 @@ Uma pessoa em Goiânia pesquisa "passagem aérea parcelada" no celular às 22h. 
 
 - **FR-005** — O bloco `.destino` deixa de existir como widget isolado. Cada uma das quatro linhas do painel ganha uma **coluna de destino** que vira sozinha, com sua própria lista. Os comprimentos das quatro listas são **coprimos entre si** (proposta: 5 / 7 / 8 / 11), de modo que a combinação visível na tela só se repita depois de ≥ 1 hora de página aberta. Custo: 0kb de JS — a não repetição vem da aritmética das listas, não de um sorteio.
 - **FR-006** — As quatro linhas viram em **cascata de cima para baixo**, com atraso fixo entre irmãs (proposta: 120ms, contra um giro de 176ms, para a cascata ser lida como cascata e não como quatro coisas separadas).
-- **FR-007** — Nenhum nome de destino, em nenhuma das quatro listas, pode estourar a janela da pá na largura de 46rem. Comprimento máximo verificado por teste, não por leitura.
+- **FR-007** — Nenhum nome de destino, em nenhuma das quatro listas, pode passar de **12 caracteres** — o teto medido: `"BUENOS AIRES"` (12) ocupa 79% da janela de 18ch na largura de 46rem, e `CENTRO-OESTE` (12) é o pior caso das listas propostas. Verificado por teste, não por leitura. *(Corrigido em 2026-08-28: a redação original dizia "não pode estourar a janela" sem número — a Phase 0 mediu e o número é 12.)*
 - **FR-008** — O painel tem **exatamente quatro linhas**, uma por produto. Linha decorativa, linha de "próximas ofertas", linha com hora ou número de voo: proibidas (gate G9).
 - **FR-009** — O painel é um objeto parafusado numa parede: moldura visível em toda a volta e `--fundo` respirando fora dela em todas as três larguras. O painel não encosta nas quatro bordas do viewport.
 - **FR-010** — O H1 é o **cabeçalho do painel**, permanece dono do LCP, e não anima opacidade, escala nem posição. Ele já está no primeiro quadro; o resto chega em volta dele.
@@ -188,7 +188,7 @@ Uma pessoa em Goiânia pesquisa "passagem aérea parcelada" no celular às 22h. 
 Todo critério abaixo é medido pelas ferramentas que já existem no repositório (`npm test`, `npm run contraste`, `npm run verificar`, `npm run check`) contra o **build servido estático**, nunca contra o `astro dev` — a barra de ferramentas do Astro injeta ~1,8 MB de JS que não existe em produção.
 
 - **SC-001** — `npm run contraste` termina com 0 reprovados, e o número de pares medidos sobe de 37 para ≥ 45 (as superfícies novas do painel e dos portões entram na medição, não ficam de fora dela).
-- **SC-002** — `npm run verificar` cobre **5 rotas × 3 larguras × 4 posições de scroll**, com console limpo e zero estouro horizontal em todas as combinações.
+- **SC-002** — `npm run verificar` cobre **9 rotas × 3 larguras × 4 posições de scroll**, com console limpo e zero estouro horizontal em todas as combinações. *(Corrigido em 2026-08-28: a redação original dizia 5 rotas. São 8 públicas + `/404` = 9. E a linha de base não é 5 nem 9: hoje `logos/verificar.mjs` visita **uma** rota — a capa. Cobrir 9 é reestruturar o laço, não parametrizá-lo.)*
 - **SC-003** — LCP mediano ≤ 800ms por rota (5 amostras, CPU 4× estrangulada), contra o alvo declarado de 1500ms da faixa captação. O elemento de LCP da capa continua sendo o H1.
 - **SC-004** — CLS ≤ 0.01 em todas as cinco rotas. Hoje é 0.00 e as alturas de célula são fixas — o alvo tem folga, não licença.
 - **SC-005** — JS enviado ao cliente = **0 bytes** em todas as cinco rotas, verificado no `.vercel/output/static`.
@@ -197,7 +197,7 @@ Todo critério abaixo é medido pelas ferramentas que já existem no repositóri
 - **SC-008** — Um quadro com `prefers-reduced-motion: reduce` por rota, provando o painel completo e parado com um destino visível por linha.
 - **SC-009** — Um quadro da transição capa→portão provando a célula virando no objeto do portão, e um caminho de degradação limpa provado em navegador sem View Transitions.
 - **SC-010** — Um quadro de hover no painel e um quadro em 360px por portão, provando que nenhum rótulo quebra em duas linhas.
-- **SC-011** — Sitemap com 9 URLs; `astro check` com 0 erros.
+- **SC-011** — Sitemap com **8 URLs**; `astro check` com 0 erros. *(Corrigido em 2026-08-28: a redação original dizia 9. São 4 de hoje + 4 portões = 8; `/404` nunca entra em sitemap.)*
 - **SC-012** — Observação de 2 minutos do painel ocioso sem repetição de combinação das quatro colunas.
 - **SC-013** — Nova entrada em `.art/log.json` registrando o que foi construído, o que foi construído **e removido**, e as correções encontradas olhando a tela — não só as previstas.
 

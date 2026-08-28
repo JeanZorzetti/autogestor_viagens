@@ -78,9 +78,19 @@ testes que as guardam. Tudo que as três histórias leem.
       existe para `PRODUTOS[0].destinos` (AER, 11 nomes) e trocar a animação
       para `ciclo-11`. É uma ligação **temporária de uma linha**, para o build
       continuar verde entre esta fase e a US2, que remove o widget inteiro
-      (T035). Marcar com comentário dizendo que morre em T035.
+      (**T038**, não T035 — T035 é o teste de sitemap). **Depende de T008**:
+      `ciclo-11` só nasce com as quatro tabelas, e `animation-name` desconhecido
+      não anima, não erra no console e não quebra o build — a classe exata de
+      defeito que esta feature diz temer. Marcar com um comentário `ponytail:`
+      que nomeie o teto (widget vivo com uma lista só) e a saída (morre em
+      T038).
 
 ### Tokens e as quatro tabelas de keyframe
+
+> **Não execute nesta posição.** T007–T010 vêm **depois** de T011–T018 — a ordem
+> que vale é a de "Dentro da Foundational", não a numérica. Estão escritas aqui
+> porque são o mesmo assunto; são executadas depois de o teste ter mostrado
+> vermelho.
 
 - [ ] **T007** Em `src/styles/tokens.css`, remover `--pa-total` (era
       `--pa-parada × 8`, e não existe mais um único N) e acrescentar
@@ -110,9 +120,18 @@ testes que as guardam. Tudo que as três histórias leem.
 > garante que a fórmula das tabelas está no teste, e não só na cabeça de quem
 > escreveu o CSS (etapa 2 do `plan.md`).
 
-- [ ] **T011** Em `test/placa.test.mjs`, reescrever a leitura do dado: a
-      constante `DESTINOS` não existe mais; o teste passa a extrair as quatro
-      listas de dentro de `PRODUTOS` em `src/data/conteudo.ts`.
+- [ ] **T011** **Primeira tarefa da fase** (ver "Dentro da Foundational"). Em
+      `test/placa.test.mjs`, reescrever a leitura do dado, três coisas:
+      (a) mover a leitura para **dentro** dos testes — hoje ela é um
+      `assert.ok(destinos, …)` no topo do módulo, então basta `DESTINOS` sumir
+      (T005) para a suíte **estourar na importação** em vez de falhar em quatro
+      testes, e T018 não veria vermelho, veria erro de carga;
+      (b) as quatro listas passam a ser extraídas de `PRODUTOS` em
+      `src/data/conteudo.ts`, e `DESTINOS` sai;
+      (c) `--pa-total` sai da leitura (T007 o remove — não existe mais um único
+      N) e a asserção de marcação que casa `/DESTINOS\.map\(\(d, i\) =>/` em
+      `index.astro` passa a casar a lista nova. Sem (c), dois testes que estão
+      verdes hoje ficam vermelhos por motivo errado.
 - [ ] **T012** **V1** — teste em `test/placa.test.mjs`: `objeto` e `detalhe` têm
       quatro valores **distintos** entre os quatro produtos (FR-020). Valor
       repetido = dois portões com o mesmo desenho, e isso reprova a spec
@@ -135,9 +154,12 @@ testes que as guardam. Tudo que as três histórias leem.
       explicitamente `flight-list`, `hotel-list`, `car-list` e `combined` —
       são as URLs que dizem "nenhum voo foi encontrado" a quem não buscou
       (R1 · Princípio IV).
-- [ ] **T018** Rodar `npm test` e **ver V1, V3, V4, V5 falharem** antes de
-      qualquer CSS novo entrar. Depois rodar T008–T010 e ver os quatro
-      passarem. Sem essa passagem pelo vermelho, o teste não prova nada.
+- [ ] **T018** Rodar `npm test` **duas vezes**, e ver o vermelho antes do
+      verde. Primeira, logo depois de T012–T017 e **antes de T003–T010**: V1,
+      V3, V4 e V5 falham — nem o dado nem as tabelas existem. Segunda, depois de
+      T003–T005: V1, V4 e V5 ficam verdes e **V3 e V2 continuam vermelhos** até
+      T007–T008 entregarem as quatro tabelas. Sem as duas passagens o teste não
+      prova nada — prova só que foi escrito depois.
 - [ ] **T019** `npm run check` limpo (0 erros) com `DESTINOS` já removido.
 
 **Checkpoint**: dado, tipos, tokens, keyframes e testes de pé. As três
@@ -199,6 +221,11 @@ rotas existirem.
       de `--sombra-cor` a 200° (M1, M2); o grão continua sendo **uma** camada
       `fixed` — nenhum `::after` novo (M4). Declarar qual anel de foco cada
       superfície nova usa (FR-035).
+      **Antes de qualquer par de cor novo entrar neste CSS**: acrescentá-lo a
+      `logos/contraste.mjs`, rodar `npm run contraste` e escrever o valor medido
+      em comentário ao lado da declaração. O Princípio V diz *antes*, não no
+      fim — T052 só conta o total; medir lá é medir depois de a tela existir,
+      que é quando trocar a cor custa dez vezes mais.
 - [ ] **T027** [US1] `src/components/CabecaDePortao.astro` — bloco 1: o código
       do produto em escala de objeto, como pá que acabou de travar, com a coluna
       de destino daquele produto virando. A forma varia por `produto.objeto`
@@ -290,7 +317,11 @@ apontar para 404 seria o Princípio IV quebrado na primeira tela.
 - [ ] **T041** [US2] Painel como objeto parafusado na parede: moldura visível em
       toda a volta, `--fundo` respirando fora dela nas três larguras, sem
       encostar nas quatro bordas do viewport (FR-009). Exatamente quatro linhas
-      — nenhuma decorativa (FR-008).
+      — nenhuma decorativa (FR-008). Respiro mínimo declarado em token, não em
+      adjetivo: "respirando" sem número é a única regra geométrica sem medida
+      nesta spec (ver A1 do `/speckit-analyze`).
+      **Mesma regra de T026**: par de cor novo passa por `npm run contraste`
+      antes de entrar no CSS, com o valor medido em comentário ao lado.
 - [ ] **T042** [US2] Primeira tela sem `100vh`: unidade dinâmica com fallback, e
       a quarta linha visível ou meio-visível em 360×640 (FR-011). O H1 continua
       dono do LCP e **não anima** opacidade, escala nem posição (FR-010 · M6).
@@ -355,11 +386,14 @@ transição, sem erro no console, sem perda de conteúdo.
 **Propósito**: os números que a spec cobra, medidos contra o **build servido** —
 nunca contra o `astro dev`, que injeta ~1,8 MB de JS que não existe em produção.
 
-- [ ] **T052** [P] Em `logos/contraste.mjs`, acrescentar os pares das
-      superfícies novas: cabeça de portão, fresta de duas colunas do PCT, grade
-      IATA do CAR, e o anel de foco sobre cada uma delas. **≥ 45 pares, 0
-      reprovados** (SC-001, FR-034). O script continua **lendo `tokens.css`** —
-      nenhuma cópia da paleta em hex entra nele.
+- [ ] **T052** [P] **Conferência final, não a primeira medição.** Os pares das
+      superfícies novas — cabeça de portão, fresta de duas colunas do PCT, grade
+      IATA do CAR, e o anel de foco sobre cada uma delas — já entraram em
+      `logos/contraste.mjs` em T026 e T041, quando o CSS foi escrito
+      (Princípio V: *antes*, não depois). Aqui se confere o total: **≥ 45 pares,
+      0 reprovados** (SC-001, FR-034), e que nenhum par tenha entrado no CSS sem
+      o valor medido em comentário ao lado. O script continua **lendo
+      `tokens.css`** — nenhuma cópia da paleta em hex entra nele.
 - [ ] **T053** [P] Em `logos/verificar.mjs`, iterar **9 rotas × 3 larguras × 4
       posições de rolagem** (correção 3 do `plan.md`: SC-002 diz 5, que é a
       contagem de antes desta feature), mais os quadros especiais: um
@@ -418,9 +452,28 @@ os três (FR-029, FR-031, FR-021). **Não é opcional aqui** (`plan.md`).
 
 ### Dentro da Foundational
 
-T003 → T004 → T005 → T006 (dado antes de tudo).
-T007 → T008 → T009 → T010 (tokens antes dos keyframes).
-T011 → T012–T017 (testes) → **T018 vê o vermelho** → T019.
+**Uma cadeia só, e ela começa no teste** — a ordem antiga tinha três cadeias
+paralelas que se contradiziam: os keyframes (T008–T010) vinham antes dos testes
+que os guardam, o oposto da etapa 2 do `plan.md` e do que o próprio T018 manda
+fazer.
+
+```
+T011                        a leitura do teste, antes de o dado sumir debaixo dela
+  → T012–T017               V1, V2, V3, V4, V5, V7 escritos para falhar
+  → T018 (1ª passagem)      vermelho: V1, V3, V4, V5
+  → T003 → T004 → T005      o dado: tipos, os quatro campos, as quatro listas,
+                            DESTINOS apagado  ·  V1, V4, V5 ficam verdes
+  → T018 (2ª passagem)      V3 e V2 ainda vermelhos — é o ponto
+  → T007 → T008             tokens e as quatro tabelas  ·  V3 e V2 ficam verdes
+  → T009 → T010             a coluna reusável e o bloco reduced-motion
+  → T006                    a ligação temporária do widget (precisa de ciclo-11)
+  → T019                    npm run check limpo
+```
+
+T011 antes de T005 não é preciosismo de TDD: hoje o teste lê `DESTINOS` num
+`assert` de topo de módulo, então apagar a constante primeiro faz a suíte
+estourar na importação — e uma suíte que não carrega não mostra vermelho
+nenhum. T006 por último porque `ciclo-11` nasce em T008.
 
 ### Dentro de US1
 
