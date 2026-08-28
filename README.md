@@ -18,10 +18,18 @@ fala com banco nenhum (veja abaixo). Em produção só existe `SITE_URL`.
 npm test          # node --test test/*.test.mjs — a conta da placa
 npm run build
 npm run check     # astro check (tipos) — 0 erros
-npm run contraste # mede os 37 pares de cor; falha com código 1 se algum reprovar
+npm run contraste # mede os 45 pares de cor DOS TOKENS; falha com código 1
+npm run contraste-gravura # mede os pares que só existem em PIXEL (ver abaixo)
 npm run verificar # prova no navegador: 3 larguras × 4 rolagens, teclado, LCP
+npm run mapas     # regera os contornos a partir do dado geográfico (ver abaixo)
 node logos/gerar-og.mjs   # regera a imagem de compartilhamento
 ```
+
+`npm run mapas` só é necessário quando a **lista de destinos** de
+`src/data/conteudo.ts` muda. Ele baixa Natural Earth 1:50m e a malha do IBGE
+para `logos/_dados/` (ignorado pelo git), e escreve três saídas que **são**
+commitadas — `src/styles/mapas.css`, `src/data/mapas.ts` e os cinco
+`public/img/parede*.svg`. O build nunca precisa de rede.
 
 **Verificar tela é sobre o build, não sobre o dev server.** O `astro dev`
 injeta a barra de ferramentas do Astro: DOM extra e ~1,8 MB de JavaScript que
@@ -118,6 +126,35 @@ e a mesma solução do hub: sobre o botão laranja um anel laranja daria 1.0:1 e
 sumiria, então `--foco` é custom property e o `.btn--primario` a troca pela
 tinta escura do próprio rótulo (7.19:1).
 
+**As figuras do site são dado, não desenho.** Cada pá tem o contorno REAL do
+lugar gravado na face, e a parede atrás dos painéis é um mapa dos lugares que
+esta busca cobre — 19 formas, nenhuma a mais. Nada disso é traçado à mão:
+`logos/gerar-mapas.mjs` sai de fonte primária (Natural Earth 1:50m para país,
+malha oficial do IBGE para as cinco macrorregiões) e a PATAGÔNIA é Argentina +
+Chile recortados no paralelo 39°S, um recorte geométrico declarado no código.
+É a mesma regra que proíbe preço inventado na placa, aplicada à imagem: um
+contorno "parecido com a Argentina" seria a versão gráfica do mesmo defeito.
+
+Cada portão carrega a parede da PRÓPRIA cobertura (`parede-aer.svg` e
+companhia): o portão do carro enquadra o Brasil em cinco regiões, o de passagem
+enquadra três continentes. É assim que a figura varia por rota, pelo mesmo
+motivo que o objeto da cabeça varia.
+
+**Existem dois checadores de contraste, e o segundo não é redundância.**
+`logos/contraste.mjs` lê os TOKENS e resolve OKLCH → sRGB; ele não consegue ver
+a gravura, porque o pixel embaixo da letra ali é o resultado de um
+`background-blend-mode: soft-light` e só existe depois de pintado.
+`logos/contraste-gravura.mjs` pinta e mede o pixel. Ele reprovou duas vezes
+antes de a direção fechar:
+
+- a primeira versão da parede era um fio branco a 13% e `--texto-3` sobre ela
+  dava **3.87:1**, abaixo do piso de 4.5. Daí a parede ser um sulco de DOIS
+  fios (escuro + claro): a mesma leitura por metade do claro, hoje em 4.73:1;
+- o próprio medidor mentiu antes disso, acusando 3.35:1 em todas as pás — o
+  pixel culpado era o antialiasing da letra laranja, não a superfície. Filtrar
+  por faixa de cor não resolve (a suavização é um degradê contínuo); apagar a
+  tinta e medir a peça, sim.
+
 **A "emenda" verde foi construída e depois removida.** A plataforma de destino
 (OnerTravel) tem header verde e este site é navy; a primeira versão avisava
 disso com uma faixa degradê de 3px sob o botão. Na tela ela não se lia — a
@@ -177,8 +214,9 @@ código 1 se qualquer um desses números estourar o orçamento — o orçamento 
 escrito na constante `ORCAMENTO` no topo dele, não neste README.
 
 Também verificado: console limpo nas três larguras, nenhum estouro horizontal,
-22 paradas de teclado todas com anel de foco visível, e 37 pares de contraste
-medidos por `logos/contraste.mjs` a partir dos próprios tokens (0 reprovados).
+22 paradas de teclado todas com anel de foco visível, 45 pares de contraste
+medidos por `logos/contraste.mjs` a partir dos próprios tokens e mais 10 pares
+medidos em pixel por `logos/contraste-gravura.mjs` (0 reprovados nos dois).
 
 Três quadros extras congelam a pá NO MEIO DA QUEDA pela Web Animations API e
 medem a camada de luz: 0,77 → 0,49 → 0,00. É o que prova que a peça aterrissa

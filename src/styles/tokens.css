@@ -1,4 +1,4 @@
-/* art-direction · solari · eixos: geometria/autônomo/escura · orçamento: 0kb · 2026-08-27 */
+/* art-direction · solari + cartografia · eixos: geometria+volume+gravura/autônomo/escura · orçamento: 0kb de JS + 10,4kb de figura gzip na pior rota · 2026-08-28 */
 
 /* ═══ A DIREÇÃO, EM UMA FRASE ═══════════════════════════════════════════════
    A página é uma placa de embarque. O verbo é VIRAR: uma pá gira no eixo
@@ -183,6 +183,47 @@
      Duas escalas sobrepostas (240px e 90px) leem como plástico injetado; uma
      só lê como ruído de TV. */
   --grao: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
+
+  /* ── cartografia ────────────────────────────────────────────────────────
+     A GRAVURA. É a terceira camada de matéria do site, depois do volume (a pá
+     de duas metades) e do grão — e é MATÉRIA, não um quinto gesto: a figura
+     vira porque a pá vira, e o verbo continua sendo um só.
+
+     Toda forma é contorno REAL, gerado por logos/gerar-mapas.mjs a partir de
+     fonte primária: Natural Earth 1:50m para país, malha oficial do IBGE para
+     as cinco macrorregiões brasileiras. Um contorno "parecido com a Argentina"
+     seria a versão gráfica do preço inventado que este site recusou por
+     escrito quando descartou a proposta `Brasa` do site de seguro.
+
+     A figura entra como camada de MISTURA (`background-blend-mode: soft-light`)
+     e não como imagem colorida: o asset carrega só ESCURECER (o fundo do
+     rebaixo, que a luz de 200° não alcança) e CLAREAR (a quina do sulco, que
+     ela alcança). Quem decide o matiz continua sendo o token da peça embaixo.
+     Custa zero elemento, zero máscara, zero filtro. */
+
+  /* A parede em que a placa está parafusada. `url()` e não um nome de arquivo
+     solto porque cada portão troca a sua pelo mapa da própria cobertura
+     (Base.astro, prop `parede`) — a capa mostra os 19 lugares que a busca
+     alcança, o portão do carro mostra o Brasil em cinco regiões. */
+  --parede: url("/img/parede.svg");
+  /* Quanto da parede se vê. Não é gosto: é o TETO que o contraste permite.
+     --texto-3 corre por cima da parede (.rivais, .ficha__rotulo, .detalhe) e
+     precisa de 4.5:1 contra o pixel mais claro que ela produz. Medido em
+     logos/contraste-gravura.mjs, não estimado:
+
+       0.13 com fio branco chapado ......... 3.87:1  REPROVA
+       0.13 com o par escuro+claro do sulco  4.62:1  passa raspando
+       0.115 com o par ..................... 4.73:1  o valor daqui
+
+     Acima de ~0.22 seria pôster de agência de qualquer jeito, que é
+     exatamente o que esta direção não é — mas quem fecha o número é a WCAG,
+     não o olho. */
+  --parede-luz: 0.115;
+  /* A figura sangra para fora da pá em vez de caber inteira dentro dela: peça
+     gravada continua atrás da borda, adesivo acaba na borda. 132% da altura
+     da pá é o valor em que o contorno ainda é reconhecível e já não tem
+     margem visível em cima nem embaixo. */
+  --gravura-altura: 132%;
 
   /* ── movimento ──────────────────────────────────────────────────────────
      Uma ideia, quatro expressões. `--dur-pa` é o único tempo novo: é quanto

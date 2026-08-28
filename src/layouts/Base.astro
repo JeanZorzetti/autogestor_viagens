@@ -24,6 +24,11 @@ interface Props {
   /** Subtipo do WebPage ("AboutPage", "ContactPage"…) quando schema.org tem
    *  um específico. */
   tipoPagina?: string | string[];
+  /** Qual mapa fica gravado na parede. Sem valor, a parede é a do saguão: os
+   *  19 lugares que a busca inteira alcança. Com o código de um produto, é a
+   *  cobertura DAQUELE produto — e é assim que a figura varia por rota, pelo
+   *  mesmo motivo que o objeto da cabeça do portão varia (FR-020). */
+  parede?: "aer" | "htl" | "pct" | "car";
 }
 
 const {
@@ -35,6 +40,7 @@ const {
   noindex = false,
   atualizado,
   tipoPagina = "WebPage",
+  parede,
 } = Astro.props;
 
 const site = Astro.site ?? new URL(SITE.url);
@@ -193,7 +199,11 @@ const grafo: Record<string, unknown>[] = [
       set:html={JSON.stringify({ "@context": "https://schema.org", "@graph": grafo })}
     />
   </head>
-  <body>
+  {/* A parede é `background-image` de `body::before`, não um <img>: ela é
+       matéria de fundo e não conteúdo, não entra na ordem de leitura, não
+       disputa o LCP e o navegador só a busca depois do que pinta a primeira
+       tela. Sem `parede`, o fallback de `--parede` em tokens.css já vale. */}
+  <body style={parede ? `--parede: url("/img/parede-${parede}.svg")` : undefined}>
     <a class="pular" href="#conteudo">Pular para o conteúdo</a>
     <Faixa />
     <main id="conteudo" tabindex="-1">

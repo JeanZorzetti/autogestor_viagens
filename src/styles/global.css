@@ -1,5 +1,8 @@
 /* art-direction · solari · eixos: geometria/autônomo/escura · orçamento: 0kb · 2026-08-27 */
 @import "./tokens.css";
+/* Os 19 contornos, um custom property cada. Arquivo GERADO — quem manda nele é
+   logos/gerar-mapas.mjs, e a fonte é dado geográfico primário, não desenho. */
+@import "./mapas.css";
 
 /* ═══ 1 · BASE ══════════════════════════════════════════════════════════════ */
 
@@ -30,6 +33,48 @@ body {
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+/* A PAREDE. A placa está parafusada numa parede, e desde a materialização de
+   27/08 a moldura existia mas a parede era um plano navy vazio. Agora ela é o
+   que uma parede de saguão é: um mapa gravado.
+
+   O QUE ELE MOSTRA. Exatamente os 19 lugares que esta busca alcança, e nenhum
+   a mais — um mapa-múndi inteiro seria decoração, e decoração é o que esta
+   direção recusa. Cada portão troca `--parede` pelo mapa da própria cobertura
+   (Base.astro), então a figura VARIA por rota pelo mesmo motivo que o objeto
+   da cabeça varia: são produtos diferentes, com alcances diferentes.
+
+   UMA camada `position: fixed` para o site inteiro, pela mesma razão do grão:
+   ela não rola. Parede que rola junto com o que está parafusado nela não é
+   parede, é papel de parede — e seriam N camadas de composição repintando no
+   scroll em vez de uma que o compositor resolve sozinho.
+
+   `38% 68%` não é centro: é o ponto do mapa que precisa sobreviver ao corte do
+   `cover`. Centrado, a janela de 360px cairia no Atlântico entre o Brasil e a
+   África — gratícula e mar. 38% da largura e 68% da altura é a América do Sul,
+   que é para onde 4 das 5 listas de destino apontam. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--parede);
+  background-repeat: no-repeat;
+  background-position: 38% 68%;
+  background-size: cover;
+  /* COMPOSIÇÃO NORMAL, e isso foi medido antes de ser escrito: `soft-light`
+     sobre uma banda escura quase não levanta nada — a fórmula multiplica pelo
+     backdrop, e o backdrop aqui é oklch(0.166). A parede simplesmente sumiu
+     da tela. É o mesmo motivo pelo qual o grão sobrevive em soft-light e uma
+     linha não: ruído de alta frequência a 0.055 se lê pela textura, um fio de
+     1px se lê pelo contraste.
+
+     Quem segura o claro dentro do piso de acessibilidade é o próprio asset (o
+     fio claro tem teto de 0.52 de alfa, ver gerar-mapas.mjs), não o modo de
+     mistura. */
+  opacity: var(--parede-luz);
 }
 
 /* O grão. UMA camada para o site inteiro — `position: fixed` cobrindo a janela
@@ -558,7 +603,25 @@ h1.placa__titulo em {
   backface-visibility: hidden;
   padding: 0.3em 0.42em;
   border-radius: var(--r-1);
-  background: linear-gradient(to bottom, var(--pa-cima) 0 50%, var(--pa-baixo) 50% 100%);
+  /* DUAS camadas: a gravura do lugar e, embaixo dela, o corpo da peça.
+     `soft-light` é o que transforma o asset preto-e-branco em sulco: onde ele
+     é escuro a peça escurece (fundo do rebaixo), onde é claro ela clareia
+     (a quina). O matiz nunca sai do token — a gravura obedece à cor da pá em
+     vez de trazer a própria, que é o mesmo princípio da sombra com matiz.
+
+     `--mapa` chega por `style` em ColunaDestino.astro. O fallback `none` não é
+     decoração defensiva: `background-image: none, <degradê>` continua válido,
+     enquanto uma custom property vazia invalidaria a declaração INTEIRA e a pá
+     perderia o próprio corpo junto com a figura. */
+  background-image: var(--mapa, none), linear-gradient(to bottom, var(--pa-cima) 0 50%, var(--pa-baixo) 50% 100%);
+  background-repeat: no-repeat;
+  background-position:
+    right 0.34em center,
+    0 0;
+  background-size:
+    auto var(--gravura-altura),
+    auto;
+  background-blend-mode: soft-light, normal;
   /* Aresta de cima acesa, pé da peça na sombra. Mesma luz de 200° da placa e
      do trilho — a regra é uma fonte de luz para o site inteiro. */
   box-shadow:

@@ -9,3 +9,10 @@ logos/_verificacao/
 # Skills e comandos do agente: ferramenta local, nao artefato do projeto.
 # O .specify/ (templates, scripts, constituicao) fica versionado; o .claude/ nao.
 .claude/
+
+# Dado geográfico bruto baixado por logos/gerar-mapas.mjs (Natural Earth 50m
+# + malha do IBGE). ~800kb, reconstruível, e as SAÍDAS dele é que são
+# commitadas — o build nunca precisa de rede.
+logos/_dados/
+public/_folha.html
+public/_zoom.html

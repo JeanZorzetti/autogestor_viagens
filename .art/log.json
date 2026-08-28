@@ -234,5 +234,89 @@
    "G4_fade_na_transicao": "achado e fechado durante o /speckit-analyze desta feature, ver handoff.md e contracts/coreografia.md secao 3 -- entra no log porque mudou o CSS servido, nao so a documentacao.",
    "governanca_constitucional": "portao de conformidade cumprido: /speckit-analyze rodou antes do /speckit-implement (obrigatorio por esta feature tocar preco, registro e marca de terceiro), fechou 3 pendencias (C2 constituicao, G4 fade, G1/G3 verificar.mjs) antes do codigo comecar."
   }
+ },
+ {
+  "data": "2026-08-28",
+  "projeto": "viagens",
+  "pagina": "/ + os 4 portoes (a capa e as rotas de produto; .doc e legais intocadas)",
+  "direcao": "solari + cartografia",
+  "tipo": "camada de materia",
+  "base": "as tres entradas anteriores deste log",
+  "pedido": "Dono disse 'Quero imagens' e chamou /art-direction. Propus tres modos de a imagem entrar nesta direcao (Emulsao: fotografia duotone travando na pa; Cartografia: figura desenhada de dado real; Atelie: natureza-morta de objeto) e ele escolheu CARTOGRAFIA, capa + os 4 portoes. A recomendacao era Cartografia, por dois motivos declarados na proposta: e a unica que eu construo inteira sem depender de ativo fotografico que nao existe no repo, e cada figura e um fato verificavel em vez de afirmacao sobre inventario de terceiro.",
+  "eixos": {
+   "materia": "geometria + volume + GRAVURA (eixo novo)",
+   "motor": "autonomo, herdado",
+   "banda": "escura"
+  },
+  "diagnostico": "O site nao tinha uma imagem de conteudo — public/img/ tinha og.png e nada mais. A direcao foi construida sem fotografia de proposito, entao 'colocar imagem' nao era adicionar um arquivo: era decidir DE QUE MATERIA a imagem e feita para nao virar um quinto gesto (G11) nem estourar o orcamento de 800ms. A resposta e que a figura nao e um gesto, e MATERIA — como o grao e o vinco. Ela vira porque a pa vira; o verbo continua sendo VIRAR e nao existe um quinto.",
+  "o_que_mudou": [
+   "TODA FIGURA SAI DE FONTE PRIMARIA, e essa e a regra que manda no arquivo novo logos/gerar-mapas.mjs: Natural Earth 1:50m (world-atlas@2) para os 11 paises, malha OFICIAL do IBGE (API v3 /malhas, intrarregiao=regiao) para as 5 macrorregioes brasileiras, uniao dos 23 territorios insulares para o CARIBE, e a PATAGONIA como Argentina + Chile recortados no paralelo 39 S por Sutherland-Hodgman — um recorte geometrico DECLARADO, nao um traco a olho. Um contorno 'parecido com a Argentina' seria a versao grafica do preco inventado que este site ja recusou por escrito.",
+   "A GRAVURA NA FACE DA PA: 19 contornos como data-uri em src/styles/mapas.css, entrando como CAMADA DE MISTURA (background-blend-mode: soft-light) sobre o degrade da pa. O asset carrega so PRETO (fundo do rebaixo, que a luz de 200 graus nao alcanca) e BRANCO (a quina, que ela alcanca) — quem decide o matiz continua sendo o token da peca. Custo: zero elemento, zero mascara, zero filtro. Isso importou: filtro numa peca que gira repinta a cada quadro, e sao 31 pas na capa.",
+   "A PAREDE: body::before fixo com o mapa dos 19 lugares que a busca cobre, e NENHUM a mais — mapa-mundi inteiro seria decoracao; isto e a cobertura do produto, e por isso e informacao. Uma camada para o site inteiro, position: fixed, pelo mesmo motivo do grao: parede que rola junto com o que esta parafusado nela nao e parede.",
+   "CADA PORTAO TEM A PAREDE DA PROPRIA COBERTURA (parede-aer/htl/pct/car.svg), lidas de conteudo.ts pelo gerador. E assim que a figura VARIA por rota — o portao do carro enquadra o Brasil em cinco regioes, o da passagem enquadra tres continentes — pelo mesmo motivo que o objeto da cabeca varia (FR-020).",
+   "O PRIMITIVO ESTAVA ESCRITO 5x: o bloco .coluna-destino__janela + N pas vivia a mao em Linha.astro e nas QUATRO cabecas de portao. Virou src/components/ColunaDestino.astro, porque a figura precisava entrar em um lugar e nao em cinco. Ele falha o BUILD se um destino nao tiver contorno — `background-image: var(--mapa-)` e declaracao invalida que some em silencio, e a pa ficaria lisa sem ninguem saber por que.",
+   "SEGUNDO CHECADOR DE CONTRASTE, e nao e redundancia: logos/contraste.mjs le TOKENS e nao consegue ver a gravura, porque o pixel embaixo da letra ali so existe depois de pintado. logos/contraste-gravura.mjs pinta e mede — 12 amostras por rota, o pixel mais claro da metade de cima de cada janela, e o pior par possivel da parede (o pixel mais claro dela x --texto-3, o texto mais escuro do site). Falha com codigo 1."
+  ],
+  "correcoes_encontradas_olhando": [
+   "PORTUGAL saia como tres pontos e um selo no canto: os Acores esticavam a caixa e empurravam o continente para fora. Espanha (Canarias) e Europa (Svalbard, via Noruega) tinham o mesmo defeito. Corrigido com uma JANELA CONTINENTAL declarada por forma — [lonMin, lonMax, latMin, latMax] — e nao com um limiar escondido de area. Achado na folha de contato, nao lendo o codigo.",
+   "O CHILE VIROU UMA BARRA RETA quando afrouxei a simplificacao para caber no orcamento. A tolerancia era uniforme contra a caixa normalizada (100 no maior lado), e o Chile mede 7 unidades de largura: 1.8 de tolerancia nele e 26% da peca. Agora ela acompanha o MENOR lado. O Caribe tinha colapsado em triangulos pelo mesmo motivo.",
+   "A PRIMEIRA PAREDE REPROVOU NO PISO: fio branco chapado a 13% dava 3.87:1 para --texto-3, abaixo de 4.5. --texto-3 corre por cima da parede de verdade (.rivais, .ficha__rotulo, .detalhe), entao o par existe. Virou SULCO DE DOIS FIOS — a fresta escura e a quina clara, o mesmo truque que o vinco da pa ja usava. O fio escuro nao tem teto (escurecer AUMENTA o contraste do texto), e e dele que vem quase toda a leitura. Hoje 4.73:1.",
+   "O PROPRIO MEDIDOR MENTIU antes disso: acusou 3.35:1 nas oito janelas, e o pixel culpado era rgb(110,90,71) — o antialiasing da letra laranja, nao a superficie. Filtrar por faixa de cor nao resolve: a suavizacao e um degrade continuo entre fundo e texto e sempre sobra um passo dentro de qualquer faixa. Apagar a tinta (color: transparent) e medir a peca e a unica leitura que nao mente.",
+   "MEDICAO DE LCP: as tres primeiras rodadas deram -136ms, +280ms e +208ms para a MESMA mudanca. A causa nao era a figura: era um `astro dev` meu esquecido em segundo plano desde o comeco da sessao mais 26 processos de Chromium orfaos de scripts que quebraram. Com a maquina limpa e A/B intercalado (as duas condicoes no mesmo minuto, nao em blocos), o custo aparece de verdade."
+  ],
+  "construido_e_removido": [
+   "mix-blend-mode: soft-light na parede. Fisicamente era o certo — o asset so escurece e clareia, o matiz sai do token. Na tela a parede SUMIU: soft-light multiplica pelo backdrop, e o backdrop aqui e oklch(0.166). E o mesmo motivo pelo qual o grao sobrevive em soft-light e uma linha nao: ruido de alta frequencia se le pela textura, um fio de 1px se le pelo contraste. Trocado por composicao normal, com o teto do claro dentro do proprio asset.",
+   "Mascara (mask-image) em vez de camada de mistura, para a cor vir 100% do token. Descartada por custo: mascara e um elemento a mais por pa, e sao 31 na capa; e a versao de dois tons (campo + aresta) precisaria de duas camadas com deslocamento. O blend faz o mesmo trabalho com uma declaracao.",
+   "O caminho da parede escrito duas vezes (par escuro + claro) dobrou o arquivo de 22 para 44kb. Trocado por <defs> + <use>, que custa 30 bytes."
+  ],
+  "custo": {
+   "faixa": "captacao",
+   "js_gzip_kb": 0,
+   "deps_novas": [],
+   "nota_deps": "Zero dependencia nova, inclusive no build: o TopoJSON e decodificado a mao no gerador (o formato e delta-encoding sobre grade quantizada e cabe em 20 linhas), e a projecao e plate carree. topojson-client + d3-geo pesariam mais em auditoria do que em bytes. O dado bruto (~800kb) fica em logos/_dados/, ignorado pelo git; as SAIDAS e que sao commitadas, entao o build nunca precisa de rede.",
+   "peso_novo_kb_gzip": {
+    "mapas_css_todas_as_rotas": 6.9,
+    "parede_capa": 3.5,
+    "parede_aer": 1.5,
+    "parede_htl": 2.7,
+    "parede_pct": 1.1,
+    "parede_car": 0.9,
+    "pior_rota_total": 10.4
+   },
+   "lcp_ms": {
+    "capa": 648,
+    "passagens-aereas": 592,
+    "hoteis": 552,
+    "pacotes": 536,
+    "aluguel-de-carro": 476,
+    "sobre": 336,
+    "privacidade": 344,
+    "termos": 300,
+    "404": 304,
+    "alvo": 800,
+    "condicao": "build servido estatico, CPU 4x estrangulada, 5 amostras/rota, 1440x900, maquina sem processo meu concorrendo"
+   },
+   "delta_lcp_medido": "+80 a +208ms contra o build anterior, medido com os DOIS builds servidos lado a lado e as requisicoes intercaladas (logos nao guarda esse script; ele viveu no scratchpad). O absoluto desta maquina oscila ate 4x entre rodadas — o delta intercalado e o unico numero confiavel aqui, e o absoluto acima foi tirado com a maquina limpa.",
+   "cls": 0.0,
+   "contraste_pares_token": 45,
+   "contraste_pares_pixel": 10,
+   "contraste_reprovados": 0,
+   "teclado": "9 rotas, 0 paradas sem anel de foco",
+   "console": "limpo nas 9 rotas x 4 larguras",
+   "estouro_horizontal": "nenhum"
+  },
+  "gates": {
+   "G9_dado_inventado": "fechado, e e o gate central desta entrega — toda forma vem de fonte primaria citada no cabecalho do gerador, e test/mapas.test.mjs falha se as saidas divergirem de conteudo.ts ou se o gerador deixar de citar as fontes.",
+   "G11_uma_ideia": "fechado — a gravura NAO e uma quinta camada de coreografia. Ela e materia: nao tem animacao propria, nao tem keyframe, nao tem listener. Ela se move porque a peca em que esta gravada se move.",
+   "G17_superficie_com_materia": "fechado com folga — a terceira camada de materia do site (volume, grao, e agora gravura). A parede, que era um plano navy vazio, virou a superficie que a placa esta parafusada.",
+   "G22_contraste_de_leitura": "REPROVOU e foi corrigido, duas vezes: a parede em fio branco chapado dava 3.87:1 para --texto-3 (virou sulco de dois fios, 4.73:1) e a pa foi medida em pixel a 5.88:1 no pior quadro. Nenhum dos dois pares e visivel para logos/contraste.mjs.",
+   "G23_reduced_motion": "fechado, e MELHOROU: sob movimento reduzido a placa nasce parada e agora cada pa tem uma figura na face em vez de so texto. O estado final ficou mais composto do que era.",
+   "G24_fallback_composto": "fechado — verificado abortando as requisicoes de /img/parede*.svg: a pagina volta a ser exatamente o painel anterior, com corpo, vinco e aresta. `var(--mapa, none)` existe por isso: custom property vazia invalidaria a declaracao INTEIRA e a pa perderia o proprio degrade junto com a figura.",
+   "G29_dentro_da_faixa": "fechado — 648ms na pior rota contra 800 de orcamento, com JS ainda em 0B. O custo foi cortado duas vezes ate caber: tolerancia da parede de 0.3 para 0.8 e das figuras de 0.5 para 1.8 (esta ultima proporcional ao menor lado da peca).",
+   "G30_dependencia_justificada": "fechado — nenhuma dep nova. A alternativa descartada esta declarada: topojson-client + d3-geo, trocados por 20 linhas de decodificacao e uma projecao plate carree.",
+   "G32_difere_do_log": "fechado — EIXO DE MATERIA NOVO (`gravura`) contra as tres ultimas entradas, que eram todas `geometria + volume`. Motor e banda continuam herdados de proposito: nao e uma direcao nova, e uma camada nova dentro da Solari.",
+   "G33_estrutura_nao_repete": "N/A DECLARADO — esta entrega nao cria pagina nem macroestrutura; ela poe materia nas quatro que ja existem (Indice, .doc, Portao). O gate mede variedade entre telas novas, e nao ha tela nova aqui.",
+   "G31_dpr_travado": "N/A DECLARADO — nao ha canvas em lugar nenhum do site."
+  }
  }
 ]

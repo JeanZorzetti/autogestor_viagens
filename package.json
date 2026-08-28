@@ -9,7 +9,9 @@
     "check": "astro check",
     "test": "node --test test/*.test.mjs",
     "contraste": "node logos/contraste.mjs",
-    "verificar": "node logos/verificar.mjs"
+    "verificar": "node logos/verificar.mjs",
+    "mapas": "node logos/gerar-mapas.mjs",
+    "contraste-gravura": "node logos/contraste-gravura.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.0",

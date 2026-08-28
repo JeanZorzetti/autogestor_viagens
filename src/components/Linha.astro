@@ -3,6 +3,7 @@
  *  à parte. Reusa o primitivo `.coluna-destino__*` (global.css, T009) e
  *  recebe `linha` (0–3) para a cascata do giro (FR-006) e a entrada
  *  escalonada que a placa já tinha. */
+import ColunaDestino from "./ColunaDestino.astro";
 import { PRODUTOS } from "../data/conteudo";
 
 interface Props {
@@ -27,13 +28,11 @@ const estilo = `--atraso:${160 + linha * 60}; --linha:${linha}; --n:${n}; --cicl
         não genérico — precisa ser único dentro de cada documento e existir
         nos dois (contracts/coreografia.md §3). Sem hífen duplo: `vt-aer`,
         não `--vt-aer` (A2). */}
-    <span
-      class="coluna-destino__janela linha__destino"
-      aria-hidden="true"
-      style={`view-transition-name: vt-${produto.codigo.toLowerCase()};`}
-    >
-      {produto.destinos.map((d, i) => <span class="coluna-destino__pa vinco" style={`--i:${i}`}>{d}</span>)}
-    </span>
+    <ColunaDestino
+      destinos={produto.destinos}
+      classe="linha__destino"
+      estilo={`view-transition-name: vt-${produto.codigo.toLowerCase()};`}
+    />
     <span class="linha__onde">{produto.onde}</span>
     <span class="status">
       <span class="status__a">24h</span>

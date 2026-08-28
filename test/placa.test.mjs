@@ -61,8 +61,15 @@ test("cada linha do painel gera a coluna de destino a partir do próprio produto
   assert.match(index, /<Linha produto=\{p\} linha=\{i\} \/>/, "a placa precisa gerar as quatro linhas do produto, não à mão");
 
   const linha = ler("src/components/Linha.astro");
-  assert.match(linha, /produto\.destinos\.map\(\(d, i\) =>/, "Linha.astro precisa gerar as pás da lista do produto");
-  assert.match(linha, /--i:\$\{i\}/, "cada pá precisa carregar seu índice para o atraso do ciclo");
+  // A coluna saiu de dentro do Linha.astro em 28/08 e virou o componente
+  // ColunaDestino.astro — o mesmo bloco estava escrito 5× (aqui e nos quatro
+  // objetos de cabeça de portão), e a gravura precisava entrar em um lugar
+  // só. O invariante não mudou: quem gera as pás continua sendo a lista DO
+  // PRODUTO, nunca uma lista à mão. Só mudou de arquivo.
+  assert.match(linha, /destinos=\{produto\.destinos\}/, "Linha.astro precisa passar a lista do próprio produto para a coluna");
+  const coluna = ler("src/components/ColunaDestino.astro");
+  assert.match(coluna, /destinos\.map\(\(d, i\) =>/, "ColunaDestino.astro precisa gerar as pás da lista recebida");
+  assert.match(coluna, /--i:\$\{i\}/, "cada pá precisa carregar seu índice para o atraso do ciclo");
   assert.match(linha, /href=\{produto\.rota\}/, "a linha do painel precisa apontar para o portão (rota interna), não para a busca");
   assert.doesNotMatch(linha, /target="_blank"/, "a linha do painel não deveria abrir em nova aba — o CTA externo migrou para o bloco 5 do portão");
 });

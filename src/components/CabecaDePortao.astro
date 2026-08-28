@@ -3,6 +3,7 @@
  *  que acabou de travar, com a coluna de destino daquele produto ainda
  *  virando. A FORMA varia por `produto.objeto` (FR-020) — reusa a coluna de
  *  destino compartilhada (global.css, T009), usada 8× no site inteiro. */
+import ColunaDestino from "./ColunaDestino.astro";
 import { PRODUTOS, REGIMES_HTL, PACOTE_COBERTURA, AEROPORTOS_CAR } from "../data/conteudo";
 
 interface Props {
@@ -43,17 +44,7 @@ const estiloColuna = `--n:${n}; --ciclo-nome:ciclo-${n}; --sombra-nome:sombra-pa
             <>
               <div class="cabeca-portao__perna">
                 <span class="cabeca-portao__perna-rotulo">Ida</span>
-                <span
-                  class="coluna-destino__janela"
-                  aria-hidden="true"
-                  style={estiloColuna}
-                >
-                  {produto.destinos.map((d, i) => (
-                    <span class="coluna-destino__pa vinco" style={`--i:${i}`}>
-                      {d}
-                    </span>
-                  ))}
-                </span>
+                <ColunaDestino destinos={produto.destinos} estilo={estiloColuna} />
               </div>
               <div class="cabeca-portao__perna">
                 <span class="cabeca-portao__perna-rotulo">Volta</span>
@@ -66,17 +57,7 @@ const estiloColuna = `--n:${n}; --ciclo-nome:ciclo-${n}; --sombra-nome:sombra-pa
         {
           produto.objeto === "faixa" && (
             <div>
-              <span
-                class="coluna-destino__janela"
-                aria-hidden="true"
-                style={estiloColuna}
-              >
-                {produto.destinos.map((d, i) => (
-                  <span class="coluna-destino__pa vinco" style={`--i:${i}`}>
-                    {d}
-                  </span>
-                ))}
-              </span>
+              <ColunaDestino destinos={produto.destinos} estilo={estiloColuna} />
               <div class="cabeca-portao__faixa-noites" aria-hidden="true">
                 {REGIMES_HTL.map((_, i) => (
                   <span class:list={["cabeca-portao__noite", i === 1 && "cabeca-portao__noite--acesa"]} />
@@ -100,17 +81,7 @@ const estiloColuna = `--n:${n}; --ciclo-nome:ciclo-${n}; --sombra-nome:sombra-pa
                   <span class="cabeca-portao__pa-valor">{PACOTE_COBERTURA.entra[1]}</span>
                 </div>
               </div>
-              <span
-                class="coluna-destino__janela"
-                aria-hidden="true"
-                style={estiloColuna}
-              >
-                {produto.destinos.map((d, i) => (
-                  <span class="coluna-destino__pa vinco" style={`--i:${i}`}>
-                    {d}
-                  </span>
-                ))}
-              </span>
+              <ColunaDestino destinos={produto.destinos} estilo={estiloColuna} />
             </>
           )
         }
@@ -128,17 +99,7 @@ const estiloColuna = `--n:${n}; --ciclo-nome:ciclo-${n}; --sombra-nome:sombra-pa
                   <span class="cabeca-portao__campo-valor">{AEROPORTOS_CAR[0].iata}</span>
                 </div>
               </div>
-              <span
-                class="coluna-destino__janela"
-                aria-hidden="true"
-                style={estiloColuna}
-              >
-                {produto.destinos.map((d, i) => (
-                  <span class="coluna-destino__pa vinco" style={`--i:${i}`}>
-                    {d}
-                  </span>
-                ))}
-              </span>
+              <ColunaDestino destinos={produto.destinos} estilo={estiloColuna} />
             </>
           )
         }
