@@ -5,3 +5,7 @@ dist/
 .env
 .DS_Store
 logos/_verificacao/
+
+# Skills e comandos do agente: ferramenta local, nao artefato do projeto.
+# O .specify/ (templates, scripts, constituicao) fica versionado; o .claude/ nao.
+.claude/
