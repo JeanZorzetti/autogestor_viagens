@@ -1,111 +1,75 @@
 import { EMPRESA, EXTERNOS } from "../consts";
 
-/** Toda a placa em um lugar só.
+/** Todo o conteúdo do site em um lugar só.
  *
- *  REGRA QUE MANDA NESTE ARQUIVO: nenhum valor aqui é inventado. A direção de
- *  arte é uma placa de embarque, e placa de embarque mostra preço e horário —
- *  o que este site NÃO tem, porque a tarifa vive na busca da OnerTravel e muda
- *  por rota e por data. Então a placa mostra o que é verdade sem consultar
- *  nada: os quatro produtos, onde eles valem, e o parcelamento máximo. Um
- *  "R$ 1.284" de enfeite na primeira tela seria número inventado — o defeito
- *  que a direção do site de seguro recusou por escrito quando descartou a
- *  proposta "Brasa". */
-
-/** Qual objeto a cabeça do portão amplia, e o tipo do bloco 3 ("detalhe
- *  ampliado"). Os dois são INJETORES — quatro produtos, quatro valores
- *  distintos em cada campo (FR-020, invariante V1). Um valor repetido
- *  significa dois portões com o mesmo desenho, e a spec inteira reprova. */
-type ObjetoDeCabeca = "par" | "faixa" | "duasMetades" | "campoUnico";
-type TipoDeDetalhe = "comparacao" | "estados" | "duasColunas" | "grade";
+ *  REGRA QUE MANDA NESTE ARQUIVO: nenhum valor aqui é inventado, e ela
+ *  sobreviveu à troca de direção sem um arranhão. A tarifa vive na busca da
+ *  OnerTravel e muda por rota e por data, então o site mostra o que é verdade
+ *  sem consultar nada: os quatro produtos, onde eles valem, e o parcelamento
+ *  máximo. Um "R$ 1.284" de enfeite na primeira tela seria número inventado —
+ *  o defeito que a direção do site de seguro recusou por escrito quando
+ *  descartou a proposta "Brasa".
+ *
+ *  Vale igual para a fotografia que entrou no lugar da placa: nenhuma das
+ *  cinco imagens mostra um preço, um horário de voo ou uma pessoa posando de
+ *  cliente satisfeito. Os critérios estão em logos/baixar-fotos.mjs. */
 
 interface Produto {
   codigo: "AER" | "HTL" | "PCT" | "CAR";
   nome: string;
   onde: string;
   nota: string;
-  /** Conteúdo interno do <svg viewBox="0 0 24 24">, traço em currentColor. */
-  icone: string;
   /** Slug do portão. Português, por termo de busca — é a linguagem da
    *  consulta que traz a pessoa, não a do código de três letras. */
   rota: string;
-  /** A lista da coluna que vira: painel e cabeça de portão leem a MESMA
-   *  lista (FR-032, uma fonte, dois usos). Comprimentos coprimos entre si
-   *  (data-model.md §2) — é o que faz a combinação visível não se repetir
-   *  antes de ~1h52 de página aberta. */
-  destinos: readonly string[];
-  objeto: ObjetoDeCabeca;
-  detalhe: TipoDeDetalhe;
 }
 
-/** As quatro linhas da placa. São o índice da página e o CTA ao mesmo tempo:
- *  a linha inteira é o link, não um botão dentro dela. */
+/* ═══ O QUE SAIU DAQUI EM 28/08/2026 ═══════════════════════════════════════
+   Quatro campos morreram junto com a direção Solari, e nenhum deles tinha
+   mais um leitor:
+
+     icone     — SVG de traço, do tempo em que cada produto tinha um ícone de
+                 linha. A direção nova identifica produto por FOTOGRAFIA.
+     destinos  — a lista de países/regiões que a coluna girava numa pá. Não há
+                 mais pá. (A cobertura geográfica continua dita em texto, nos
+                 blocos COBERTURA e nas fichas de cada portão.)
+     objeto    — qual forma a cabeça do portão ampliava (par/faixa/…). A
+                 cabeça agora é a foto daquele produto.
+     detalhe   — qual arranjo o bloco 3 usava. As rotas declaram o próprio.
+
+   Cada um deles sustentava um teste e um pedaço de CSS que também saíram. */
+
+/** Os quatro produtos. Na capa são as peças da vitrine — a fotografia inteira
+ *  é o link, não um botão dentro dela — e cada um tem a rota do próprio
+ *  portão. */
 export const PRODUTOS: readonly Produto[] = [
   {
     codigo: "AER",
     nome: "Passagens aéreas",
     onde: "Brasil e exterior",
     nota: "Companhias lado a lado na mesma busca",
-    icone:
-      '<path d="M10.2 3.6a1.8 1.8 0 0 1 3.6 0V9l7.7 4.3v2.3l-7.7-2.2v4.3l2.6 1.9v1.8L12 20.3l-4.4 1.1v-1.8l2.6-1.9v-4.3L2.5 15.6v-2.3L10.2 9z"/>',
     rota: "/passagens-aereas",
-    // 11 nomes — ciclo 24,2s. R2 (2026-08-28): país/região, nunca cidade —
-    // "a busca vende a Argentina" é fato do produto; "a busca vende Buenos
-    // Aires" é afirmação sobre o inventário de um terceiro.
-    destinos: [
-      "BRASIL",
-      "ARGENTINA",
-      "CHILE",
-      "PORTUGAL",
-      "ESPANHA",
-      "URUGUAI",
-      "PARAGUAI",
-      "COLÔMBIA",
-      "PERU",
-      "MÉXICO",
-      "ITÁLIA",
-    ],
-    objeto: "par",
-    detalhe: "comparacao",
   },
   {
     codigo: "HTL",
     nome: "Hotéis e resorts",
     onde: "Brasil e exterior",
     nota: "Filtra por categoria de quarto e regime",
-    icone:
-      '<path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16"/><path d="M15 10h4a1 1 0 0 1 1 1v10"/><path d="M7.5 8h1M7.5 12h1M7.5 16h1M11.5 8h1M11.5 12h1M11.5 16h1"/><path d="M2.5 21h19"/>',
     rota: "/hoteis",
-    // 8 nomes — ciclo 17,6s.
-    destinos: ["NORDESTE", "SUDESTE", "SUL", "CENTRO-OESTE", "NORTE", "CARIBE", "EUROPA", "PATAGÔNIA"],
-    objeto: "faixa",
-    detalhe: "estados",
   },
   {
     codigo: "PCT",
     nome: "Pacotes",
     onde: "Voo + hospedagem",
     nota: "Os dois no mesmo preço e no mesmo carrinho",
-    icone:
-      '<rect x="3.5" y="8" width="17" height="12" rx="2"/><path d="M9 8V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V8"/><path d="M9.5 12v4M14.5 12v4"/>',
     rota: "/pacotes",
-    // 7 nomes — ciclo 15,4s.
-    destinos: ["NORDESTE", "CARIBE", "ARGENTINA", "CHILE", "PORTUGAL", "SUL", "SUDESTE"],
-    objeto: "duasMetades",
-    detalhe: "duasColunas",
   },
   {
     codigo: "CAR",
     nome: "Aluguel de carro",
     onde: "Retirada no destino",
     nota: "Inclusive no aeroporto de chegada",
-    icone:
-      '<path d="M3 16.5v-3.2l1.8-4.4A2 2 0 0 1 6.65 7.6h10.7a2 2 0 0 1 1.85 1.3L21 13.3v3.2"/><path d="M3 16.5h18"/><circle cx="7.2" cy="16.5" r="1.9"/><circle cx="16.8" cy="16.5" r="1.9"/><path d="M4.8 13.3h14.4"/>',
     rota: "/aluguel-de-carro",
-    // 5 nomes — ciclo 11,0s. Comprimentos 11/8/7/5: coprimos dois a dois,
-    // mmc(5,7,8,11) = 3080 paradas × 2,2s = 1h52min56s (FR-005 pede ≥ 1h).
-    destinos: ["BRASIL", "CENTRO-OESTE", "NORDESTE", "SUDESTE", "SUL"],
-    objeto: "campoUnico",
-    detalhe: "grade",
   },
 ] as const;
 

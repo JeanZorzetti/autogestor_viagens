@@ -1,122 +1,114 @@
 // Gera a imagem de compartilhamento (Open Graph) do site.
-//   node logos/gerar-og.mjs
+//   npm run build && node logos/gerar-og.mjs
 //
-// Renderiza no NAVEGADOR em vez de montar o PNG no sharp, por um motivo só: a
-// fonte. A IBM Plex Mono não está instalada no sistema, então um SVG
-// rasterizado pelo sharp cairia numa mono qualquer — e o cartão de
-// compartilhamento é justamente onde a marca aparece para quem ainda NÃO
-// entrou no site. Aqui a página carrega o MESMO arquivo de fonte que o site
-// serve, de public/fonts.
+// ═══ ELE DEIXOU DE DESENHAR E PASSOU A FOTOGRAFAR ═══════════════════════════
+// A versão anterior montava o cartão do zero num HTML próprio: a faixa de
+// status, o título em monoespaçada, uma "pá" com um destino travado e as
+// quatro linhas da placa. Era uma SEGUNDA versão da capa, mantida à mão.
 //
-// A alternativa (um arquivo de design mantido à mão) foi recusada: é assim que
-// um PNG de marca fica desatualizado sem ninguém perceber.
+// E foi exatamente assim que ela apodreceu. Quando a direção mudou, o cartão
+// continuou servindo a placa Solari — mono em tudo, num site que não tem mais
+// mono em título nenhum. Pior: ele exibia "DESTINO FORTALEZA", um nome de
+// CIDADE que o conteúdo do site tinha banido meses antes (a regra passou a ser
+// país/região, porque "a busca vende a Argentina" é fato do produto e "a busca
+// vende Fortaleza" é afirmação sobre o inventário de um terceiro). O cartão
+// que aparece para quem AINDA NÃO ENTROU no site estava mostrando a única
+// coisa que o site combinou de não dizer.
+//
+// A correção não é redesenhar o cartão na direção nova — é parar de ter um
+// segundo desenho. Agora o script abre a capa de verdade no navegador e
+// fotografa a primeira tela. O cartão passa a ser a página: se a direção
+// mudar de novo, ele muda junto, sem ninguém lembrar de nada.
+//
+// Ele fotografa o BUILD, nunca o dev server: o `astro dev` injeta a barra de
+// ferramentas do Astro, que apareceria no cartão.
 import { chromium } from "playwright";
-import { readFileSync, mkdirSync } from "node:fs";
-import { pathToFileURL } from "node:url";
+import { createServer } from "node:http";
+import { readFile, stat } from "node:fs/promises";
+import { extname, join, normalize } from "node:path";
+
+const RAIZ = ".vercel/output/static";
+const SAIDA = "public/img/og.png";
 
 const L = 1200;
 const A = 630;
-const SAIDA = "public/img/og.png";
 
-// Tokens em hex, copiados de tokens.css (lá eles são OKLCH; aqui o navegador
-// resolveria os dois igual, mas hex mantém o script legível). São poucos e
-// estáveis — importar CSS de dentro de um script node custaria mais que as
-// seis linhas que economizaria.
-const FUNDO = "#000d28";
-const PLACA = "#00143c";
-const BORDA = "#2d3f63";
-const LARANJA = "#f88400";
-const LARANJA_ALTO = "#ffa640";
-const TEXTO = "#eef2fa";
-const TEXTO_3 = "#8f9cb5";
+/* A ALTURA DA JANELA DE CAPTURA. A abertura da capa mede `92svh`, então para
+   que ela preencha exatamente os 630px do cartão a viewport precisa ser
+   630 ÷ 0,92 ≈ 685px de altura. Sem essa conta o cartão sairia com uma faixa
+   da vitrine embaixo, ou com a abertura cortada no meio da frase. */
+const VIEWPORT_A = Math.round(A / 0.92);
 
-// O telefone sai de src/consts.ts, não escrito aqui: um cartão que promete um
-// número diferente do que o site mostra é o tipo de divergência que ninguém
-// revisa depois que o PNG fica pronto. Regex e não import porque consts.ts é
-// TypeScript e este script roda em node cru.
-const consts = readFileSync("src/consts.ts", "utf8");
-const TELEFONE = consts.match(/telefoneExibicao: "([^"]+)"/)?.[1];
-if (!TELEFONE) throw new Error("não consegui ler telefoneExibicao de src/consts.ts");
+const T = {
+  ".html": "text/html;charset=utf-8",
+  ".css": "text/css",
+  ".js": "text/javascript",
+  ".woff2": "font/woff2",
+  ".png": "image/png",
+  ".svg": "image/svg+xml",
+  ".avif": "image/avif",
+  ".webp": "image/webp",
+  ".json": "application/json",
+};
 
-// A marca inline, do MESMO componente que a página usa — não uma segunda
-// cópia. Pega só o <svg> de dentro do .astro e as custom properties do <style>.
-const logoAstro = readFileSync("src/components/Logo.astro", "utf8");
-const svg = logoAstro.match(/<svg[\s\S]*?<\/svg>/)?.[0];
-const vars = [...logoAstro.matchAll(/(--lg-[a-z0-9]+): (#[0-9a-f]{6});/g)]
-  .map(([, k, v]) => `${k}:${v}`)
-  .join(";");
-if (!svg || !vars) throw new Error("não consegui extrair a marca de src/components/Logo.astro");
-const marca = svg.replace('class:list={["logo", klass]}', `class="logo" style="${vars}"`).replace(/\{size\}/g, "56");
+const srv = createServer(async (q, r) => {
+  const alvo = decodeURIComponent(q.url.split("?")[0]);
+  for (const t of [alvo, alvo + ".html", join(alvo, "index.html")]) {
+    try {
+      const f = join(RAIZ, normalize(t));
+      if ((await stat(f)).isDirectory()) continue;
+      const b = await readFile(f);
+      r.writeHead(200, { "content-type": T[extname(f)] ?? "application/octet-stream" });
+      return r.end(b);
+    } catch {}
+  }
+  r.writeHead(404);
+  r.end();
+});
+await new Promise((r) => srv.listen(0, "127.0.0.1", r));
+const porta = srv.address().port;
 
-const fonte = pathToFileURL("public/fonts/plex-mono-600-latin.woff2").href;
+const nav = await chromium.launch();
+const ctx = await nav.newContext({ viewport: { width: L, height: VIEWPORT_A }, deviceScaleFactor: 1 });
+const pagina = await ctx.newPage();
+await pagina.goto(`http://127.0.0.1:${porta}/`, { waitUntil: "load" });
 
-// As quatro linhas da placa, as mesmas de src/data/conteudo.ts. Lidas do
-// arquivo pelo mesmo motivo do telefone.
-const conteudo = readFileSync("src/data/conteudo.ts", "utf8");
-const linhas = [...conteudo.matchAll(/codigo: "([A-Z]{3})",\s*\n\s*nome: "([^"]+)"/g)].map(([, c, n]) => [c, n]);
-if (linhas.length !== 4) throw new Error(`esperava 4 produtos em conteudo.ts, achei ${linhas.length}`);
+/* `.then(() => true)`: `document.fonts.ready` resolve para um FontFaceSet, que
+   não atravessa a serialização do Playwright. */
+await pagina.evaluate(() => document.fonts.ready.then(() => true));
+await pagina.evaluate(() =>
+  Promise.all([...document.images].filter((i) => i.loading !== "lazy").map((i) => i.decode().catch(() => {}))).then(
+    () => true,
+  ),
+);
 
-const html = `<!doctype html><html><head><meta charset="utf-8">
-<style>
-  @font-face{font-family:"Plex Mono";font-weight:600;font-display:block;src:url("${fonte}") format("woff2")}
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{width:${L}px;height:${A}px;background:${FUNDO};color:${TEXTO};
-       font-family:"Plex Mono",monospace;font-weight:600;overflow:hidden;
-       display:flex;flex-direction:column}
+/* A entrada da página anima a lâmina de texto subindo por uma fresta. Um
+   cartão tirado no meio disso pegaria a chamada pela metade — então o script
+   desliga a coreografia em vez de esperar um tempo arbitrário e torcer. É o
+   mesmo estado que quem usa `prefers-reduced-motion` vê: a composição inteira,
+   parada. */
+await pagina.addStyleTag({
+  content: `.entra > * { animation: none !important; translate: 0 0 !important; }`,
+});
+await pagina.waitForTimeout(400);
 
-  /* A FAIXA DE STATUS — o topo da placa, igual ao do site. */
-  .faixa{display:flex;align-items:center;gap:18px;padding:26px 56px;
-         border-bottom:1px solid ${BORDA};background:${PLACA};
-         font-size:19px;letter-spacing:.14em;text-transform:uppercase;color:${TEXTO_3}}
-  .faixa .nome{color:${TEXTO};letter-spacing:.1em}
-  .faixa .fim{margin-left:auto;color:${LARANJA}}
-  .logo{display:block;width:56px;height:56px}
+await pagina.screenshot({ path: SAIDA, clip: { x: 0, y: 0, width: L, height: A } });
 
-  .corpo{flex:1;padding:38px 56px 0;background:${PLACA}}
-  h1{font-size:66px;line-height:1.0;letter-spacing:-.03em;text-transform:uppercase;
-     font-variant-ligatures:none}
-  h1 em{display:block;font-style:normal;color:${LARANJA}}
+/* A prova de que o cartão não saiu escuro por acidente (imagem que não chegou,
+   véu com o valor errado): a luminância média tem que estar numa faixa de
+   fotografia à hora azul, nem preta nem estourada. Um cartão preto é o defeito
+   mais provável aqui e o mais difícil de notar — ninguém abre o PNG. */
+const { data, info } = await import("sharp").then((m) =>
+  m.default(SAIDA).raw().toBuffer({ resolveWithObject: true }),
+);
+let soma = 0;
+for (let i = 0; i < data.length; i += info.channels) soma += (data[i] + data[i + 1] + data[i + 2]) / 3;
+const media = soma / (data.length / info.channels);
+if (media < 12 || media > 200) {
+  throw new Error(`og.png com luminância média ${media.toFixed(1)}/255 — o cartão provavelmente saiu em branco ou preto`);
+}
 
-  /* O DESTINO — a pá que no site vira sozinha, aqui congelada num valor. Um
-     cartão de compartilhamento não anima, então o gesto entra como ele fica
-     DEPOIS de travar: é isso que a placa mostra 99% do tempo. */
-  .destino{display:flex;align-items:baseline;gap:20px;margin-top:26px;
-           padding-top:20px;border-top:1px solid ${BORDA}}
-  .destino .rot{font-size:18px;letter-spacing:.14em;text-transform:uppercase;color:${TEXTO_3}}
-  .destino .val{font-size:36px;color:${LARANJA_ALTO};letter-spacing:-.01em}
+console.log(`${SAIDA} — ${L}×${A}, luminância média ${media.toFixed(1)}/255 (a primeira tela da capa)`);
 
-  .linhas{display:flex;gap:0;margin-top:22px;border-top:1px solid ${BORDA}}
-  .linhas div{flex:1;padding:14px 0 0;border-right:1px solid ${BORDA}}
-  .linhas div:last-child{border-right:0}
-  .linhas .cod{font-size:17px;letter-spacing:.08em;color:${LARANJA}}
-  .linhas .nom{font-size:19px;color:${TEXTO};margin-top:5px;letter-spacing:-.01em}
-
-  .rodape{display:flex;align-items:center;gap:22px;padding:22px 56px;
-          border-top:1px solid ${BORDA};font-size:20px;letter-spacing:.06em;
-          text-transform:uppercase;color:${TEXTO_3}}
-  .rodape .zap{color:${TEXTO}}
-  /* O filete da marca fechando o cartão — a mesma régua laranja que separa as
-     seções no site, na espessura que uma miniatura de compartilhamento ainda
-     mostra. */
-  .emenda{height:5px;background:${LARANJA}}
-</style></head><body>
-  <div class="faixa">${marca}<span class="nome">Autogestor Viagens</span><span>· GYN Goiânia</span><span class="fim">Busca aberta 24h</span></div>
-  <div class="corpo">
-    <h1>Pesquise<br>onde quiser.<br><em>Compare aqui.</em></h1>
-    <div class="destino"><span class="rot">Destino</span><span class="val">FORTALEZA</span></div>
-    <div class="linhas">
-      ${linhas.map(([c, n]) => `<div><div class="cod">${c}</div><div class="nom">${n}</div></div>`).join("")}
-    </div>
-  </div>
-  <div class="emenda"></div>
-  <div class="rodape"><span>Voo · Hotel · Pacote · Carro</span><span>Até 12x</span><span class="zap" style="margin-left:auto">${TELEFONE}</span></div>
-</body></html>`;
-
-mkdirSync("public/img", { recursive: true });
-const navegador = await chromium.launch();
-const pagina = await navegador.newPage({ viewport: { width: L, height: A }, deviceScaleFactor: 1 });
-await pagina.setContent(html, { waitUntil: "load" });
-await pagina.evaluate(() => document.fonts.ready);
-await pagina.screenshot({ path: SAIDA });
-await navegador.close();
-console.log(`${SAIDA} — ${L}×${A}`);
+await nav.close();
+srv.close();

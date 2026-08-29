@@ -3,7 +3,6 @@ import Faixa from "../components/Faixa.astro";
 import Rodape from "../components/Rodape.astro";
 import { ATENDIMENTO, EMPRESA, EXTERNOS, GA4, SITE } from "../consts";
 import { AREA_SERVIDA } from "../data/conteudo";
-import { FOTO_FOCO } from "../data/fotos";
 import "../styles/global.css";
 
 interface Props {
@@ -25,11 +24,6 @@ interface Props {
   /** Subtipo do WebPage ("AboutPage", "ContactPage"…) quando schema.org tem
    *  um específico. */
   tipoPagina?: string | string[];
-  /** Qual mapa fica gravado na parede. Sem valor, a parede é a do saguão: os
-   *  19 lugares que a busca inteira alcança. Com o código de um produto, é a
-   *  cobertura DAQUELE produto — e é assim que a figura varia por rota, pelo
-   *  mesmo motivo que o objeto da cabeça do portão varia (FR-020). */
-  parede?: "aer" | "htl" | "pct" | "car";
 }
 
 const {
@@ -41,32 +35,7 @@ const {
   noindex = false,
   atualizado,
   tipoPagina = "WebPage",
-  parede,
 } = Astro.props;
-
-/* A PAREDE DA ROTA. Uma prop, uma figura: `parede` TROCA o mapa gravado pela
-   fotografia daquele produto, e a troca é excludente porque as duas camadas
-   dividiriam um orçamento de contraste que só cabe uma (a conta está em
-   tokens.css, em --foto-luz). A capa não passa `parede` e fica com o mapa dos
-   19 destinos; os quatro portões passam e ficam com a foto.
-
-   `--parede: none` e não opacidade zero: camada invisível com `url()` ainda
-   baixa o SVG, e a rota pagaria por uma figura que ninguém vê.
-
-   VAI NO <html> E NÃO NO <body>, e isso não é gosto: a foto é pintada por
-   `html::before` (as duas pseudo do body já são o mapa e o grão), e custom
-   property herda para baixo. Declarada no body, ela nunca chegaria na camada
-   que a usa — a página buscaria a foto da capa em todas as rotas.
-
-   Sem `parede`, os fallbacks de tokens.css já valem: o mapa dos 19 lugares e
-   a foto do saguão. É a capa, e as páginas legais herdam ela de propósito. */
-const estiloParede = parede
-  ? [
-      `--foto: image-set(url("/img/foto-${parede}.avif") type("image/avif"), url("/img/foto-${parede}.webp") type("image/webp"))`,
-      `--foto-foco: ${FOTO_FOCO[parede]}`,
-      `--parede: none`,
-    ].join("; ")
-  : undefined;
 
 const site = Astro.site ?? new URL(SITE.url);
 // `trailingSlash: "never"` também vale para a home: sem o `.replace` final,
@@ -160,7 +129,7 @@ const grafo: Record<string, unknown>[] = [
 ---
 
 <!doctype html>
-<html lang="pt-BR" style={estiloParede}>
+<html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -177,16 +146,21 @@ const grafo: Record<string, unknown>[] = [
     <link rel="icon" href="/favicon.png" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-    {/* Uma requisição de fonte, um peso, do próprio domínio. `crossorigin`
-         mesmo sendo mesma origem: sem ele o preload de fonte é descartado e o
-         arquivo é baixado duas vezes — fonte é sempre buscada em modo CORS, e
-         o preload precisa casar com esse modo. */}
-    <link rel="preload" as="font" type="font/woff2" href="/fonts/plex-mono-600-latin.woff2" crossorigin />
+    {/* SÓ A SERIFA É PRECARREGADA, e a escolha é o LCP. O título da abertura
+         é o maior texto da página e é ele que o navegador mede; a mono só
+         aparece em rótulos pequenos e carrega com `font-display: optional`,
+         que dispensa preload por construção. Precarregar as duas faria a mono
+         competir por banda com a imagem da abertura, que é a outra candidata
+         a LCP.
+         `crossorigin` mesmo sendo mesma origem: sem ele o preload de fonte é
+         descartado e o arquivo é baixado duas vezes — fonte é sempre buscada
+         em modo CORS, e o preload precisa casar com esse modo. */}
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/instrument-serif-400-latin.woff2" crossorigin />
 
     {/* Um valor só, sem par claro/escuro: este site tem uma banda (ver o
-         carimbo em tokens.css). É o próprio --noite-950, para a barra do
-         navegador continuar a página em vez de cortá-la. */}
-    <meta name="theme-color" content="#000d28" />
+         carimbo em tokens.css). É o próprio --fundo (--noite-980), para a
+         barra do navegador continuar a página em vez de cortá-la. */}
+    <meta name="theme-color" content="#000717" />
 
     {/* GA4, mesma propriedade do hub — as seis frentes são um funil só. Só no
         build de produção: `astro dev` na máquina de quem edita mandaria
@@ -224,11 +198,6 @@ const grafo: Record<string, unknown>[] = [
       set:html={JSON.stringify({ "@context": "https://schema.org", "@graph": grafo })}
     />
   </head>
-  {/* A parede — o mapa gravado e a fotografia embaixo dele — é
-       `background-image` de pseudo-elemento, nunca um <img>: ela é matéria de
-       fundo e não conteúdo, não entra na ordem de leitura, não ganha alt e o
-       navegador só a busca depois do que pinta a primeira tela. Quem declara
-       as duas é o <html> acima, por causa da herança. */}
   <body>
     <a class="pular" href="#conteudo">Pular para o conteúdo</a>
     <Faixa />

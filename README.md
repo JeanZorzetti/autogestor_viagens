@@ -15,22 +15,22 @@ Não há variável de ambiente para exportar em desenvolvimento — este site n�
 fala com banco nenhum (veja abaixo). Em produção só existe `SITE_URL`.
 
 ```bash
-npm test          # node --test test/*.test.mjs — a conta da placa
+npm test          # node --test test/*.test.mjs — conteúdo e fotografia
 npm run build
 npm run check     # astro check (tipos) — 0 erros
-npm run contraste # mede os 45 pares de cor DOS TOKENS; falha com código 1
-npm run contraste-gravura # mede os pares que só existem em PIXEL (ver abaixo)
-npm run verificar # prova no navegador: 3 larguras × 4 rolagens, teclado, LCP
-npm run mapas     # regera os contornos a partir do dado geográfico (ver abaixo)
-npm run fotos     # rebaixa as 4 fotografias de parede do Unsplash (ver abaixo)
+npm run contraste          # 24 pares de TOKEN contra token; falha com código 1
+npm run contraste-abertura # 698 pares de texto sobre FOTOGRAFIA (ver abaixo)
+npm run verificar          # prova no navegador: 4 larguras × 4 rolagens, hover,
+                           # teclado, reduced-motion, transição, LCP/CLS
+npm run fotos     # rebaixa as 5 fotografias do Unsplash (ver abaixo)
 node logos/gerar-og.mjs   # regera a imagem de compartilhamento
 ```
 
-`npm run mapas` só é necessário quando a **lista de destinos** de
-`src/data/conteudo.ts` muda. Ele baixa Natural Earth 1:50m e a malha do IBGE
-para `logos/_dados/` (ignorado pelo git), e escreve três saídas que **são**
-commitadas — `src/styles/mapas.css`, `src/data/mapas.ts` e os cinco
-`public/img/parede*.svg`. O build nunca precisa de rede.
+**Os dois checadores de contraste não são redundância, e rodar só um deixa
+metade do site sem medida.** `contraste.mjs` mede token contra token e cobre
+tudo que pousa sobre uma superfície de cor. `contraste-abertura.mjs` cobre o
+que pousa sobre uma FOTOGRAFIA — onde o fundo não é um token, são pixels que
+mudam a cada troca de imagem, de `object-position` ou de `--vidro-*`.
 
 **Verificar tela é sobre o build, não sobre o dev server.** O `astro dev`
 injeta a barra de ferramentas do Astro: DOM extra e ~1,8 MB de JavaScript que
@@ -61,124 +61,142 @@ geometria de `src/components/Logo.astro` do hub, que saiu de
 uma segunda versão para divergir. A única diferença é que os gradientes
 perderam o `light-dark()` — este site tem uma banda só.
 
-**A direção é "Solari" (geometria · autônomo · escura, 0kb de JS).** A página é
-uma placa de embarque e o verbo é **virar**: uma pá gira no eixo horizontal e
-trava num valor novo. Esse gesto único aparece nas quatro camadas —
+**A direção é "Janela de Embarque" (luz · scroll · escura).** A página é uma
+janela: do outro lado dela há um lugar, fotografado à hora azul e em cor cheia;
+deste lado há o metal do peitoril, onde o texto pousa. O verbo é **abrir** —
+uma máscara descobre a imagem — e ele aparece nas quatro camadas:
 
 | camada | onde |
 |---|---|
-| entrada | as quatro linhas da placa viram e travam, com 60ms entre elas |
-| scroll | cada item da lista densa vira ao entrar, via `animation-timeline: view()` |
-| ponteiro | a célula de status vira de `24H` para `ABRIR` no hover (desligada em `hover: none`) |
-| transição | View Transitions entre rotas: a faixa atravessa, o corpo vira |
+| entrada | a lâmina de texto sobe por uma fresta (`overflow: hidden` no pai) |
+| scroll | cada peça é revelada pela mesma máscara, via `animation-timeline: view()` nativo |
+| ponteiro | o véu da peça recua e a fotografia cresce dentro da moldura parada |
+| transição | a fotografia do produto atravessa da vitrine para a abertura do portão |
 
-Não há fade em lugar nenhum do site: pá não desbota, pá vira.
+Não há fade em lugar nenhum: janela não desbota, janela abre.
 
-**Por que não virou "tema hacker".** A monoespaçada é o material da direção
-porque placa de embarque *é* uma grade de células de largura fixa. Mas ela
-manda só no display, nos códigos e nas linhas da placa — o texto corrido roda
-na pilha do sistema (0kb baixados). Mono em 400 palavras cansa, e o público
-desta página não é técnico. A spec original de `Terminal Vivo` avisa disso, e é
-exatamente essa a parte que foi recusada.
+**Esta direção substituiu uma anterior, e o registro importa.** Até 28/08/2026
+o site era uma PLACA DE EMBARQUE ("Solari"): navy chapado do topo ao rodapé,
+monoespaçada em todos os títulos, uma pá girando como motor, e a fotografia
+entrando a 11-16% de opacidade, em cinza, atrás de tudo. Seis sessões
+empilharam camadas sobre ela — volume, gravura de mapa, foto-parede, uma faixa
+de saguão.
 
-**O H1 não anima, e isso é regra, não esquecimento.** Ele é o elemento de LCP
-(confirmado: `H1.placa__titulo`, medido em `logos/verificar.mjs`). Elemento de
-LCP não entra na coreografia — o resto chega em volta dele.
+Ela foi recusada inteira pelo dono, e o diagnóstico é o mesmo que a recusa: a
+tela vendia viagem com estética de **sala de controle**. Estava tudo medido e
+não dava vontade de ir a lugar nenhum. O que mudou de fundo não foi a paleta —
+é a mesma tinta — foi **quem é a figura**: a fotografia virou a matéria, e a
+geometria recuou para moldura. O histórico completo, com eixos e armadilhas,
+está em `.art/log.json`.
 
-**A pá que gira sozinha mostra DESTINO, nunca preço.** Nome de cidade é fato;
-tarifa sem consulta seria número inventado. Preço de passagem muda por rota,
-por data e por hora, e o valor válido é o da busca no momento da compra. Isso
-está declarado na primeira tela, em `/sobre`, nos Termos, no rodapé e — em
-maiúsculas — no `llms.txt`, para um motor de resposta não preencher a lacuna
-sozinho. Há um teste que falha se um `R$` aparecer no conteúdo servido.
+**A monoespaçada não sumiu, desceu de posto.** Ela mandava em todos os títulos
+e era metade do que fazia um site de viagem parecer um terminal. Hoje marca só
+o que é código — IATA, rótulo de ficha, numeração de seção — que é onde largura
+fixa é informação e não figurino. Os títulos são Instrument Serif, 20,5kb, um
+peso. Salto do corpo ao H1 da abertura: 5,2x.
 
-**A saída da pá vaza para além do próprio slot, de propósito.** Com a saída
-dentro do slot (`11.5%→12.5%`) a pá que sai terminava exatamente quando a
-seguinte começava, e sobravam 176ms com a janela **vazia** — o gesto principal
-da página piscando em branco a cada 2,2s. Medido quadro a quadro, não deduzido.
-Agora a saída ocupa `12.5%→13.5%`, sobrepondo a entrada da próxima. Placa de
-verdade nunca fica vazia: a pá que chega tapa a que sai. `test/placa.test.mjs`
-falha se alguém "consertar" isso.
+**O LCP é a fotografia, e a direção assume isso por escrito.** O manifesto de
+custo está no topo de `src/styles/tokens.css` com números medidos, não
+estimados. A regra que continua valendo é a outra: **elemento de LCP não entra
+na coreografia** — o H1 e a imagem da abertura já estão no primeiro quadro, e o
+que chega pela fresta é a lâmina de texto abaixo deles.
 
-**A macroestrutura é o Índice, não a pilha de seções.** O hub e o Coopluz
-compartilham `.secao > .container > olho + h2 + chamada`; o site de seguro é um
-percurso de estações em grade 5/7. Aqui tudo é lista: **zero cards na página
-inteira**. Os quatro produtos que no hub eram cards com ícone são linhas de
-placa, com código à esquerda e status à direita, e a linha inteira é o link —
-não há botão dentro dela. A nav é a faixa de status (não uma barra de 4 links) e
-o rodapé é uma linha só (não um bloco de 4 colunas), porque o site tem quatro
-páginas e quatro páginas cabem numa linha.
+**A macroestrutura é a Vitrine.** Os quatro produtos são fotografias numa grade
+irregular (`7fr / 5fr`, invertida na segunda linha, com desalinhamento
+vertical), e a peça inteira é o link — não há botão dentro dela. A razão segue
+a COLUNA, não a ordem do HTML: quem está na coluna larga deita (5:4), quem está
+na estreita fica em pé (4:5). Grade simétrica não é decisão.
 
-**As páginas internas não encenam a placa.** `/sobre`, `/privacidade` e
-`/termos` usam `.doc`, um documento simples. São fichas, não painéis de
-partida; encenar um percurso que o conteúdo não tem é pior que não encenar
-nenhum.
+A nav continua sendo uma linha sobre a imagem (não uma barra de 4 links com
+botão à direita) e o rodapé continua sendo uma linha só (não um bloco de 4
+colunas), porque o site tem quatro páginas.
 
-**Contraste é medido, não estimado, e o checador lê o CSS.** `npm run contraste`
-roda 37 pares e falha com código 1. Diferente do mesmo script no site de
-seguro, ele **não tem uma cópia da paleta em hex**: lê `tokens.css`, resolve os
-aliases `var()` e converte OKLCH → sRGB na hora. Uma fonte da verdade só.
+**As páginas internas não encenam a janela.** `/sobre`, `/privacidade` e
+`/termos` usam `.doc`, um documento simples, sem fotografia. Uma imagem
+decorativa numa política de privacidade é o tipo de enfeite que esta direção
+recusa; o que elas herdam é a tipografia e a banda.
+
+**O texto pousa sobre a foto, e o véu que permite isso é calibrado, não
+escolhido.** São dois gradientes sobrepostos — o vertical (a janela: limpa em
+cima, fechada no peitoril) e o horizontal (a lâmina atrás da coluna de texto,
+que some antes dos 74% para a imagem ficar acesa à direita) — mais uma verga em
+pixels para a faixa de navegação, mais um conjunto separado de valores para o
+celular, onde não existe "o outro lado" para preservar.
+
+`npm run contraste-abertura` fotografa a página com o texto escondido e varre
+os pixels sob cada linha, em 5 rotas x 4 larguras x 2 estados (repouso e
+**hover** — a camada de ponteiro recua o véu, então o pior fundo que aquele
+texto vê é o de hover). 698 pares. O procedimento de calibração dos três
+valores do celular está comentado em `tokens.css`: apertar até zerar, afrouxar
+até quase reprovar.
+
+**Sobre fotografia não existe texto secundário.** A regra que fechou os últimos
+seis pares, e que vale mais que eles: a escala `--texto / -2 / -3` hierarquiza
+por luminância, e luminância só hierarquiza contra fundo estável. Sobre uma
+imagem, o degrau que no navy lê como "isto é secundário" vira "isto está
+apagado". Dentro do peitoril e da faixa a escala colapsa no valor alto, e a
+hierarquia passa a ser tamanho e família. Fora dali a escala de três degraus
+segue inteira.
+
+**Contraste é medido, não estimado, e o checador lê o CSS.** `npm run
+contraste` roda 24 pares e falha com código 1. Diferente do mesmo script no
+site de seguro, ele **não tem uma cópia da paleta em hex**: lê `tokens.css`,
+resolve os aliases `var()` e converte OKLCH -> sRGB na hora. Uma fonte da
+verdade só.
 
 Ele pegou um defeito antes de a página existir: a borda do botão de contorno
-dava **2.32:1** sobre a placa, abaixo do 3:1 que a WCAG 1.4.11 exige para
-limite de componente interativo. Daí `--noite-600` estar em `L 0.505` e não em
-`0.44` — é contraste, não gosto. O anel de foco tem o mesmo tipo de armadilha
-e a mesma solução do hub: sobre o botão laranja um anel laranja daria 1.0:1 e
-sumiria, então `--foco` é custom property e o `.btn--primario` a troca pela
-tinta escura do próprio rótulo (7.19:1).
+dava **2.32:1**, abaixo do 3:1 que a WCAG 1.4.11 exige para limite de
+componente interativo. Daí `--noite-600` estar em `L 0.505` e não em `0.44`. O
+anel de foco tem a mesma armadilha e a mesma solução do hub: sobre o botão
+laranja um anel laranja daria 1.0:1 e sumiria, então `--foco` é custom property
+e o `.btn--primario` a troca pela tinta escura do próprio rótulo (7.19:1).
 
-**As figuras do site são dado, não desenho.** Cada pá tem o contorno REAL do
-lugar gravado na face, e a parede atrás dos painéis é um mapa dos lugares que
-esta busca cobre — 19 formas, nenhuma a mais. Nada disso é traçado à mão:
-`logos/gerar-mapas.mjs` sai de fonte primária (Natural Earth 1:50m para país,
-malha oficial do IBGE para as cinco macrorregiões) e a PATAGÔNIA é Argentina +
-Chile recortados no paralelo 39°S, um recorte geométrico declarado no código.
-É a mesma regra que proíbe preço inventado na placa, aplicada à imagem: um
-contorno "parecido com a Argentina" seria a versão gráfica do mesmo defeito.
+**As cinco fotografias estão todas na hora azul, e isso não é acaso.** É o que
+faz o conjunto ler como um site em vez de cinco imagens: o navy da marca não
+está *atrás* delas, ele é a continuação delas. Uma praia de sol a pino foi
+descartada por esse motivo, mesmo sendo livre e bonita.
 
-**Uma figura por parede, e a divisão foi medida.** A parede da CAPA é o mapa
-dos 19 destinos; a dos QUATRO PORTÕES é uma fotografia (`npm run fotos` baixa
-do Unsplash, dessatura, equaliza e converte para AVIF/WebP — a procedência de
-cada uma fica na tabela do próprio script, e o crédito em
-`public/img/FOTOS.json`). As duas camadas não coexistem, e o motivo é
-aritmético, não estético: o mapa a `--parede-luz: 0.115` já media 4.73:1 no par
-`--texto-3` × pixel mais claro da parede, contra um piso de 4.5. Somar a foto
-por baixo derrubava para **3.73:1**; dividir o orçamento entre as duas
-(0.07 + 0.07) passava em 4.51:1 entregando duas figuras apagadas. Então
-`Base.astro` apaga uma quando acende a outra — com `--parede: none`, não com
-opacidade zero, senão o SVG ainda seria baixado. A gravura das PÁS não entra
-nessa conta e continua em todas as rotas: ela mora dentro da peça.
+`npm run fotos` baixa do Unsplash, recorta em volta de um foco declarado,
+converte para AVIF/WebP em duas ou três larguras e **gera** `src/data/fotos.ts`
+com largura, razão e a cor média de cada arquivo (o poster). Nada disso é
+digitado à mão: `width`/`height` escritos no componente são a primeira coisa a
+divergir quando alguém troca uma foto, e divergir ali é CLS.
 
-A fotografia é MATÉRIA, não assunto: entra a 16% de opacidade, em escala de
-cinza, retingida pelas duas tintas da casa (`color` com o navy troca o matiz
-preservando a luminância; `soft-light` com o laranja levanta o quente só onde
-a foto já era clara). Ela não é o LCP (240ms, num `<p>`), não tem `alt`, não
-entra na ordem de leitura e nenhuma delas mostra rosto identificável ou marca
-de companhia aérea — pessoa aqui é silhueta anônima de saguão, porque modelo
-de banco posando de cliente satisfeito seria a versão fotográfica do preço
-inventado que esta placa recusa.
+**Duas fotos ilegais ficaram publicadas seis sessões, e ninguém viu.** Ao
+acender a primeira imagem em cor cheia apareceu uma marca d'água "Unsplash+"
+ladrilhada: a asa e a estrada eram licença paga. Estavam invisíveis porque
+entravam a 11% em cinza atrás de tudo. Foram substituídas por equivalentes
+livres, e `logos/baixar-fotos.mjs` agora **falha o download** se a foto for
+`plus`/`premium`. A lição não é "olhe as fotos": é que asset com licença errada
+só aparece quando já está em produção, e uma linha de guarda é mais barata que
+a checagem visual que falhou.
 
-**Existem dois checadores de contraste, e o segundo não é redundância.**
-`logos/contraste.mjs` lê os TOKENS e resolve OKLCH → sRGB; ele não consegue ver
-a gravura, porque o pixel embaixo da letra ali é o resultado de um
-`background-blend-mode: soft-light` e só existe depois de pintado.
-`logos/contraste-gravura.mjs` pinta e mede o pixel. Ele reprovou duas vezes
-antes de a direção fechar:
+**O enquadramento é decisão da PÁGINA, não do arquivo.** O arquivo é 4:5. A
+grade mostra as peças da coluna larga em 5:4 e a abertura do portão mostra a
+mesma imagem em ~2,6:1 — o `object-fit: cover` corta de novo, em cada uma. Por
+isso existem duas tabelas de `--foco-foto` (uma em `index.astro`, outra em
+`CabecaDePortao.astro`) com valores diferentes para a mesma foto. Sem elas, o
+portão de aluguel de carro abria com um borrão de nuvem e a estrada ficava fora
+do quadro.
 
-- a primeira versão da parede era um fio branco a 13% e `--texto-3` sobre ela
-  dava **3.87:1**, abaixo do piso de 4.5. Daí a parede ser um sulco de DOIS
-  fios (escuro + claro): a mesma leitura por metade do claro, hoje em 4.73:1;
-- o próprio medidor mentiu antes disso, acusando 3.35:1 em todas as pás — o
-  pixel culpado era o antialiasing da letra laranja, não a superfície. Filtrar
-  por faixa de cor não resolve (a suavização é um degradê contínuo); apagar a
-  tinta e medir a peça, sim;
-- e ele reprovou a fotografia de parede duas vezes antes de ela virar o que é
-  hoje: **3.41:1** com o pico solto e **3.68:1** com o pico cortado em 168.
-  Foi o que forçou a regra de uma figura por parede. O checador também mudou
-  junto: ele media a parede só na capa (bastava, quando os cinco SVG saíam do
-  mesmo gerador com o mesmo teto de alfa) e não servia AVIF, o que faria a
-  medição passar por um motivo falso — imagem recusada não pinta. Agora varre
-  as cinco rotas e nomeia a pior.
+**Nenhuma fotografia mostra rosto identificável, marca de companhia, preço ou
+horário.** Pessoa aqui é silhueta anônima de saguão — modelo de banco posando
+de cliente satisfeito seria a versão fotográfica do preço inventado que este
+site recusa. Os critérios estão na tabela de `logos/baixar-fotos.mjs`, e há
+teste que falha se um `R$` aparecer no conteúdo servido.
+
+**O site não exibe preço em lugar nenhum, e isso é declarado.** Tarifa vive na
+busca da OnerTravel e muda por rota, por data e por hora. Está dito na primeira
+tela, em `/sobre`, nos Termos, no rodapé e — em maiúsculas — no `llms.txt`,
+para um motor de resposta não preencher a lacuna sozinho.
+
+**Há 0,2kb de JavaScript no site inteiro, e ele existe por um motivo só.** A
+vitrine declara quatro `view-transition-name` e o portão de destino declara um;
+os outros três seriam órfãos, e o navegador resolve órfão com o fade padrão
+dele — três fotografias desbotando no meio da transição, que é exatamente o
+gesto que esta direção recusa. Não há saída em CSS estático: a folha não sabe
+qual peça foi clicada. O script (inline, só na capa) apaga o nome das três que
+não foram. Sem ele o site continua funcionando; é degradação, não quebra.
 
 **A "emenda" verde foi construída e depois removida.** A plataforma de destino
 (OnerTravel) tem header verde e este site é navy; a primeira versão avisava
@@ -219,34 +237,41 @@ houver; o esqueleto do Coopluz mostra o caminho.
 Faixa: **captação** (o site existe para produzir um clique na busca).
 
 ```
-JS adicionado: 0 kb gzip (nenhuma dependência de runtime)
-LCP: 0,32s (alvo 1,5s) · CLS: 0,0000 (alvo 0,05) · INP: n/d (não há interação com JS)
-Elemento de LCP: H1.placa__titulo
-Fonte: 1 arquivo, 15,6 kb (IBM Plex Mono 600, subset latin, do próprio domínio)
-Matéria: 0 kb baixados — grão é um feTurbulence gerado UMA vez em data-uri
-         (~330 bytes no CSS, estático, nunca dentro de @keyframes) e todo o
-         volume é gradiente e box-shadow. Uma camada de mix-blend-mode no
-         site inteiro, fixa, que não repinta no scroll.
-Fallback: sem JS a página é idêntica — a coreografia inteira é CSS. Sem suporte
-          a scroll-timeline ou com prefers-reduced-motion, a placa nasce
-          inteira e parada, com um destino visível e o vinco no lugar.
+JS adicionado: 0,2 kb, inline, só na capa (nenhuma dependência de runtime;
+               as outras oito rotas: 0 bytes)
+Fonte: 2 arquivos — Instrument Serif 400 (20,5 kb, precarregada, é o texto
+       do LCP) e IBM Plex Mono 600 (15,6 kb, font-display: optional)
+Fotografia: abertura 39,8 kb em 1280 / 67,3 kb em 1920 (AVIF); as 4 peças
+            da vitrine somam 133 kb em 1040, todas lazy e abaixo da dobra
+PRIMEIRA TELA em 1440px: 116 kb (html + css inline + serifa + abertura)
+
+LCP: 296-500ms nas 9 rotas (orçamento interno 800ms · limiar CWV 2500ms)
+CLS: 0,0000 (orçamento 0,01 · limiar CWV 0,1)
+Elemento de LCP: IMG nas 5 rotas com fotografia; P nas 4 de documento
+
+Fallback: sem JS a página é idêntica, menos o fade dos três nomes de
+          transição não clicados. Se a fotografia não chegar, o container
+          fica pintado com a COR MÉDIA dela (gerada pelo pipeline, gravada
+          no manifesto) e o véu, a tipografia, o peitoril e a grade
+          continuam compostos — não é um retângulo cinza, é a mesma página
+          com um bloco de cor no lugar da imagem. Com prefers-reduced-
+          motion, tudo nasce inteiro e parado.
 Fora do limiar bom de CWV? não
 ```
 
-Medido em `logos/verificar.mjs`: build estático servido localmente, CPU 4×
-estrangulada, 1440×900, mediana de 5 amostras. O `verificar.mjs` falha com
-código 1 se qualquer um desses números estourar o orçamento — o orçamento está
-escrito na constante `ORCAMENTO` no topo dele, não neste README.
+Medido em `logos/verificar.mjs`: build estático servido localmente, 1440x900,
+mediana de 5 amostras. Ele falha com código 1 se qualquer número estourar o
+orçamento — que está na constante `ORCAMENTO` no topo dele, não neste README.
 
-Também verificado: console limpo nas três larguras, nenhum estouro horizontal,
-22 paradas de teclado todas com anel de foco visível, 45 pares de contraste
-medidos por `logos/contraste.mjs` a partir dos próprios tokens e mais 10 pares
-medidos em pixel por `logos/contraste-gravura.mjs` (0 reprovados nos dois).
+**Ressalva honesta:** esses números são de máquina local sem throttle de rede.
+Em 4G simulado o LCP sobe; o que protege a margem é o tamanho — 116 kb de
+primeira tela com zero JS bloqueante tem folga larga para os 2,0s da faixa.
 
-Três quadros extras congelam a pá NO MEIO DA QUEDA pela Web Animations API e
-medem a camada de luz: 0,77 → 0,49 → 0,00. É o que prova que a peça aterrissa
-e SÓ ENTÃO termina de pegar a luz, em vez de chegar acesa — a diferença entre
-uma superfície e um texto girando, e ela não aparece em quadro parado.
+Também verificado, nas 9 rotas: console limpo em 4 larguras, nenhum estouro
+horizontal, todas as paradas de teclado com anel de foco visível (26 na capa),
+nada preso fechado com `prefers-reduced-motion`, nada preso fechado depois de
+rolar a página inteira, e nenhum `view-transition-name` órfão na passagem
+capa -> portão (congelada em 60ms e 140ms pela Web Animations API).
 
 ## Deploy
 

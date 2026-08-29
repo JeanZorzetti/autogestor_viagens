@@ -1,0 +1,60 @@
+---
+/** A fotografia — a matéria desta direção, e o único componente que a serve.
+ *
+ *  Existe para que largura, altura, srcset e cor de poster saiam do MANIFESTO
+ *  gerado por logos/baixar-fotos.mjs, nunca de números digitados na página. Um
+ *  width/height escrito à mão é a primeira coisa a divergir quando alguém
+ *  troca uma foto, e width/height divergente é CLS — a métrica que esta
+ *  direção assinou em ≤ 0.05.
+ *
+ *  AVIF em <source> e WebP no <img>, sem um terceiro formato: quem não tem
+ *  AVIF tem WebP desde 2020, e um JPEG de fallback seria peso para um
+ *  navegador que este site já não atende em mais nada. */
+import { FOTOS, alturaDe } from "../data/fotos";
+
+interface Props {
+  /** Chave do manifesto: `saguao`, `aer`, `htl`, `pct`, `car`. */
+  nome: keyof typeof FOTOS | string;
+  /** Vazio quando a imagem é decoração e o texto ao lado já diz tudo. Uma
+   *  descrição redundante é ruído lido em voz alta antes do título. */
+  alt: string;
+  /** O `sizes` do <img>. Sem ele o navegador assume 100vw e baixa o degrau
+   *  maior para uma peça de 520px. */
+  sizes: string;
+  /** Só a abertura. Ela é o LCP: `fetchpriority=high` e `loading=eager`. */
+  prioridade?: boolean;
+  classe?: string;
+  estilo?: string;
+}
+
+const { nome, alt, sizes, prioridade = false, classe, estilo } = Astro.props;
+
+const foto = FOTOS[nome];
+if (!foto) throw new Error(`foto "${nome}" não está em src/data/fotos.ts — rode \`npm run fotos\``);
+
+const maior = Math.max(...foto.larguras);
+const srcset = (ext: string) => foto.larguras.map((l) => `/img/f-${nome}-${l}.${ext} ${l}w`).join(", ");
+---
+
+{/* A cor do poster no CONTAINER e não no <img>: pintada no <img> ela é
+    substituída no instante em que o arquivo decodifica, o que dá um piscar de
+    cor onde deveria haver uma transição. No container ela fica atrás e some
+    por baixo da fotografia. É o fallback estático desta direção — se a imagem
+    não chegar, o que sobra é um retângulo na cor média da foto, não um buraco
+    navy. */}
+<span class:list={["foto", classe]} style={`background-color: ${foto.cor}; ${estilo ?? ""}`}>
+  <picture>
+    <source type="image/avif" srcset={srcset("avif")} sizes={sizes} />
+    <img
+      src={`/img/f-${nome}-${foto.larguras[0]}.webp`}
+      srcset={srcset("webp")}
+      sizes={sizes}
+      alt={alt}
+      width={maior}
+      height={alturaDe(nome as string, maior)}
+      decoding={prioridade ? "sync" : "async"}
+      loading={prioridade ? "eager" : "lazy"}
+      fetchpriority={prioridade ? "high" : "auto"}
+    />
+  </picture>
+</span>

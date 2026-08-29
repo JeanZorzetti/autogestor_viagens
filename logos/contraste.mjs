@@ -13,6 +13,10 @@
 //
 // Um tema só: este site é escuro por decisão de direção (ver o carimbo em
 // tokens.css). Não há seletor claro/escuro para medir.
+//
+// COBERTURA PARCIAL POR CONSTRUÇÃO: este script mede token contra token. O
+// texto que corre sobre a fotografia da abertura tem por fundo um pixel, não
+// um token, e é medido por logos/contraste-abertura.mjs. Rode os dois.
 import { readFileSync } from "node:fs";
 
 // ── OKLCH → sRGB (fórmulas de Björn Ottosson) ───────────────────────────────
@@ -62,65 +66,44 @@ const hex = (n) => "#" + cor(n).map((v) => v.toString(16).padStart(2, "0")).join
 // [rótulo, frente, fundo, mínimo]
 // 4.5 → texto normal · 3 → texto grande e limite de componente interativo
 // (WCAG 1.4.11) · 1 → separador puramente decorativo, medido só para registro.
+// [rótulo, frente, fundo, mínimo]
+// 4.5 → texto normal · 3 → texto grande e limite de componente interativo
+// (WCAG 1.4.11) · 1 → separador puramente decorativo, medido só para registro.
+//
+// ═══ O QUE ESTE ARQUIVO DEIXOU DE MEDIR EM 28/08/2026 ══════════════════════
+// A tabela era quatro vezes maior e media a placa Solari: os dois extremos do
+// gradiente do painel, as duas metades da pá, o trilho de metal da moldura, o
+// vinco. Esses tokens não existem mais — a direção nova não tem painel, nem
+// pá, nem vinco — e um par medindo um token morto é um teste que passa sempre.
+//
+// A superfície de risco mudou de lugar junto com eles. Na Solari todo texto
+// vivia sobre uma cor chapada ou um gradiente de tokens, e este script cobria
+// o site inteiro. Aqui o texto mais visível da página mora sobre uma
+// FOTOGRAFIA, e fotografia não é token: quem mede aquilo é o
+// logos/contraste-abertura.mjs, que fotografa a página e varre os pixels.
+// Os dois juntos é que fecham a cobertura — nenhum dos dois sozinho.
 const PARES = {
-  "texto sobre as duas superfícies": [
+  "texto sobre as superfícies de token": [
     ["texto / fundo", "--texto", "--fundo", 4.5],
-    ["texto / placa", "--texto", "--placa", 4.5],
-    ["texto / placa-linha (linha em hover)", "--texto", "--placa-linha", 4.5],
-    ["texto-2 / fundo", "--texto-2", "--fundo", 4.5],
-    ["texto-2 / placa", "--texto-2", "--placa", 4.5],
-    ["texto-3 (nota, rótulo) / fundo", "--texto-3", "--fundo", 4.5],
-    ["texto-3 / placa", "--texto-3", "--placa", 4.5],
-    ["texto-3 / placa-linha", "--texto-3", "--placa-linha", 4.5],
-  ],
-  "a matéria: o painel deixou de ser cor chapada": [
-    // O corpo da placa virou gradiente (topo iluminado, pé na sombra da
-    // moldura). Todo texto que mora nela agora tem DOIS fundos possíveis, e é
-    // o extremo escuro que decide — medir só a cor média deixaria passar um
-    // par que reprova no rodapé da seção.
-    ["texto / placa-alto", "--texto", "--placa-alto", 4.5],
-    ["texto / placa-baixo (o pé do painel)", "--texto", "--placa-baixo", 4.5],
-    ["texto-2 / placa-baixo", "--texto-2", "--placa-baixo", 4.5],
-    // 001-painel-e-portoes: a cabeça do portão (H1 + bluf) é a MESMA matéria
-    // de gradiente que a placa da capa — os dois extremos precisam do par
-    // completo, não só um lado de cada. Fechando os dois que faltavam.
-    ["texto-2 (bluf da cabeça de portão) / placa-alto", "--texto-2", "--placa-alto", 4.5],
-    ["texto-3 / placa-alto (o extremo claro)", "--texto-3", "--placa-alto", 4.5],
-    ["texto-3 (rótulo, cabeça de portão) / placa-baixo", "--texto-3", "--placa-baixo", 4.5],
-    // O <header> virou trilho de metal recuado, mais escuro que tudo. Texto
-    // sobre ele ficou MAIS legível, não menos — mas medido, não presumido.
-    ["texto (marca na faixa) / moldura", "--texto", "--moldura", 4.5],
-    ["texto-3 (GYN Goiânia) / moldura", "--texto-3", "--moldura", 4.5],
-    ["marca (busca aberta 24h) / moldura", "--marca", "--moldura", 4.5],
-    // 001-painel-e-portoes: o campo único da cabeça do portão CAR (retirada
-    // ‖ devolução) é o mesmo recesso de moldura da janela de destino.
-    ["marca-alta (valor do campo, cabeça do CAR) / moldura", "--marca-alta", "--moldura", 4.5],
-    ["anel de foco / moldura", "--foco", "--moldura", 3],
-  ],
-  "a pá — texto sobre as duas metades da peça": [
-    // A pá tem metade de cima iluminada e metade de baixo na própria sombra,
-    // com corte duro em 50%. O nome do destino atravessa as duas, então as
-    // duas precisam passar: é literalmente o mesmo texto em dois fundos.
-    ["marca-alta (destino) / pá metade de cima", "--marca-alta", "--pa-cima", 4.5],
-    ["marca-alta (destino) / pá metade de baixo", "--marca-alta", "--pa-baixo", 4.5],
-    ["marca (código AER/HTL) / pá metade de cima", "--marca", "--pa-cima", 4.5],
-    ["marca (código AER/HTL) / pá metade de baixo", "--marca", "--pa-baixo", 4.5],
-    // 001-painel-e-portoes: o bloco 3 do portão PCT (duasMetades) rotula cada
-    // metade da pá grande ("VOO" / "HTL"). texto-3 reprovou a 4.43:1 sobre
-    // pa-cima (abaixo do 4.5 mínimo) — texto-2 é o que está no CSS.
-    ["texto-2 (rótulo VOO/HTL, cabeça do PCT) / pá metade de cima", "--texto-2", "--pa-cima", 4.5],
-    ["texto-2 (rótulo VOO/HTL, cabeça do PCT) / pá metade de baixo", "--texto-2", "--pa-baixo", 4.5],
+    ["texto / superfície (a caixa do fecho)", "--texto", "--superficie", 4.5],
+    ["texto / superfície-alta (details aberto, hover)", "--texto", "--superficie-alta", 4.5],
+    ["texto-2 (corpo secundário) / fundo", "--texto-2", "--fundo", 4.5],
+    ["texto-2 / superfície", "--texto-2", "--superficie", 4.5],
+    ["texto-2 / superfície-alta", "--texto-2", "--superficie-alta", 4.5],
+    ["texto-3 (nota, rótulo, crédito) / fundo", "--texto-3", "--fundo", 4.5],
+    ["texto-3 / superfície", "--texto-3", "--superficie", 4.5],
+    ["texto-3 / superfície-alta", "--texto-3", "--superficie-alta", 4.5],
   ],
   "marca — o laranja medido das peças de captação": [
     // #f88400 é o laranja exato de "AGORA!" e do botão BUSCAR nas peças de
     // ago/2026 (amostrado em pixel, não aproximado). Sobre o navy ele passa
     // como texto normal; sobre branco daria ~2.4:1. A banda escura é o que
     // acomoda a cor da marca sem clareá-la — não é gosto.
-    ["marca (código, status, link) / fundo", "--marca", "--fundo", 4.5],
-    ["marca / placa", "--marca", "--placa", 4.5],
-    ["marca / placa-linha", "--marca", "--placa-linha", 4.5],
-    ["marca-alta (a pá do destino) / placa", "--marca-alta", "--placa", 4.5],
-    ["marca-alta / fundo", "--marca-alta", "--fundo", 4.5],
+    ["marca (código AER/HTL, link, seta) / fundo", "--marca", "--fundo", 4.5],
+    ["marca / superfície", "--marca", "--superficie", 4.5],
+    ["marca / superfície-alta", "--marca", "--superficie-alta", 4.5],
+    ["marca-alta (link em hover) / fundo", "--marca-alta", "--fundo", 4.5],
+    ["marca-alta / superfície", "--marca-alta", "--superficie", 4.5],
   ],
   "o botão": [
     // A cor da marca NÃO é escurecida para passar; quem muda é o texto em cima
@@ -133,25 +116,15 @@ const PARES = {
     // sumiria — é por isso que --foco é custom property e o .btn--primario a
     // sobrescreve com a tinta escura. Os dois casos estão medidos.
     ["anel de foco / fundo", "--foco", "--fundo", 3],
-    ["anel de foco / placa", "--foco", "--placa", 3],
-    // 001-painel-e-portoes: a linha do painel (e a linha de "voltar" reusada
-    // na cabeça do portão) troca de fundo no foco — o anel pode aparecer
-    // sobre placa-linha, ou sobre os dois extremos do gradiente da cabeça.
-    ["anel de foco / placa-linha (linha focada)", "--foco", "--placa-linha", 3],
-    ["anel de foco / placa-alto (cabeça de portão)", "--foco", "--placa-alto", 3],
-    ["anel de foco / placa-baixo (cabeça de portão)", "--foco", "--placa-baixo", 3],
+    ["anel de foco / superfície", "--foco", "--superficie", 3],
+    ["anel de foco / superfície-alta", "--foco", "--superficie-alta", 3],
     ["anel de foco DENTRO do botão (tinta) / marca", "--tinta-sobre-marca", "--marca", 3],
     ["borda-forte (contorno do btn) / fundo", "--borda-forte", "--fundo", 3],
-    ["borda-forte / placa", "--borda-forte", "--placa", 3],
+    ["borda-forte / superfície", "--borda-forte", "--superficie", 3],
   ],
   "separadores — decorativos, medidos só para registro": [
-    ["borda / placa", "--borda", "--placa", 1],
     ["borda / fundo", "--borda", "--fundo", 1],
-    // O vinco deixou de ser UM fio (--vinco, removido) e virou o par
-    // sombra/luz: a fresta e a quina que pega a luz logo abaixo dela.
-    ["vinco: fio de sombra / fio de luz", "--vinco-sombra", "--vinco-luz", 1],
-    ["aresta acesa / corpo da pá", "--aresta-luz", "--pa-cima", 1],
-    ["moldura (trilho) / placa", "--moldura", "--placa", 1],
+    ["borda / superfície", "--borda", "--superficie", 1],
   ],
 };
 

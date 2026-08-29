@@ -2,38 +2,40 @@
 import Logo from "./Logo.astro";
 import { EMPRESA } from "../consts";
 
-/* A faixa de status — e é ela a navegação deste site.
+/* A navegação deste site, e ela é uma linha sobre a fotografia.
  *
  * NÃO existe barra com quatro links e um botão à direita: essa silhueta é a de
- * ~80% das landings, e a estrutura escolhida (Índice) pede que a navegação
- * seja a própria lista. O que fica no topo é o que uma placa de aeroporto tem
- * em cima: onde você está, e se o painel está operando. Os links do site
- * inteiro moram no rodapé, que cabe numa linha porque são quatro páginas.
+ * ~80% das landings, e na estrutura escolhida (Vitrine) a navegação é a
+ * própria grade de peças — a pessoa clica na fotografia do que quer. Os links
+ * do site inteiro moram no rodapé, que cabe numa linha porque são quatro
+ * páginas.
  *
- * `GYN` é o código IATA do aeroporto de Goiânia, onde a empresa fica. É dado,
- * não enfeite: diz de onde a agência opera antes de a pessoa rolar. */
+ * O que fica aqui em cima é o mínimo: quem é, de onde opera, e se está
+ * atendendo. `GYN` é o código IATA do aeroporto de Goiânia, onde a empresa
+ * fica. É dado, não enfeite: diz de onde a agência opera antes de a pessoa
+ * rolar. */
 
 const inicio = Astro.url.pathname === "/";
 ---
 
-<header>
+<header class="cabecalho">
   <div class="container">
     <div class="faixa">
       {
         inicio ? (
           <span class="faixa__marca">
-            <Logo size={26} />
+            <Logo size={24} />
             {EMPRESA.nome}
           </span>
         ) : (
           <a class="faixa__marca" href="/">
-            <Logo size={26} />
+            <Logo size={24} />
             {EMPRESA.nome}
           </a>
         )
       }
       <span class="faixa__sep" aria-hidden="true">·</span>
-      <span>GYN Goiânia</span>
+      <span class="faixa__cidade">GYN Goiânia</span>
       <span class="faixa__fim">Busca aberta 24h</span>
     </div>
   </div>

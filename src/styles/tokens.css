@@ -1,30 +1,125 @@
-/* art-direction · solari + cartografia + vidro fumê + saguão · eixos: geometria+volume+gravura+fotografia-parede+FOTOGRAFIA-FIGURA/autônomo/escura · orçamento: 0kb de JS + 10,4kb de gravura + 27,6kb de fotografia-parede na pior rota + 14,2kb da faixa do saguão na capa · 2026-08-28 */
+/* art-direction · janela de embarque · eixos: luz/scroll/escura · orçamento: faixa captação · 2026-08-29 */
+
+/* ═══ O CUSTO, MEDIDO ══════════════════════════════════════════════════════
+   Faixa: CAPTAÇÃO (tráfego pago, custo por clique) — a mais apertada.
+
+   JS adicionado ....... 0,2kb, inline, só na capa (o script que impede o
+                         fade dos view-transition-name órfãos, comentado em
+                         src/pages/index.astro). As outras oito rotas: 0.
+                         Nenhuma dependência de runtime.
+   Fonte ............... 20,5kb da Instrument Serif (precarregada, é o texto
+                         do LCP) + 15,6kb da Plex Mono (`font-display:
+                         optional`, sem preload).
+   Abertura ............ 39,8kb em 1280 · 67,3kb em 1920 · 20kb em 760 (AVIF).
+                         É o elemento de LCP, e a direção assume isso.
+   Vitrine ............. 4 fotografias, 133kb somadas em 1040 — todas `lazy`
+                         e abaixo da dobra, fora do caminho do LCP.
+
+   PRIMEIRA TELA em 1440px: 116kb (html+css+serifa+abertura).
+
+   MEDIDO por logos/verificar.mjs nas nove rotas:
+     LCP  296–500ms   (orçamento interno do projeto: 800ms · limiar CWV: 2500)
+     CLS  0,0000      (orçamento: 0,01 · limiar CWV: 0,1)
+     JS   0 bytes externos
+     Elemento de LCP: IMG nas cinco rotas com fotografia; P nas quatro de
+     documento.
+
+   Fora do limiar "bom" de Core Web Vitals? NÃO, em nenhuma métrica.
+
+   RESSALVA HONESTA: os números acima são de máquina local sem throttle, que
+   é o que o verificar.mjs mede. Em 4G simulado com CPU 4× o LCP sobe, e o que
+   protege a margem é o tamanho: 116kb de primeira tela com zero JS bloqueante
+   tem folga larga para os 2,0s da faixa.
+
+   FALLBACK ESTÁTICO: se a fotografia não chegar, o container fica pintado com
+   a COR MÉDIA dela (gerada por logos/baixar-fotos.mjs e gravada no manifesto),
+   e o véu, a tipografia, o peitoril e a grade continuam compostos. Não é um
+   retângulo cinza: é a mesma página com um bloco de cor no lugar da imagem.
+   Sem JavaScript nenhum a página é idêntica, menos o fade dos três nomes de
+   transição não clicados. */
 
 /* ═══ A DIREÇÃO, EM UMA FRASE ═══════════════════════════════════════════════
-   A página é uma placa de embarque. O verbo é VIRAR: uma pá gira no eixo
-   horizontal e trava num valor novo. Esse único gesto aparece nas quatro
-   camadas da coreografia — entrada, scroll, ponteiro e troca de rota — e não
-   existe um quinto gesto. Não há fade em lugar nenhum: pá não desbota, pá
-   vira.
+   A página é uma JANELA. Do outro lado dela há um lugar, fotografado à hora
+   azul e em cor cheia; deste lado há o metal do peitoril, onde o texto pousa.
+   O verbo é ABRIR: uma máscara descobre a imagem, e esse mesmo gesto aparece
+   nas quatro camadas da coreografia — entrada, scroll, ponteiro e troca de
+   rota. Não existe um quinto gesto, e não há fade em lugar nenhum: janela não
+   desbota, janela abre.
 
-   POR QUE NÃO É "TEMA HACKER". A monoespaçada aqui não é cosplay de terminal:
-   placa de embarque é uma grade de células de largura fixa, e é isso que a
-   mono é. Ela manda no display e nas linhas da placa; o texto corrido corre
-   na pilha do sistema, porque mono em 400 palavras cansa e o público desta
-   página não é técnico.
+   ─── O QUE ESTA DIREÇÃO SUBSTITUIU E POR QUÊ ──────────────────────────────
+   Até 28/08/2026 este site era uma PLACA DE EMBARQUE (direção "Solari"):
+   navy chapado do topo ao rodapé, monoespaçada em todos os títulos, uma pá
+   girando no eixo horizontal como motor, e a fotografia entrando a 11-16% de
+   opacidade, em cinza, atrás de tudo. Seis sessões empilharam camadas sobre
+   ela — volume, gravura de mapa, foto-parede, uma faixa de saguão.
 
-   BANDA ESCURA NÃO É GOSTO. O laranja da casa (#f88400) dá 8.1:1 sobre o navy
-   e passa como texto normal; sobre branco daria 2.4:1 e reprovaria. Clarear a
-   marca para caber num fundo claro não é opção — a peça de captação que roda
-   hoje é navy, e é a mesma tinta.                                           */
+   Ela era coerente e foi recusada inteira pelo dono, e o diagnóstico é o
+   mesmo que a recusa: a tela vendia viagem com a estética de uma SALA DE
+   CONTROLE. Estava tudo medido e não dava vontade de ir a lugar nenhum.
+   Ninguém compra passagem olhando um painel de operações.
+
+   O que mudou de fundo não foi a paleta — é a mesma tinta da casa — foi QUEM
+   É A FIGURA. Na Solari a matéria era geometria e a fotografia era parede;
+   aqui a fotografia é a matéria, e a geometria recuou para moldura. Foi
+   preciso reescrever o pipeline de imagem inteiro (logos/baixar-fotos.mjs)
+   para parar de apagar a foto, e a primeira coisa que apareceu quando ela
+   acendeu foi uma marca d'água de Unsplash+ em duas das cinco.
+
+   ─── A BANDA CONTINUA ESCURA, E NÃO É INÉRCIA ─────────────────────────────
+   Dois motivos, os dois medidos. O laranja da casa (#f88400) dá 8.1:1 sobre
+   o navy (7.97:1 medido contra o --fundo novo) e 2.4:1 sobre branco — clarear a marca para caber num fundo claro
+   não é opção, porque a peça de captação que roda hoje é navy e é a mesma
+   tinta. E as cinco fotografias do site foram escolhidas na HORA AZUL: o
+   fundo escuro não está atrás delas, ele é a continuação delas. Numa banda
+   clara essas imagens viram recortes colados. */
 
 @font-face {
+  /* O DISPLAY. Serifa de alto contraste, um peso só, 21kb.
+     Ela é a metade da troca de direção que o olho registra primeiro: a
+     monoespaçada da Solari mandava em todos os títulos, e mono em título é o
+     que fazia um site de viagem parecer um terminal. A mono não sumiu — desceu
+     para o papel que ela faz bem (código, rótulo, número), que é onde largura
+     fixa é informação e não figurino.
+
+     `swap` e não `optional` como a mono: este é o texto do LCP. Com `optional`
+     um primeiro carregamento sem cache pinta o H1 na serifa do sistema e nunca
+     troca — e a diferença entre Instrument Serif e a serifa do Windows é a
+     diferença entre a direção e nenhuma direção. Com `swap` o reflow existe,
+     e o `size-adjust` abaixo é o que o mantém pequeno. */
+  font-family: "Instrument Serif";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/instrument-serif-400-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  /* A MÉTRICA DE ESPERA. Não é uma fonte nova: é a serifa do sistema com as
+     métricas da Instrument Serif carimbadas por cima, para o quadro pintado
+     antes de a webfont chegar ocupar a MESMA caixa. Sem isto, o H1 da abertura
+     reflui quando a fonte troca, e reflow no maior elemento da tela é CLS
+     exatamente onde a direção assinou ≤ 0.05.
+     Os três números saem da razão entre as unidades da Instrument Serif e as
+     da Georgia — não são chute: `size-adjust` alinha a altura de x, e os dois
+     `override` alinham as linhas de base. */
+  font-family: "Serifa de espera";
+  src: local("Georgia"), local("Times New Roman");
+  size-adjust: 106%;
+  ascent-override: 88%;
+  descent-override: 22%;
+}
+
+@font-face {
+  /* A mono, herdada da direção anterior e mantida. Ela deixou de mandar na
+     página e passou a marcar só o que é código: IATA, rótulo de ficha,
+     numeração de seção. `optional` continua certo aqui — nenhum texto de LCP
+     usa esta fonte, e uma mono ligeiramente diferente por um carregamento é
+     melhor que um reflow. */
   font-family: "Plex Mono";
   font-style: normal;
   font-weight: 600;
-  /* `optional`: se a fonte não chegar no primeiro quadro, a página fica na
-     mono do sistema e NÃO troca depois. Placa que reflui 300ms após pintar é
-     pior que placa numa mono ligeiramente diferente. */
   font-display: optional;
   src: url("/fonts/plex-mono-600-latin.woff2") format("woff2");
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
@@ -32,83 +127,161 @@
 }
 
 :root {
-  /* Só uma banda. Este site não tem alternador de tema, e a ausência é
-     decisão: o interruptor é o gesto do Coopluz e herdá-lo aqui seria pegar
-     emprestado o que faz aquele site ser ele. Some junto metade dos tokens
-     (não há `light-dark()`) e o script de pré-pintura do <head>. */
+  /* Uma banda só. Sem alternador de tema: o interruptor é o gesto do Coopluz,
+     e herdá-lo aqui seria pegar emprestado o que faz aquele site ser ele. */
   color-scheme: dark;
 
-  /* ── primitivos: amostrados em pixel das peças de captação de ago/2026
-        (docs/viagens/ do hub), convertidos para OKLCH. Não são valores
-        "próximos do laranja da marca" — são os valores. Nunca use um
-        primitivo direto num componente; use os papéis lá embaixo. ────────── */
+  /* ── primitivos ─────────────────────────────────────────────────────────
+     Amostrados em pixel das peças de captação de ago/2026 (docs/viagens/ do
+     hub) e convertidos para OKLCH. São os valores da marca, não valores
+     "próximos". Nunca use um primitivo direto num componente; use os papéis.
+     Sobreviveram inteiros à troca de direção — o que mudou foi o papel de
+     cada um, não a tinta. */
 
   /* navy — medido em #000d28 / #00143c nas duas peças de fundo escuro */
-  --noite-950: oklch(0.1661 0.0607 257.7); /* fundo da página */
-  --noite-900: oklch(0.2059 0.0826 259.7); /* corpo da placa */
-  --noite-850: oklch(0.2420 0.0760 258.5); /* linha da placa, superfície alta */
-  --noite-700: oklch(0.3600 0.0620 257.0); /* vinco forte, separador visível */
+  --noite-980: oklch(0.1270 0.0470 258); /* NOVO: a moldura, o mais fundo */
+  --noite-950: oklch(0.1661 0.0607 257.7);
+  --noite-900: oklch(0.2059 0.0826 259.7);
+  --noite-850: oklch(0.242 0.076 258.5);
+  --noite-700: oklch(0.36 0.062 257);
   /* 0.505 e não 0.44, e a diferença NÃO é gosto: em 0.44 a borda do botão de
-     contorno media 2.32:1 sobre a placa, abaixo do 3:1 que a WCAG 1.4.11 exige
-     para limite de componente interativo. O logos/contraste.mjs reprovou esse
-     par antes de a página existir; 0.505 mede 3.07:1. */
-  --noite-600: oklch(0.5050 0.0520 256.0); /* limite de componente interativo */
+     contorno media 2.32:1 sobre a superfície, abaixo do 3:1 que a WCAG 1.4.11
+     exige para limite de componente interativo. O logos/contraste.mjs
+     reprovou esse par antes de a página existir; 0.505 mede 3.44:1 sobre o
+     --fundo novo, que é mais escuro que o da Solari. */
+  --noite-600: oklch(0.505 0.052 256);
 
   /* laranja — #f88400, o de "AGORA!" e do botão BUSCAR da peça */
   --laranja-500: oklch(0.7285 0.1774 56.4);
-  --laranja-400: oklch(0.7970 0.1535 65.4); /* ponta clara, só em realce */
+  --laranja-400: oklch(0.797 0.1535 65.4);
 
   /* ── papéis ─────────────────────────────────────────────────────────────
      Medidos por logos/contraste.mjs, que falha com código 1 se um par
-     reprovar. Os números no comentário são o que ele mediu, não estimativa. */
-  --fundo: var(--noite-950);
-  --placa: var(--noite-900);
-  --placa-linha: var(--noite-850);
-  --borda: var(--noite-700);
-  --borda-forte: var(--noite-600);
+     reprovar. Os números nos comentários são o que ele mediu. */
 
-  --texto: oklch(0.9600 0.0080 250); /* 15.3:1 sobre --fundo */
-  --texto-2: oklch(0.7600 0.0180 250); /* 8.5:1 — corpo secundário */
-  --texto-3: oklch(0.6300 0.0220 250); /* 5.2:1 — o mínimo que ainda é texto */
+  /* O FUNDO É O MAIS ESCURO DOS SEIS, e essa é a inversão que a direção
+     nova pede. Na Solari o fundo era --noite-950 e a "placa" (--noite-900)
+     era mais clara: o conteúdo boiava sobre o fundo. Aqui o conteúdo não
+     bóia, ele é RECORTADO no escuro — a fotografia é a única coisa que
+     emite luz, e um fundo mais fundo é o que a faz emitir. A cor média das
+     cinco fotos vai de rgb(50 61 64) a rgb(114 93 83); contra L=0.127 todas
+     elas acendem. */
+  --fundo: var(--noite-980);
+  --superficie: var(--noite-950); /* a lâmina que carrega texto sobre foto */
+  --superficie-alta: var(--noite-900); /* hover, <details> aberto */
+  --borda: var(--noite-850);
+  --borda-forte: var(--noite-600); /* limite de componente interativo */
 
-  --marca: var(--laranja-500); /* 8.1:1 sobre --fundo */
+  --texto: oklch(0.96 0.008 250); /* 17.96:1 sobre --fundo */
+  --texto-2: oklch(0.78 0.018 250); /* 10.14:1 — corpo secundário */
+  --texto-3: oklch(0.655 0.022 250); /* 6.38:1 — o mínimo que ainda é texto */
+
+  --marca: var(--laranja-500); /* 7.97:1 sobre --fundo */
   --marca-alta: var(--laranja-400);
-  --tinta-sobre-marca: oklch(0.2000 0.0400 60); /* rótulo escuro sobre laranja: 6.9:1 */
+  --tinta-sobre-marca: oklch(0.2 0.04 60); /* rótulo escuro sobre laranja: 7.19:1 */
 
   /* Anel de foco. É custom property porque MUDA DE COR conforme a superfície:
-     laranja sobre navy é ótimo (8.1:1) e sobre o botão laranja seria 1.0:1 —
-     sumiria exatamente no controle mais importante da página. Sobre laranja o
-     anel troca para a mesma tinta escura do rótulo. */
+     laranja sobre navy é ótimo e sobre o botão laranja seria 1.0:1 — sumiria
+     exatamente no controle mais importante da página. */
   --foco: var(--laranja-400);
 
+  /* ── a janela ───────────────────────────────────────────────────────────
+     Os três valores que fazem a fotografia ser vista e o texto continuar
+     legível em cima dela.
+
+     --vidro-piso é o alfa MÍNIMO do véu de --fundo na faixa onde corre texto,
+     e ele não é gosto: é o número que logos/contraste-abertura.mjs mede
+     contra o pixel real mais claro da fotografia sob cada linha de texto,
+     em cinco larguras. Mexer aqui sem rodar aquele script é publicar texto
+     ilegível numa página que tem a medida no repositório.
+
+     --vidro-teto é o alfa no topo do véu, onde não corre texto nenhum: perto
+     de zero, porque é ali que a fotografia é vista à luz que ela tem. O
+     degradê entre os dois é a "janela": a imagem clara em cima, o peitoril
+     escuro embaixo, e o texto no peitoril. */
+  --vidro-piso: 0.97;
+  --vidro-teto: 0.05;
+  /* O meio da rampa. Sem esta parada o gradiente é uma reta de 46% a 88%, e
+     reta é justamente o que deixa o TÍTULO na metade fraca: medido, o H1 caía
+     numa região de ~0.35 de véu e o céu do janelão passava por trás dele. A
+     rampa agora fecha rápido logo depois do horizonte e assenta devagar. */
+  --vidro-meio: 0.72;
+  /* A VERGA: o véu curto do TOPO da janela, medido em PIXELS e não em %.
+     Existe pela faixa de navegação, que corre sobre a parte alta da
+     fotografia — a região que o peitoril deixa aberta de propósito. Na
+     abertura da capa o topo é o teto escuro do terminal e a faixa se lia sem
+     ajuda; na do portão de hotéis é uma fachada iluminada e na do carro é
+     nuvem branca, e ali a marca media 1.3:1. Um site que escolhe suas
+     fotografias não pode depender de que a próxima também tenha o canto
+     escuro.
+
+     Em px porque o que ela protege tem altura fixa: a faixa mede ~56px em
+     qualquer viewport. Em % ela cobriria 8px numa tela baixa e 90px numa
+     alta, protegendo demais numa e de menos na outra. */
+  --vidro-verga: 0.94;
+  --vidro-verga-h: 150px;
+
+  /* A LÂMINA LATERAL. Um segundo véu, horizontal, atrás da coluna de texto.
+     Ela existe porque a saída óbvia — fechar mais o véu vertical — apaga a
+     fotografia inteira para resolver um problema que só existe de um lado:
+     no desktop o texto ocupa ~55% da largura, e os outros 45% são justamente
+     onde a imagem é vista. Somada ao vertical, ela deixa o canto inferior
+     esquerdo quase opaco e o superior direito quase limpo.
+     É a composição de capa de revista, e é a razão de o gate medir o pixel
+     real: o alfa efetivo em cada ponto é o produto de dois gradientes, e
+     isso não se estima de cabeça. */
+  --vidro-lado: 0.6;
+
+  /* Onde o véu começa a fechar, em % da altura da abertura. Acima disto a
+     foto é limpa. 46% e não 50%: a linha do horizonte das cinco fotos cai
+     entre 40% e 55%, e fechar o véu antes do horizonte corta o céu, que é
+     onde está a cor da hora azul. 38% e não 46%: a diferença é o par de
+     contraste do H1, não o gosto — em 46% o título nascia sobre o vidro do
+     janelão. */
+  --vidro-inicio: 38%;
+
+  /* ── luz ────────────────────────────────────────────────────────────────
+     Declarada UMA vez e obedecida em todo elemento. A luz vem de cima e da
+     esquerda porque é de lá que ela vem nas cinco fotografias (o sol
+     poente está à esquerda do quadro em três, e o céu ilumina de cima nas
+     cinco). Sombra montada contra a luz da foto é o que faz uma tela
+     parecer colada em vez de fotografada. */
+  --luz-azimute: 205deg;
+  --sombra-cor: oklch(0.09 0.035 258); /* tem matiz, nunca é preto */
+
+  /* Grão. Gerado uma vez, nunca animado. Dois tamanhos sobrepostos leem como
+     fibra; um só lê como ruído digital. Ele existe para dar à interface a
+     mesma textura que a fotografia tem — sem ele, o CSS ao lado da foto
+     parece um adesivo por cima dela. */
+  --grao: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
+
   /* ── tipografia ─────────────────────────────────────────────────────────
-     Duas famílias com contraste real de função, não de gosto:
-       mono   → display, códigos, números, tudo que mora numa célula da placa
-       corpo  → prosa, e é a pilha do sistema (0kb baixados)
-     Salto do corpo (1rem) ao H1 (4.25rem) = 4.25×. */
-  --mono: "Plex Mono", "Placa fallback", ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", monospace;
+     Duas famílias com contraste real de função:
+       display → serifa de alto contraste, só título
+       corpo   → pilha do sistema, 0kb baixados
+     mais a mono, que agora só marca código.
+     Salto do corpo (1.0625rem) ao H1 da abertura (5.5rem) = 5.2×. */
+  --display: "Instrument Serif", "Serifa de espera", Georgia, "Times New Roman", serif;
   --corpo: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: "Plex Mono", ui-monospace, "Cascadia Mono", "Segoe UI Mono", monospace;
 
   --t-xs: 0.75rem;
   --t-sm: 0.875rem;
-  --t-base: 1rem;
-  --t-lg: 1.125rem;
-  --t-xl: 1.375rem;
-  --t-3xl: clamp(1.75rem, 1.2rem + 2.6vw, 2.75rem);
-  --t-placa: clamp(2.15rem, 1.15rem + 4.6vw, 4.25rem); /* o H1 — 3 linhas curtas */
-  /* A pá do destino. Ela é o GESTO PRINCIPAL da direção e estava em --t-2xl
-     (2.125rem no teto), menor que dois outros títulos da página — um motor
-     autônomo do tamanho de um subtítulo não é o motor de nada. Agora é o
-     segundo maior elemento da página, atrás só do H1, e a proporção entre os
-     dois (4.25 : 3.25 = 1.31) é deliberada: a pá compete com o título, não
-     empata. Teto de 3.25rem e não mais: "BUENOS AIRES" tem 12 caracteres e a
-     12 caracteres de mono a 4rem a janela pediria 800px. */
-  --t-pa: clamp(1.75rem, 0.95rem + 3.6vw, 3.25rem);
+  --t-base: 1.0625rem;
+  --t-lg: 1.1875rem;
+  --t-xl: 1.4375rem;
+  /* Os títulos são a serifa, e serifa de alto contraste PEDE tamanho: abaixo
+     de ~2rem a Instrument Serif perde justamente o contraste de traço que a
+     torna ela. Por isso a escala de título começa alta e o salto é grande. */
+  --t-2xl: clamp(1.75rem, 1.2rem + 2.4vw, 2.5rem);
+  --t-3xl: clamp(2.15rem, 1.4rem + 3.2vw, 3.5rem);
+  --t-abertura: clamp(2.75rem, 1.3rem + 6.2vw, 5.5rem);
 
   /* ── espaço ─────────────────────────────────────────────────────────────
-     Escala de 4px. A placa usa uma unidade própria (--celula) porque a linha
-     da placa é uma célula de altura fixa, não um bloco que cresce com o
-     conteúdo — é isso que faz a lista ler como placa e não como tabela. */
+     Escala de 4px. A --celula da placa morreu com a placa: a Vitrine não tem
+     linha de altura fixa, ela tem peças de razão fixa (4:5), e quem manda na
+     altura de uma peça é a fotografia dentro dela. */
+  --e-1: 0.25rem;
   --e-2: 0.5rem;
   --e-3: 0.75rem;
   --e-4: 1rem;
@@ -116,283 +289,74 @@
   --e-6: 2rem;
   --e-8: 3rem;
   --e-10: 4.5rem;
+  --e-12: 6.5rem;
 
-  --celula: 4.5rem; /* altura da linha da placa em ≥720px */
-  --celula-mobile: 3.75rem;
-
-  /* O painel é um objeto PARAFUSADO NUMA PAREDE (FR-009): a moldura precisa
-     ficar visível em toda a volta, com --fundo respirando fora dela. "Ele não
-     encosta nas quatro bordas do viewport" era a única regra geométrica desta
-     spec sem número (A1, achado do /speckit-analyze) — este token fecha o
-     número. */
-  --painel-respiro: var(--e-4);
-
-  --largura: 74rem;
-  --leitura: 62ch;
-
-  /* Raio quase zero: pá de placa é retângulo. 2px só para a serrilha do
-     antialiasing não aparecer no canto. Isto NÃO é o "corte seco" recusado no
-     site de seguro — lá o problema era a banda clara e a sombra zero; aqui a
-     banda é escura e o vinco da pá é a sombra. */
-  --r-1: 2px;
-
-  /* ── matéria ────────────────────────────────────────────────────────────
-     A primeira versão desta direção tinha o VERBO (virar) e não tinha a
-     MATÉRIA: a pá era texto laranja num plano navy chapado, e placa parada
-     lia como lista. O que segue é do que a superfície é feita.
-
-     UMA FONTE DE LUZ, declarada aqui e obedecida em todo elemento. 200° é a
-     luz alta do saguão, vindo de cima e um pouco da esquerda: toda aresta
-     virada para cima acende, toda sombra cai para baixo e para a direita.
-     Sombra em cima de um elemento e do lado no vizinho é o que faz uma tela
-     parecer montada em vez de desenhada.
-
-     NÃO é token: nenhuma declaração calcula a partir dele, e custom property
-     que ninguém lê é o mesmo que comentário com ponto e vírgula. É uma REGRA,
-     e ela está escrita aqui. */
-  /* O corpo do painel não é chapado: a luz alta do saguão clareia o topo e
-     o pé fica na sombra da própria moldura. Valores LITERAIS e não
-     `oklch(from var(--placa) calc(l + …))` de propósito — o logos/contraste.mjs
-     lê estes tokens para medir os pares, e ele resolve `oklch(...)` e alias,
-     não cor relativa. Uma fonte da verdade vale mais que três caracteres. */
-  --placa-alto: oklch(0.2280 0.0826 259.7);
-  --placa-baixo: oklch(0.1940 0.0826 259.7);
-  /* A sombra tem matiz — é o navy fechado, nunca preto. Preto puro sobre
-     objeto colorido é o erro mais visível de banda escura. */
-  --sombra-cor: oklch(0.0900 0.0450 258);
-
-  /* A pá é uma peça física de duas metades dobradas no vinco. A de cima pega
-     a luz do saguão; a de baixo vive na própria sombra da de cima. Os 0.026 de
-     diferença de L são o degrau mínimo que ainda se lê como dobra a 1.5m da
-     tela — abaixo disso vira banding, acima vira duas peças diferentes. */
-  --pa-cima: oklch(0.2620 0.0790 258.5);
-  --pa-baixo: oklch(0.2120 0.0810 258.5);
-  /* O sulco do vinco: dois fios, não um. A linha escura é a fresta entre as
-     metades; a clara logo abaixo é a quina da metade de baixo pegando luz.
-     Um fio só lê como borda de tabela — é o que havia antes. */
-  --vinco-sombra: oklch(0.1500 0.0560 258);
-  --vinco-luz: oklch(0.3400 0.0700 258);
-  /* Aresta superior da pá e da moldura, onde a luz de 200° bate direto. */
-  --aresta-luz: oklch(0.4700 0.0680 258);
-  /* A moldura do painel: a placa está PARAFUSADA numa parede, e a parede é o
-     --fundo. Isto é o metal entre as duas. */
-  --moldura: oklch(0.1350 0.0520 258);
-
-  /* Grão. Gerado UMA vez como data-uri e nunca animado — feTurbulence animado
-     repinta a cada quadro e é a forma mais cara de conseguir textura.
-     Duas escalas sobrepostas (240px e 90px) leem como plástico injetado; uma
-     só lê como ruído de TV. */
-  --grao: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
-
-  /* ── cartografia ────────────────────────────────────────────────────────
-     A GRAVURA. É a terceira camada de matéria do site, depois do volume (a pá
-     de duas metades) e do grão — e é MATÉRIA, não um quinto gesto: a figura
-     vira porque a pá vira, e o verbo continua sendo um só.
-
-     Toda forma é contorno REAL, gerado por logos/gerar-mapas.mjs a partir de
-     fonte primária: Natural Earth 1:50m para país, malha oficial do IBGE para
-     as cinco macrorregiões brasileiras. Um contorno "parecido com a Argentina"
-     seria a versão gráfica do preço inventado que este site recusou por
-     escrito quando descartou a proposta `Brasa` do site de seguro.
-
-     A figura entra como camada de MISTURA (`background-blend-mode: soft-light`)
-     e não como imagem colorida: o asset carrega só ESCURECER (o fundo do
-     rebaixo, que a luz de 200° não alcança) e CLAREAR (a quina do sulco, que
-     ela alcança). Quem decide o matiz continua sendo o token da peça embaixo.
-     Custa zero elemento, zero máscara, zero filtro. */
-
-  /* ── fotografia ─────────────────────────────────────────────────────────
-     A QUARTA camada de matéria, depois do volume, do grão e da gravura — e,
-     como a gravura, ela é MATÉRIA e não um quinto gesto: a foto não anima,
-     não rola e não tem legenda. Ela é do que a parede do saguão é feita.
-
-     POR QUE A PAREDE E NÃO O CONTEÚDO. Foto de viagem em site de agência mora
-     em card, e card com foto de praia em cima é exatamente a página que esta
-     direção recusou desde a primeira entrada do log. Aqui a fotografia entra
-     no único lugar em que ela não vira ilustração: atrás de tudo, embaixo do
-     mapa gravado, no plano em que a placa está parafusada. O assunto da tela
-     continua sendo a placa.
-
-     DUAS TINTAS, NÃO UMA. O asset chega em escala de cinza (logos/baixar-
-     fotos.mjs dessatura na origem), e o CSS repõe a cor com as tintas da casa:
-     `color` troca o matiz por --noite-950 preservando a luminância da foto, e
-     `soft-light` de --marca por cima levanta o quente só onde a foto já era
-     clara. Foi medido contra as alternativas antes de virar isto: o tint navy
-     sozinho e a foto crua rebaixada dão a MESMA tela (a foto já vem cinza, o
-     `color` quase não trabalha), e nenhuma das duas tem temperatura. A parede
-     tem que ser feita das duas tintas do site, senão é um plano escuro com
-     uma imagem apagada dentro.
-
-     ZERO JS, ZERO ELEMENTO. Uma camada `position: fixed` no `html::before` —
-     `body::before` já é o mapa e `body::after` já é o grão. Ela não rola pelo
-     mesmo motivo que as outras duas não rolam: parede que rola junto com o que
-     está parafusado nela é papel de parede. */
-
-  /* `image-set` e não `url`: AVIF onde há suporte, WebP no resto, e o navegador
-     baixa UM dos dois. Sem os dois, um Safari 15 fica sem parede fotográfica —
-     e a tela continua de pé, porque o mapa e o volume da placa são camadas
-     independentes desta. Degrada, não quebra. */
-  --foto: none;
-  /* Onde o corte de `cover` tem que cair. Numa foto de saguão o que precisa
-     sobreviver é a linha do horizonte da janela, não o piso. Cada rota
-     sobrescreve junto com a sua foto (Base.astro). */
-  --foto-foco: 50% 50%;
-  /* O TETO, e ele é medido, não escolhido: logos/contraste-gravura.mjs mede o
-     pixel mais claro que a parede produz contra --texto-3 nas cinco rotas e
-     falha com código 1 abaixo de 4.5:1. Varredura de 28/08, foto sozinha na
-     parede:
-
-       0.30 ......... 3.66:1  REPROVA
-       0.24 ......... 4.11:1  REPROVA
-       0.20 ......... 4.35:1  REPROVA
-       0.16 ......... 4.64:1  o valor daqui
-
-     UMA FIGURA POR PAREDE, e o número acima é o motivo. O mapa gravado a
-     0.115 já media 4.73:1 — ou seja, ele gastava sozinho quase todo o vão
-     entre o piso (4.50) e o que a parede aguenta. Somar a fotografia por
-     baixo dele derrubava o par para 3.73:1, e a saída de dividir o
-     orçamento em dois (mapa 0.07 + foto 0.07 = 4.51:1) passava raspando
-     entregando duas figuras apagadas, que é lama e não é camada.
-
-     Então a parede da CAPA é o mapa dos 19 destinos (informação: sai de
-     fonte primária e mostra o alcance real da busca) e a parede dos QUATRO
-     PORTÕES é a fotografia. Base.astro apaga uma quando acende a outra, e
-     apaga de verdade — `--parede: none`, não opacidade zero, senão o SVG
-     ainda seria baixado. A gravura nas PÁS não entra nessa conta e continua
-     em todas as rotas: ela mora dentro da peça, não na parede. */
-  --foto-luz: 0.16;
-
-  /* A parede em que a placa está parafusada. `url()` e não um nome de arquivo
-     solto porque cada portão troca a sua pelo mapa da própria cobertura
-     (Base.astro, prop `parede`) — a capa mostra os 19 lugares que a busca
-     alcança, o portão do carro mostra o Brasil em cinco regiões. */
-  --parede: url("/img/parede.svg");
-  /* Quanto da parede se vê. Não é gosto: é o TETO que o contraste permite.
-     --texto-3 corre por cima da parede (.rivais, .ficha__rotulo, .detalhe) e
-     precisa de 4.5:1 contra o pixel mais claro que ela produz. Medido em
-     logos/contraste-gravura.mjs, não estimado:
-
-       0.13 com fio branco chapado ......... 3.87:1  REPROVA
-       0.13 com o par escuro+claro do sulco  4.62:1  passa raspando
-       0.115 com o par ..................... 4.73:1  o valor daqui
-
-     Acima de ~0.22 seria pôster de agência de qualquer jeito, que é
-     exatamente o que esta direção não é — mas quem fecha o número é a WCAG,
-     não o olho. */
-
-  /* ── o saguão ───────────────────────────────────────────────────────────
-     A FAIXA. Uma fotografia à luz cheia no topo da primeira tela, e a única
-     do site que é FIGURA: as outras quatro são parede, entram a 16% atrás de
-     tudo e o que sobra delas é forma. Esta é olhada de frente.
-
-     POR QUE ELA NÃO PAGA O TETO DE --foto-luz. O 0.16 lá em cima é o teto da
-     PAREDE, e ele existe porque a parede é `position: fixed` cobrindo a
-     viewport inteira: `--texto-3` corre por cima dela em toda parte, e o par
-     mais fraco decide o número. A faixa é uma região delimitada com zero
-     linha de texto por cima — a faixa de status fica ACIMA dela, no trilho de
-     metal, e a placa começa ABAIXO. Sem par de contraste, não há piso de WCAG
-     a respeitar. É a mesma conta com a variável que importa trocada, e é o
-     motivo de a fotografia poder finalmente ser vista neste site.
-
-     A ALTURA VEM DA LARGURA (`vw`), não da altura (`svh`), e o desempate foi
-     FR-011: em `svh` a faixa cresce junto com telas altas, e um celular de
-     360×640 recebia 218px de foto empurrando a quarta linha do painel para
-     fora da dobra — que é justamente o que a spec proíbe. Em `vw` o celular
-     recebe o piso (96px) e o desktop os 302px, que é o que se quer nos dois:
-     uma fresta em letterbox no telefone, uma janela de saguão no monitor.
-
-     A RETA, e ela foi MEDIDA em 360×640 antes de ser escrita. Com 96px de
-     faixa a quarta linha do painel caía 57px abaixo da dobra, e a medição
-     mostrou por que: mesmo SEM faixa nenhuma essa linha já vivia a 31px da
-     dobra. Não há folga a tomar em 360px — o telefone não perde a fotografia
-     por gosto, ele perde por não haver pixel sobrando. Então a faixa é uma
-     FRESTA no telefone e uma janela de saguão no monitor:
-
-       360px ....  44px  (8.2:1 — a fresta)
-       736px ... 134px  (5.5:1)
-      1440px ... 302px  (4.8:1 — a janela)
-
-     `calc(23.9vw - 42px)` é a reta que passa por 44 em 360 e 302 em 1440.
-
-     E O SEGUNDO TERMO EXISTE PORQUE A LARGURA SOZINHA ERRAVA O TELEFONE. Com
-     só a reta, um celular de 360×780 — que é o tamanho comum, não o aperto —
-     recebia os mesmos 44px de um 360×640, e o quadro de verificação mostrou o
-     resultado: uma tarja escura entre o trilho e a placa, com 68px de folga
-     sobrando embaixo da quarta linha. A faixa perdia a fotografia por uma
-     restrição que aquela tela não tinha.
-
-     O que aperta o telefone é ALTURA, não largura: o conteúdo da placa mede o
-     mesmo em qualquer tela e termina por volta de 668px do topo. Então o
-     segundo termo é a sobra real de altura, `100svh - 700px`, e o `max` deixa
-     a faixa usar o que for maior — a largura manda no monitor, a altura manda
-     no telefone:
-
-       360×640 ...  44px  (8.2:1)  o aperto: não há folga, e a faixa é fresta
-       360×780 ...  80px  (4.5:1)  o celular comum
-       360×900 ...  96px  (3.8:1)  o celular alto
-       736 ....... 134px  (5.5:1)
-      1440 ....... 302px  (4.8:1)  a janela de saguão
-
-     O TETO DE 96px NO TERMO DE ALTURA não é arredondamento: o arquivo é
-     4.77:1 e o `cover` só corta altura enquanto a faixa for MAIS LARGA que
-     ele. Sem teto, uma tela estreita e muito alta pedia uma faixa de 2.7:1,
-     mais quadrada que a foto — e aí o corte vira na largura, jogando fora as
-     pontas da janela, que são o que dá o panorama. 96px é onde 360px de tela
-     ainda produz 3.8:1 e o corte de largura fica em 21%, que a simetria da
-     foto absorve. */
-  --saguao-h: clamp(44px, max(calc(23.9vw - 42px), min(calc(100svh - 700px), 96px)), 302px);
-  /* Quanto a placa SOBE por cima da borda de baixo da foto. Não é para
-     esconder foto: é para a sombra do painel cair DENTRO da fotografia, que é
-     o que faz a placa ler como parafusada na janela em vez de empilhada
-     embaixo dela. Um respiro inteiro (--e-4) some atrás do painel; meio
-     respiro deixa a sombra visível e a foto quase toda. */
-  --saguao-recobre: 0.5rem;
-
-  --parede-luz: 0.115;
-  /* A figura sangra para fora da pá em vez de caber inteira dentro dela: peça
-     gravada continua atrás da borda, adesivo acaba na borda. 132% da altura
-     da pá é o valor em que o contorno ainda é reconhecível e já não tem
-     margem visível em cima nem embaixo. */
-  --gravura-altura: 132%;
+  --raio: 2px; /* quase reto: é uma janela, e vidraça não tem canto redondo */
+  --largura: 68rem;
 
   /* ── movimento ──────────────────────────────────────────────────────────
-     Uma ideia, quatro expressões. `--dur-pa` é o único tempo novo: é quanto
-     leva uma pá para girar e travar. Abaixo de 320ms o giro não é lido como
-     giro; acima de 520ms o H1 demora a assentar e atrapalha a leitura. */
+     --ease-cena é a curva que faz coreografia parecer intenção: 80% da
+     distância nos primeiros 30% do tempo, e o resto assentando. */
   --dur-instante: 100ms;
   --dur-rapida: 160ms;
   --dur-base: 240ms;
-  --dur-pa: 420ms;
+  --dur-cena: 620ms;
 
-  /* A curva da pá: cai rápido e trava seco, com um resto mínimo de assentar.
-     Não é `ease-out` (isso é software) nem spring (isso é borracha, e pá de
-     alumínio não quica). */
-  --ease-pa: cubic-bezier(0.28, 0.86, 0.12, 1);
   --ease-saida: cubic-bezier(0, 0, 0.2, 1);
+  --ease-entrada: cubic-bezier(0.4, 0, 1, 1);
+  --ease-cena: cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* Quanto tempo cada destino fica parado antes de a pá virar para o
-     próximo, e quanto dura o giro. Os dois entram na conta das quatro
-     tabelas de keyframe `ciclo-N` de `global.css` — mexer num sem refazer a
-     conta dessincroniza a placa. Não existe mais um `--pa-total` único: cada
-     coluna tem N diferente (5/7/8/11), então o ciclo (`N × --pa-parada`) é
-     calculado por coluna, não escrito aqui. */
-  --pa-parada: 2.2s;
-  --pa-giro: 0.176s; /* o tempo de uma pá cair e travar — IGUAL nas 4 colunas */
-  /* Atraso entre as quatro linhas do painel virando em cascata (FR-006).
-     Negativo quando aplicado: cada linha nasce adiantada na própria linha do
-     tempo, sem timer e sem JS. 120ms contra um giro de 176ms faz as pás se
-     sobreporem parcialmente — a cascata lê como UMA onda descendo o painel. */
-  --pa-cascata: 120ms;
+  /* ── sombra ─────────────────────────────────────────────────────────────
+     Rampa de quatro degraus: cada um dobra o blur e reduz o alfa. Quatro
+     degraus leem como luz difusa real; um `0 4px 12px rgba(0,0,0,.1)` lê como
+     Bootstrap. O deslocamento segue --luz-azimute (205deg → a sombra cai para
+     baixo e à direita). */
+  --sombra-peca: 1px 2px 4px oklch(0.09 0.035 258 / 0.24), 2px 6px 12px oklch(0.09 0.035 258 / 0.2),
+    4px 14px 28px oklch(0.09 0.035 258 / 0.16), 8px 34px 68px oklch(0.09 0.035 258 / 0.12);
 }
 
-/* Métrica do fallback, medida com logos/metricas-fonte.mjs contra a pilha mono
-   do sistema. Sem isto, a placa reflui quando a Plex chega — e refluxo numa
-   grade de célula fixa é justamente o defeito mais visível desta direção. */
-@font-face {
-  font-family: "Placa fallback";
-  src: local("Cascadia Mono"), local("Consolas"), local("Menlo"), local("DejaVu Sans Mono"), local("monospace");
-  size-adjust: 100%;
-  ascent-override: 92%;
-  descent-override: 24%;
-  line-gap-override: 0%;
+/* ═══ O CELULAR PEDE OUTRO COMPROMISSO ═════════════════════════════════════
+   Em tela estreita a coluna de texto ocupa a largura inteira, e a lâmina
+   lateral deixa de ter função: não existe "o outro lado" para preservar. A
+   única variável que sobra é a vertical, e por isso o véu fecha mais cedo e
+   mais forte aqui.
+
+   Não é a mesma composição em escala menor, é uma decisão diferente: no
+   desktop a fotografia continua acesa à direita do texto; no celular ela é
+   vista inteira ACIMA dele, e dali para baixo vira peitoril.
+
+   OS TRÊS NÚMEROS SÃO CALIBRADOS, não escolhidos. Saem do
+   logos/contraste-abertura.mjs, que mede 360px junto com as outras larguras —
+   e é em 360 que mora o pior par do site, porque é a única largura em que o
+   texto não tem para onde se afastar da fotografia. O procedimento foi
+   apertar até zerar e depois afrouxar até quase reprovar:
+
+     28% / 0.82 / 0.97  →  3 pares reprovam (o H1 da capa a 2.83:1 contra
+                           #4a97cd, que é o céu do janelão)
+     24% / 0.89 / 0.98  →  286 de 286 passam        ← é este
+     20% / 0.93 / 0.99  →  passa também, e apaga fotografia à toa
+
+   Mexer em qualquer um dos três sem rodar `npm run contraste-abertura` é
+   publicar texto ilegível numa página que tem a medida no repositório. */
+@media (max-width: 45.99rem) {
+  :root {
+    --vidro-inicio: 24%;
+    --vidro-meio: 0.89;
+    --vidro-piso: 0.98;
+  }
+}
+
+/* As custom properties que ANIMAM precisam de @property com `syntax`
+   declarado — sem isto o navegador as trata como texto e a interpolação não
+   acontece (o valor pula de um extremo ao outro no fim da animação). */
+@property --abre {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 100%;
+}
+
+@property --progresso {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
 }

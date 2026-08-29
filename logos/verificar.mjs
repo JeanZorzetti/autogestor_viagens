@@ -71,7 +71,9 @@ const ROTAS = [
 ];
 
 // Onde existe coluna girando: a capa (4 linhas) e as 4 cabeças de portão.
-const ROTAS_COM_GIRO = new Set(["capa", "passagens-aereas", "hoteis", "pacotes", "aluguel-de-carro"]);
+// As cinco rotas que abrem com fotografia. As quatro de documento (/sobre,
+// /privacidade, /termos, /404) não têm abertura nem camada de ponteiro.
+const ROTAS_COM_FOTO = new Set(["capa", "passagens-aereas", "hoteis", "pacotes", "aluguel-de-carro"]);
 
 const LARGURAS = [
   { nome: "360", largura: 360, altura: 780 }, // I6 soma 360×640 à parte, abaixo
@@ -175,19 +177,32 @@ async function varrerRota(rota) {
     await ctx.close();
   }
 
-  // I6 — FR-011/T042: a quarta linha da capa visível ou meio-visível em
-  // 360×640 (nem sempre igual a 360×780, que é a largura da varredura acima).
+  // A DOBRA DO CELULAR PEQUENO, em 360×640 — o aparelho mais apertado que
+  // este site atende, e nem sempre igual a 360×780.
+  //
+  // A invariante MUDOU com a direção, e vale dizer o que ela era: na placa
+  // Solari o que precisava caber era a QUARTA LINHA do painel, porque as
+  // quatro linhas eram o índice e o CTA ao mesmo tempo. Na Vitrine as quatro
+  // peças são fotografias empilhadas e nenhuma delas cabe na primeira tela do
+  // celular — exigir isso seria transportar um requisito de um desenho para
+  // outro só porque ele estava escrito.
+  //
+  // O que precisa caber agora é a ABERTURA INTEIRA: a janela, a promessa e o
+  // botão. Se o CTA principal cai abaixo da dobra no aparelho mais apertado, a
+  // primeira tela virou pôster e deixou de ser página de captação.
   if (rota.slug === "capa") {
     const ctx = await navegador.newContext({ viewport: { width: 360, height: 640 } });
     const pagina = await ctx.newPage();
     await pagina.goto(base + rota.caminho, { waitUntil: "networkidle" });
-    await pagina.evaluate(() => document.fonts.ready);
+    await pagina.evaluate(() => document.fonts.ready.then(() => true));
+    await pagina.waitForTimeout(400);
     await pagina.screenshot({ path: `${SAIDA}/capa-360x640-topo.png` });
-    const linhas = await pagina.locator(".linhas > li").count();
-    const quarta = pagina.locator(".linhas > li").nth(3);
-    const visivel = (await quarta.boundingBox())?.y < 640;
-    if (linhas !== 4) locais.push(`capa: painel tem ${linhas} linhas, deveria ter exatamente 4 (FR-008)`);
-    if (!visivel) locais.push("capa @ 360×640: a quarta linha está completamente abaixo da dobra (FR-011)");
+
+    const cta = await pagina.locator(".abertura .btn--primario").boundingBox();
+    const pecas = await pagina.locator(".vitrine__grade > li").count();
+    if (pecas !== 4) locais.push(`capa: a vitrine tem ${pecas} peças, deveria ter exatamente 4`);
+    if (!cta || cta.y + cta.height > 640)
+      locais.push(`capa @ 360×640: o CTA da abertura cai abaixo da dobra (base em ${Math.round((cta?.y ?? 0) + (cta?.height ?? 0))}px)`);
     await ctx.close();
   }
 
@@ -197,69 +212,79 @@ async function varrerRota(rota) {
 
 problemas.push(...(await emLotes(ROTAS, 4, varrerRota)).flat());
 
-// ── quadro de hover: a camada de ponteiro, só onde há coluna girando ────────
-for (const slug of ROTAS_COM_GIRO) {
+// ── quadro de hover: a camada de PONTEIRO ──────────────────────────────────
+// Na direção "janela de embarque" o ponteiro faz a janela ABRIR um pouco
+// mais: o véu da peça recua e a fotografia cresce dentro da moldura parada.
+// A prova é numérica, não só visual — um screenshot de hover parece igual ao
+// de repouso para quem não sabe o que procurar.
+for (const slug of ROTAS_COM_FOTO) {
   const rota = ROTAS.find((r) => r.slug === slug);
   const ctx = await navegador.newContext({ viewport: { width: 1440, height: 900 } });
   const pagina = await ctx.newPage();
   await pagina.goto(base + rota.caminho, { waitUntil: "networkidle" });
-  await pagina.evaluate(() => document.fonts.ready);
-  const alvoHover = slug === "capa" ? ".linha" : ".cabeca-portao__volta";
-  await pagina.locator(alvoHover).first().hover();
-  await pagina.waitForTimeout(600);
+  await pagina.evaluate(() => document.fonts.ready.then(() => true));
+
+  // Só a capa tem peças. Nos portões o elemento que responde ao ponteiro é o
+  // link de volta, e o que ele move é a própria seta.
+  const alvo = slug === "capa" ? ".vitrine__grade > li:nth-child(1) .peca" : ".portao__volta";
+  await pagina.locator(alvo).first().scrollIntoViewIfNeeded();
+  await pagina.waitForTimeout(400);
+  await pagina.locator(alvo).first().hover();
+  await pagina.waitForTimeout(800);
   await pagina.screenshot({ path: `${SAIDA}/${slug}-1440-hover.png` });
+
   if (slug === "capa") {
-    const virou = await pagina.locator(".linha").first().locator(".status__b").isVisible();
-    if (!virou) problemas.push("capa @ hover: a face B do status não apareceu");
+    const [veu, escala] = await pagina.evaluate(() => {
+      const peca = document.querySelector(".vitrine__grade > li:nth-child(1) .peca");
+      return [
+        +getComputedStyle(peca.querySelector(".peca__veu")).opacity,
+        getComputedStyle(peca.querySelector("img")).scale,
+      ];
+    });
+    if (!(veu < 0.9)) problemas.push(`capa @ hover: o véu da peça não recuou (opacidade ${veu})`);
+    if (escala === "none" || parseFloat(escala) <= 1)
+      problemas.push(`capa @ hover: a fotografia não cresceu na moldura (scale ${escala})`);
+    console.log(`capa               hover   véu ${veu} · foto ${escala}`);
   }
   await ctx.close();
 }
-console.log(`hover   ${ROTAS_COM_GIRO.size} rota(s) com coluna girando`);
 
-// ── quadros da pá caindo: a matéria em movimento, mesmas 5 rotas ────────────
-// Quadro parado não prova a peça. A pá tem corpo (duas metades, vinco, aresta
-// acesa) e uma camada de luz que acende conforme se vira para a fonte — se
-// essa camada dessincronizar do giro, a peça acende antes de aterrissar e
-// ninguém percebe olhando a placa parada. Congelado pela Web Animations API a
-// partir do primeiro `.coluna-destino__pa` de cada rota — funciona igual nas
-// 5, porque o primitivo é o mesmo (T009) em qualquer N.
-for (const slug of ROTAS_COM_GIRO) {
+// ── a camada de SCROLL: nenhuma peça pode ficar presa fechada ───────────────
+// `animation-timeline: view()` recorta o elemento na entrada e o abre até o
+// fim do intervalo. O modo de falha dela é silencioso e grave: um intervalo
+// mal declarado deixa o `clip-path` travado num recorte parcial, e o conteúdo
+// simplesmente não existe para quem chegou rolando — sem erro de console, sem
+// nada. Aqui a página é rolada até o fim e cada elemento com a camada é lido:
+// parado no lugar, ele TEM que estar aberto.
+for (const slug of ROTAS_COM_FOTO) {
   const rota = ROTAS.find((r) => r.slug === slug);
   const ctx = await navegador.newContext({ viewport: { width: 1440, height: 900 } });
   const pagina = await ctx.newPage();
   await pagina.goto(base + rota.caminho, { waitUntil: "networkidle" });
-  await pagina.evaluate(() => document.fonts.ready);
+  await pagina.evaluate(() => document.fonts.ready.then(() => true));
 
-  const lidas = [];
-  for (const [nome, local] of [
-    ["queda-inicio", 30],
-    ["queda-meio", 110],
-    ["queda-fim", 260],
-  ]) {
-    await pagina.evaluate((local) => {
-      const pas = document.getAnimations().filter((a) => a.effect?.target?.classList?.contains("coluna-destino__pa"));
-      const delay = pas[0].effect.getComputedTiming().delay;
-      for (const a of pas) {
-        a.pause();
-        a.currentTime = delay + local;
+  const presos = await pagina.evaluate(async () => {
+    const passo = innerHeight * 0.75;
+    const ruins = [];
+    for (let y = 0; y < document.body.scrollHeight; y += passo) {
+      scrollTo(0, y);
+      await new Promise((r) => setTimeout(r, 220));
+      for (const el of document.querySelectorAll(".abre")) {
+        const c = el.getBoundingClientRect();
+        // Só julga quem já passou do meio da tela: quem está entrando ainda
+        // está recortado de propósito — é a animação acontecendo.
+        if (c.top > innerHeight * 0.45 || c.bottom < 0) continue;
+        const cp = getComputedStyle(el).clipPath;
+        if (cp !== "none" && !/inset\(0(px|%)?( 0(px|%)?){0,3}\)/.test(cp))
+          ruins.push(`${el.className.toString().slice(0, 24)} → ${cp}`);
       }
-    }, local);
-    await pagina.waitForTimeout(120);
-    const caixa = await pagina.locator(".coluna-destino__janela").first().boundingBox();
-    await pagina.screenshot({
-      path: `${SAIDA}/${slug}-1440-${nome}.png`,
-      clip: { x: caixa.x - 8, y: caixa.y - 8, width: Math.min(760, caixa.width + 16), height: caixa.height + 16 },
-    });
-    lidas.push([
-      nome,
-      await pagina.evaluate(() => +getComputedStyle(document.querySelector(".coluna-destino__pa"), "::before").opacity),
-    ]);
-  }
+    }
+    scrollTo(0, 0);
+    return [...new Set(ruins)];
+  });
 
-  const [inicio, , fim] = lidas.map(([, v]) => v);
-  if (!(inicio > 0.5)) problemas.push(`${slug} @ queda: começou a ${inicio.toFixed(2)} de sombra, esperava > 0.5`);
-  if (!(fim < 0.1)) problemas.push(`${slug} @ queda: aterrissou com ${fim.toFixed(2)} de sombra, esperava < 0.1`);
-  console.log(`${slug.padEnd(18)} queda   sombra ${lidas.map(([n, v]) => `${n.replace("queda-", "")} ${v.toFixed(2)}`).join(" → ")}`);
+  if (presos.length) problemas.push(`${slug} @ scroll: elemento preso fechado — ${presos.join(" | ")}`);
+  console.log(`${slug.padEnd(18)} scroll  ${presos.length ? `${presos.length} preso(s)` : "tudo abre"}`);
   await ctx.close();
 }
 
@@ -274,17 +299,25 @@ for (const rota of ROTAS) {
   await pagina.waitForTimeout(400);
   await pagina.screenshot({ path: `${SAIDA}/${rota.slug}-1440-reduzido.png` });
 
-  if (ROTAS_COM_GIRO.has(rota.slug)) {
-    // Cada COLUNA (não a página inteira) precisa mostrar exatamente 1 destino.
-    const porColuna = await pagina.$$eval(".coluna-destino__janela", (janelas) =>
-      janelas.map((j) => [...j.querySelectorAll(".coluna-destino__pa")].filter((n) => getComputedStyle(n).opacity !== "0").length)
-    );
-    const erradas = porColuna.filter((v) => v !== 1);
-    if (erradas.length) problemas.push(`${rota.slug} @ reduced-motion: ${erradas.length} coluna(s) sem exatamente 1 destino visível`);
-    console.log(`${rota.slug.padEnd(18)} reduzido  colunas: ${porColuna.join(", ")}`);
-  } else {
-    console.log(`${rota.slug.padEnd(18)} reduzido  (sem coluna girando)`);
-  }
+  // O PISO. Sem movimento a tela não vira uma versão degradada: ela é a mesma
+  // composição, parada. O que precisa ser verdade é que nada dependa de uma
+  // animação ter rodado para existir — nenhum `.abre` recortado, nenhum
+  // `.entra > *` deslocado para fora da própria caixa.
+  const escondidos = await pagina.evaluate(() => {
+    const ruins = [];
+    for (const el of document.querySelectorAll(".abre")) {
+      const cp = getComputedStyle(el).clipPath;
+      if (cp !== "none" && !/inset\(0(px|%)?( 0(px|%)?){0,3}\)/.test(cp)) ruins.push(`.abre recortado: ${cp}`);
+    }
+    for (const el of document.querySelectorAll(".entra > *")) {
+      const t = getComputedStyle(el).translate;
+      if (t !== "none" && !/^0(px)?( 0(px)?)?$/.test(t)) ruins.push(`.entra deslocado: ${t}`);
+    }
+    return ruins;
+  });
+  if (escondidos.length)
+    problemas.push(`${rota.slug} @ reduced-motion: ${escondidos.length} elemento(s) presos — ${escondidos.join(" | ")}`);
+  console.log(`${rota.slug.padEnd(18)} reduzido  ${escondidos.length ? `${escondidos.length} preso(s)` : "tudo visível parado"}`);
   if (consoleMsgs.length) problemas.push(`${rota.slug} @ reduced-motion: console sujo — ${consoleMsgs.join(" | ")}`);
   await ctx.close();
 }
@@ -314,7 +347,9 @@ for (const rota of ROTAS) {
       });
     });
   });
-  await pagina.locator(".linha").first().click();
+  // A peça da vitrine, que carrega o `view-transition-name: vt-aer` na
+  // fotografia — é ela que tem que atravessar para a abertura do portão.
+  await pagina.locator(".vitrine__grade > li:nth-child(1) .peca").click();
   await pagina.waitForURL(/passagens-aereas/, { timeout: 3000 }).catch(() => {});
   await pagina.waitForTimeout(200);
 
@@ -322,18 +357,38 @@ for (const rota of ROTAS) {
     ["60ms", 60],
     ["140ms", 140],
   ]) {
+    /* ═══ O QUE É UM ÓRFÃO, DE VERDADE ═══════════════════════════════════
+       Este detector já mediu a coisa errada e o registro fica: ele procurava
+       `::view-transition-old(vt-*)` rodando `-ua-view-transition-fade-out` e
+       chamava isso de órfão. Não é. Um par que CASA nos dois documentos
+       também roda fade-out e fade-in — em `plus-lighter`, dentro do
+       `::view-transition-group(vt-*)` que faz o morph. Esse cross-fade é
+       como o navegador resolve dois quadros da MESMA imagem em tamanhos
+       diferentes; ele não é o gesto "fade" que a direção proíbe, e acusá-lo
+       reprovava a transição justamente quando ela estava certa.
+
+       Órfão é o nome que existe de um lado só: tem `old(vt-X)` e não tem
+       `new(vt-X)`, ou o contrário. Era o caso das três peças não clicadas da
+       vitrine, antes do script inline da capa. */
     const fadeEncontrado = await pagina.evaluate((t) => {
-      let achado = false;
+      const velhos = new Set();
+      const novos = new Set();
       for (const a of document.getAnimations()) {
         const pe = a.effect?.pseudoElement ?? "";
         if (!pe.startsWith("::view-transition")) continue;
         a.currentTime = t;
-        if (pe.includes("vt-") && pe.includes("old") && a.animationName === "-ua-view-transition-fade-out") achado = true;
+        const m = pe.match(/^::view-transition-(old|new)\((vt-[\w-]+)\)$/);
+        if (m) (m[1] === "old" ? velhos : novos).add(m[2]);
       }
-      return achado;
+      const orfaos = [...velhos].filter((n) => !novos.has(n)).concat([...novos].filter((n) => !velhos.has(n)));
+      return orfaos.length ? orfaos.join(", ") : false;
     }, t);
     await pagina.screenshot({ path: `${SAIDA}/transicao-capa-portao-${nome}.png` });
-    if (fadeEncontrado) problemas.push(`transição @ ${nome}: um vt-* órfão está rodando o fade padrão do navegador (G4 voltou)`);
+    if (fadeEncontrado)
+      problemas.push(
+        `transição @ ${nome}: nome(s) de transição sem par nos dois documentos — ${fadeEncontrado}. ` +
+          `O navegador resolve órfão com o fade padrão dele, que é o gesto que esta direção não usa.`,
+      );
   }
   console.log("transição   quadros de 60ms e 140ms congelados, ver logos/_verificacao/transicao-*.png");
   await ctx.close();
@@ -353,10 +408,15 @@ for (const rota of ROTAS) {
 
   const suportaPageReveal = await pagina.evaluate(() => "onpagereveal" in window);
   await pagina.goto(base + "/", { waitUntil: "networkidle" });
-  await pagina.locator(".linha").first().click();
+  // A primeira peça da vitrine é o link para /passagens-aereas. Era `.linha`
+  // (a linha da placa) até a troca de direção; o alvo mudou, a prova não.
+  await pagina.locator(".vitrine__grade > li:nth-child(1) .peca").click();
   await pagina.waitForURL(/passagens-aereas/, { timeout: 3000 }).catch(() => {});
   const h1 = await pagina.locator("h1").first().isVisible();
-  const objeto = await pagina.locator(".cabeca-portao__objeto").isVisible();
+  // O que precisa ter sobrevivido à navegação sem view-transition é a
+  // FOTOGRAFIA da abertura do portão — ela é a matéria da página, e era o
+  // `.cabeca-portao__objeto` da direção anterior que ocupava este lugar.
+  const objeto = await pagina.locator(".portao__abertura .foto img").first().isVisible();
   await pagina.screenshot({ path: `${SAIDA}/degradacao-firefox-passagens-aereas.png` });
 
   if (suportaPageReveal) problemas.push("degradação: Firefox agora suporta onpagereveal — o engine da prova mudou, revisar SC-009");

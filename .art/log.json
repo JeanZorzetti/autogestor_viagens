@@ -419,5 +419,47 @@
   },
   "prova": "3 larguras (390/768/1440) × 4 posições de scroll + hover no CTA + prefers-reduced-motion, em /hoteis (a foto mais pesada e o pior par de contraste). Console limpo, sem shift entre quadros. Gates do projeto: contraste 45/45, contraste-gravura 10/10, check 0 erros, test 16/16.",
   "licenca": "Unsplash License — uso comercial, sem atribuição obrigatória, sem custo. Crédito com autor e link em public/img/FOTOS.json porque a licença pede e porque este site não publica material de origem que ele não consiga apontar."
+ },
+ {
+  "data": "2026-08-29",
+  "projeto": "viagens",
+  "pagina": "o site inteiro — capa, os 4 portões, e as 4 rotas de documento por herança",
+  "direcao": "janela de embarque",
+  "tipo": "TROCA DE DIREÇÃO. Não é mais uma camada sobre a Solari: é a substituição dela.",
+  "base": "nenhuma. As seis entradas anteriores deste log são todas da mesma direção, que foi recusada inteira.",
+  "eixos": {
+   "materia": "FOTOGRAFIA em cor cheia (eixo novo; a geometria recuou para moldura)",
+   "motor": "scroll — a máscara que abre (era 'autônomo': a pá que virava sozinha)",
+   "banda": "escura"
+  },
+  "pedido": "O dono abriu com uma frase só: 'Não gostei do design do site como um todo'. Sem detalhe, sem direção pedida. Ofereci três direções que diferem entre si em ≥2 eixos (Janela de Embarque / Diário de Bordo / Hora Dourada) e ele escolheu a primeira, que era a recomendação.",
+  "diagnostico": "A tela vendia viagem com estética de SALA DE CONTROLE. Navy chapado do topo ao rodapé sem uma variação de banda, monoespaçada em todos os títulos, e a única fotografia entrando a ~15% de opacidade em cinza-azulado — invisível. Estava coerente, medido e sem desejo nenhum. Seis sessões empilharam camadas (volume, gravura de mapa, foto-parede, faixa de saguão) sobre uma direção cujo problema era ela mesma, não o acabamento.",
+  "o_que_mudou": [
+   "A FOTOGRAFIA VIROU A MATÉRIA. O pipeline de imagem (logos/baixar-fotos.mjs) foi reescrito do avesso: ele existia para APAGAR a foto (cinza, equalização para média 52, teto de pico em 130/255, para caber embaixo de texto a 11% de opacidade). Agora entrega cor cheia, duas ou três larguras responsivas, recorte por foco e a cor média de cada arquivo como poster.",
+   "AS FOTOS ERAM ILEGAIS E NINGUÉM SABIA. Ao acender a primeira imagem apareceu uma marca d'água 'Unsplash+' ladrilhada: duas das cinco (a asa e a estrada) eram licença paga e estavam publicadas havia seis sessões, invisíveis porque iam a 11% em cinza. Substituídas por equivalentes livres; um guarda no script agora falha o download se a foto for plus/premium, e um teste guarda o crédito.",
+   "AS CINCO FOTOS SÃO A MESMA HORA. Trocada também a praia de sol a pino por uma vila costeira no crepúsculo — as cinco imagens estão agora na hora azul, que é literalmente a paleta da casa (navy + âmbar). Foi isso que fez o conjunto ler como um site e não como cinco imagens.",
+   "TIPOGRAFIA: a monoespaçada saiu dos títulos e desceu para o que ela faz bem (código, rótulo, número). Entrou a Instrument Serif, 20,5kb, um peso, precarregada — é o texto do LCP. Salto corpo→H1 de 5,2×.",
+   "ESTRUTURA: de Índice (a placa: lista densa de quatro linhas) para VITRINE (grade irregular 7fr/5fr, invertida na segunda linha, com desalinhamento vertical). A célula inteira é o link, e a fotografia manda.",
+   "COREOGRAFIA: o verbo passou de VIRAR para ABRIR, nas quatro camadas. Entrada: a lâmina de texto sobe por uma fresta. Scroll: `animation-timeline: view()` nativo, 0kb. Ponteiro: o véu da peça recua e a foto cresce na moldura parada. Transição: a fotografia do produto atravessa da peça da vitrine para a abertura do portão.",
+   "O VÉU. A decisão central e a mais cara de acertar: texto sobre fotografia em cor cheia. São dois gradientes sobrepostos (vertical = a janela; horizontal = a lâmina atrás da coluna de texto), mais uma verga em px para a faixa de navegação, e um conjunto separado de valores para o celular.",
+   "SOBRE FOTOGRAFIA NÃO EXISTE TEXTO SECUNDÁRIO. A regra que fechou os últimos seis pares do gate e que vale mais que eles: a escala --texto/-2/-3 hierarquiza por luminância, e luminância só hierarquiza contra fundo estável. Dentro do peitoril e da faixa a escala colapsa no valor alto; a hierarquia passa a ser tamanho e família.",
+   "LIMPEZA: morreram Linha.astro, ColunaDestino.astro, mapas.css, gerar-mapas.mjs, src/data/mapas.ts, contraste-gravura.mjs, contraste-saguao.mjs, quatro campos de Produto (icone/destinos/objeto/detalhe) e cinco testes — todos da direção anterior, nenhum com leitor."
+  ],
+  "gates": {
+   "contraste.mjs": "24 pares de token, 0 reprovados (a tabela foi reescrita: media painel, pá, vinco e moldura, que não existem mais)",
+   "contraste-abertura.mjs": "NOVO. 698 pares de texto-sobre-FOTOGRAFIA — 5 rotas × 4 larguras × 2 estados (repouso e hover) — todos passam. Fotografa a página com o texto escondido e varre os pixels sob cada linha; não estima alfa nenhum.",
+   "verificar.mjs": "9 rotas, sem problemas. LCP 296–500ms (orçamento 800), CLS 0,0000, 0B de JS externo. Teclado: 0 paradas sem anel em 9 rotas. reduced-motion: tudo visível parado em 9 rotas.",
+   "test": "8 testes, 8 passam (4 de conteúdo herdados + 4 novos sobre a fotografia)"
+  },
+  "custo": "faixa captação · 116kb de primeira tela em 1440px · 0,2kb de JS inline só na capa · LCP 296–500ms local, CLS 0",
+  "armadilhas_que_custaram_tempo": [
+   "`<picture>` sem altura: `height:100%` no <img> resolve contra o <picture>, não contra a moldura. A imagem ficava com a altura intrínseca, o `object-fit: cover` não tinha o que cobrir, e quem cortava era o overflow — sempre pelo topo. A peça do carro mostrava só nuvem.",
+   "`aspect-ratio` na foto e não na peça: o <li> esticava para a altura da linha do grid e a legenda descolava do rodapé da imagem.",
+   "`header { position: absolute }` estilizando o ELEMENTO: a cabeça de portão também é um <header>, e a regra da barra de navegação colapsava a abertura das quatro rotas de produto.",
+   "No gate: `getComputedStyle().color` devolve `oklch(...)` literal no Chromium, e ler os três números como R,G,B deu 283 reprovações falsas de 286. A cor tem que ser resolvida num canvas.",
+   "No gate: `img.decode()` numa imagem `loading=lazy` fora da viewport nunca resolve — travava o script em silêncio, sem imprimir uma linha.",
+   "No gate: screenshot de viewport deixava as peças da vitrine (abaixo da dobra) fora do PNG, e elas eram descartadas caladas. `fullPage` revelou 146 pares que não estavam sendo medidos.",
+   "O detector de órfão de view-transition acusava um par CASADO: um par que casa também roda fade-out/fade-in em plus-lighter dentro do grupo do morph. Órfão é o nome que existe de um lado só."
+  ]
  }
 ]

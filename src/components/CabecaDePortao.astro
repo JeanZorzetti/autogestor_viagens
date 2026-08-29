@@ -1,10 +1,26 @@
 ---
-/** Bloco 1 do portão: o código do produto em escala de objeto, como uma pá
- *  que acabou de travar, com a coluna de destino daquele produto ainda
- *  virando. A FORMA varia por `produto.objeto` (FR-020) — reusa a coluna de
- *  destino compartilhada (global.css, T009), usada 8× no site inteiro. */
-import ColunaDestino from "./ColunaDestino.astro";
-import { PRODUTOS, REGIMES_HTL, PACOTE_COBERTURA, AEROPORTOS_CAR } from "../data/conteudo";
+/** A abertura do portão: a mesma janela da capa, uma tela abaixo em escala.
+ *
+ *  A fotografia daqui é a MESMA que a peça correspondente da vitrine mostra na
+ *  capa, e carrega o mesmo `view-transition-name` — é ela que atravessa o
+ *  clique, crescendo da célula para a tela inteira. É a camada 4 da
+ *  coreografia, e é o que faz a navegação parecer aproximar a janela em vez de
+ *  reiniciar o mundo.
+ *
+ *  ─── O QUE ESTE COMPONENTE DEIXOU DE SER ────────────────────────────────
+ *  Ele era a "cabeça de portão" da direção Solari: quatro objetos diferentes
+ *  (`par`, `faixa`, `duasMetades`, `campoUnico`) desenhados em CSS, cada um
+ *  ampliando uma pá que acabava de travar, com uma coluna de destinos girando
+ *  ao lado. Eram ~110 linhas de marcação condicional e ~400 de CSS para
+ *  produzir quatro variações de um gesto que a direção nova não tem.
+ *
+ *  A variação por rota não sumiu — mudou de matéria. Antes o que variava era a
+ *  FORMA do objeto; agora é a FOTOGRAFIA, que é a matéria desta direção. Cada
+ *  portão abre com a imagem do que ele vende, e quatro imagens diferentes
+ *  variam mais, com menos código, do que quatro arranjos de retângulo. */
+import Foto from "../components/Foto.astro";
+import { PRODUTOS } from "../data/conteudo";
+import creditos from "../../public/img/FOTOS.json";
 
 interface Props {
   produto: (typeof PRODUTOS)[number];
@@ -13,101 +29,58 @@ interface Props {
 }
 
 const { produto, titulo, bluf } = Astro.props;
-const n = produto.destinos.length;
+const foto = produto.codigo.toLowerCase();
+const credito = creditos.find((c) => c.nome === foto)!;
 
-// FR-025/T047: o par da transição de rota — a mesma janela do produto que
-// vira na linha do painel (Linha.astro) vira aqui, na cabeça do portão.
-const estiloColuna = `--n:${n}; --ciclo-nome:ciclo-${n}; --sombra-nome:sombra-pa-${n}; view-transition-name: vt-${produto.codigo.toLowerCase()};`;
+/* O ENQUADRAMENTO NA ABERTURA, e ele NÃO é o mesmo da vitrine.
+   O arquivo é 4:5 (retrato). Na grade da capa ele aparece em 4:5 ou 5:4; aqui
+   a moldura é a largura da tela por ~74svh, o que dá algo perto de 2,6:1 — o
+   `cover` escala pela largura e mostra uma FAIXA ESTREITA da altura do
+   arquivo. Onde essa faixa cai decide se o portão abre com o assunto ou com o
+   céu acima dele: sem estes valores, o de aluguel de carro abria com um borrão
+   de nuvem e a estrada ficava fora do quadro. */
+const FOCO_NA_ABERTURA: Record<string, string> = {
+  aer: "50% 52%", // a linha do horizonte e a ponta da asa
+  htl: "50% 38%", // a fachada acesa e a piscina moram na metade de cima
+  pct: "50% 58%", // a vila na falésia, não o céu acima dela
+  car: "50% 78%", // a estrada e a rocha vermelha, no terço de baixo
+};
 ---
 
-<header class:list={["cabeca-portao", `cabeca-portao--${produto.objeto}`]}>
-  <div class="container">
-    <a class="cabeca-portao__volta linha" href="/">
-      <span class="linha__codigo">{"←"}</span>
-      <span>
-        <span class="linha__nome">Voltar ao painel</span>
-      </span>
-      <span class="linha__onde">{"o saguão"}</span>
-      <span class="visualmente-oculto">{" "}— volta para o painel de partidas, com os quatro produtos</span>
+<header class="portao__abertura">
+  {/* `alt=""`: o H1 logo abaixo diz o que a página é, e a foto é a matéria da
+      direção, não informação. */}
+  <Foto
+    nome={foto}
+    alt=""
+    sizes="100vw"
+    prioridade
+    classe="abertura__foto"
+    estilo={`view-transition-name: vt-${foto}; --foco-foto: ${FOCO_NA_ABERTURA[foto]};`}
+  />
+  <div class="abertura__veu" aria-hidden="true"></div>
+
+  {/* O link de volta mora DENTRO do peitoril, não solto no alto da imagem.
+      Ele já esteve lá em cima e era ilegível: no portão de hotéis o topo da
+      fotografia é uma fachada iluminada, e um link em --texto-2 sobre ela não
+      passa contraste nenhum. Aqui embaixo ele está na mesma faixa protegida em
+      que o H1 pousa — a que logos/contraste-abertura.mjs mede. */}
+  <div class="container abertura__peitoril">
+    <a class="portao__volta" href="/">
+      Voltar ao saguão<span class="visualmente-oculto"> — a página inicial, com os quatro produtos</span>
     </a>
-
-    <div class="cabeca-portao__miolo">
+    <span class="portao__codigo" aria-hidden="true">{produto.codigo}</span>
+    <h1 class="portao__h1">{titulo}</h1>
+    <div class="entra" style="--atraso: 120">
       <div>
-        <span class="cabeca-portao__codigo">{produto.codigo}</span>
-        <h1 class="cabeca-portao__h1">{titulo}</h1>
-        <p class="cabeca-portao__bluf">{bluf}</p>
-      </div>
-
-      <div class="cabeca-portao__objeto">
-        {
-          produto.objeto === "par" && (
-            <>
-              <div class="cabeca-portao__perna">
-                <span class="cabeca-portao__perna-rotulo">Ida</span>
-                <ColunaDestino destinos={produto.destinos} estilo={estiloColuna} />
-              </div>
-              <div class="cabeca-portao__perna">
-                <span class="cabeca-portao__perna-rotulo">Volta</span>
-                <span class="cabeca-portao__codigo">{produto.codigo}</span>
-              </div>
-            </>
-          )
-        }
-
-        {
-          produto.objeto === "faixa" && (
-            <div>
-              <ColunaDestino destinos={produto.destinos} estilo={estiloColuna} />
-              <div class="cabeca-portao__faixa-noites" aria-hidden="true">
-                {REGIMES_HTL.map((_, i) => (
-                  <span class:list={["cabeca-portao__noite", i === 1 && "cabeca-portao__noite--acesa"]} />
-                ))}
-              </div>
-              <span class="visualmente-oculto">Faixa de noites de hospedagem</span>
-            </div>
-          )
-        }
-
-        {
-          produto.objeto === "duasMetades" && (
-            <>
-              <div class="cabeca-portao__pa-grande">
-                <div class="cabeca-portao__pa-metade cabeca-portao__pa-metade--cima">
-                  <span class="cabeca-portao__pa-rotulo">Voo</span>
-                  <span class="cabeca-portao__pa-valor">{produto.codigo}</span>
-                </div>
-                <div class="cabeca-portao__pa-metade cabeca-portao__pa-metade--baixo">
-                  <span class="cabeca-portao__pa-rotulo">Hotel</span>
-                  <span class="cabeca-portao__pa-valor">{PACOTE_COBERTURA.entra[1]}</span>
-                </div>
-              </div>
-              <ColunaDestino destinos={produto.destinos} estilo={estiloColuna} />
-            </>
-          )
-        }
-
-        {
-          produto.objeto === "campoUnico" && (
-            <>
-              <div class="cabeca-portao__campo">
-                <div class="cabeca-portao__campo-metade">
-                  <span class="cabeca-portao__campo-rotulo">Retirada</span>
-                  <span class="cabeca-portao__campo-valor">{AEROPORTOS_CAR[0].iata}</span>
-                </div>
-                <div class="cabeca-portao__campo-metade">
-                  <span class="cabeca-portao__campo-rotulo">Devolução</span>
-                  <span class="cabeca-portao__campo-valor">{AEROPORTOS_CAR[0].iata}</span>
-                </div>
-              </div>
-              <ColunaDestino destinos={produto.destinos} estilo={estiloColuna} />
-            </>
-          )
-        }
-
-        <span class="visualmente-oculto">
-          {produto.nome}: destinos que a busca cobre, entre eles {produto.destinos.join(", ")}.
-        </span>
+        <p class="portao__bluf">{bluf}</p>
       </div>
     </div>
   </div>
+
+  <p class="abertura__credito">
+    Foto <a href={credito.pagina} target="_blank" rel="noopener">
+      {credito.autor}<span class="visualmente-oculto"> no Unsplash — abre em nova aba</span></a
+    >
+  </p>
 </header>

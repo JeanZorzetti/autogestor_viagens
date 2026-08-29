@@ -1,12 +1,26 @@
 ---
 import Base from "../layouts/Base.astro";
-import Linha from "../components/Linha.astro";
+import Foto from "../components/Foto.astro";
 import { CONCORRENTES, PASSOS, PERGUNTAS, PRODUTOS, RAZOES } from "../data/conteudo";
 import { ATENDIMENTO, EMPRESA, EXTERNOS, whatsapp } from "../consts";
-import { FOTO_FOCO, SAGUAO } from "../data/fotos";
+import creditos from "../../public/img/FOTOS.json";
 
 const BUSCA = EXTERNOS.busca;
 const AJUDA = whatsapp("Olá! Estou comprando pelo site de viagens e preciso de ajuda.");
+const creditoAbertura = creditos.find((c) => c.nome === "saguao")!;
+
+/* O ENQUADRAMENTO NA GRADE. O arquivo de cada peça é 4:5, e a grade mostra as
+   duas da coluna larga em 5:4 — o `object-fit: cover` corta altura, e onde ele
+   corta decide se a peça mostra o assunto ou o céu em cima dele. Mora aqui e
+   não no manifesto de fotos porque é propriedade da PEÇA (de como a imagem é
+   exibida nesta grade), não do arquivo: a mesma foto entra na abertura do
+   portão em 16:9 e pede outro corte. */
+const FOCO_NA_GRADE: Record<string, string> = {
+  aer: "50% 58%", // a asa e a linha do horizonte moram abaixo do meio
+  htl: "50% 50%", // 4:5 nativo na coluna estreita — não há corte a decidir
+  pct: "50% 50%", // idem
+  car: "50% 82%", // a estrada é o assunto, e ela está no terço de baixo
+};
 
 const titulo = "Passagens aéreas, hotéis e pacotes em até 12x | Autogestor Viagens";
 const descricao =
@@ -27,85 +41,146 @@ const faqSchema = {
 ---
 
 <Base titulo={titulo} descricao={descricao} schema={[faqSchema]}>
-  {/* ══ O SAGUÃO ═══════════════════════════════════════════════════════════
-      A faixa fotográfica, e a única figura do site — as outras quatro fotos
-      são parede, a 16% atrás de tudo. Só a capa tem: nos quatro portões a
-      fotografia continua sendo parede, porque lá a primeira tela já é a cabeça
-      do portão com a coluna girando, e duas figuras na mesma tela é o começo
-      da página de catálogo que esta direção recusa.
+  {/* ══ A ABERTURA ══════════════════════════════════════════════════════════
+      A janela. A fotografia ocupa a tela inteira em cor cheia, o véu fecha do
+      horizonte para baixo, e o título pousa no peitoril.
 
-      Fica FORA da <section class="placa"> de propósito: ela não é conteúdo da
-      placa, é a parede em que a placa está parafusada. O CSS as amarra pelo
-      seletor `.saguao + .placa`, que é o que garante que a conta de altura de
-      FR-011 só valha onde as duas existem juntas.
+      O H1 e a fotografia NÃO animam: os dois são o elemento de LCP e já estão
+      no primeiro quadro pintado. O que entra pela fresta é a lâmina de texto
+      abaixo deles — é a regra "o resto chega em volta do LCP", não economia de
+      código.
 
-      `alt=""` e não uma descrição: a foto não carrega informação que o texto
-      ao lado já não dê. Um alt de "pessoas olhando aviões pela janela do
-      aeroporto" seria ruído lido em voz alta antes do H1 — decoração descrita
-      é pior para leitor de tela do que decoração declarada como tal.
+      `alt=""` e não uma descrição: a foto não carrega informação que o H1 ao
+      lado já não dê. Um alt de "pessoas olhando aviões pela janela do
+      aeroporto" seria ruído lido em voz alta antes do título — decoração
+      descrita é pior para leitor de tela do que decoração declarada como tal.
+      O crédito do autor fica visível no canto, e em public/img/FOTOS.json. */}
+  <section class="abertura">
+    <Foto nome="saguao" alt="" sizes="100vw" prioridade classe="abertura__foto" />
+    <div class="abertura__veu" aria-hidden="true"></div>
 
-      Crédito do autor em public/img/FOTOS.json (Unsplash License não exige
-      atribuição; o arquivo existe porque este site aponta a origem de tudo que
-      publica). */}
-  <div class="saguao" style={`--saguao-foco: ${FOTO_FOCO.saguao}`}>
-    <picture>
-      <source srcset="/img/saguao.avif" type="image/avif" />
-      {/* O WebP é o <img>, não um segundo <source>: quem não tem AVIF tem
-          WebP desde 2020, e um terceiro formato seria um fallback para um
-          navegador que este site já não atende em mais nada. */}
-      <img
-        src="/img/saguao.webp"
-        alt=""
-        width={SAGUAO.largura}
-        height={SAGUAO.altura}
-        fetchpriority="high"
-      />
-    </picture>
-  </div>
+    <div class="container abertura__peitoril">
+      <h1 class="abertura__titulo">
+        Pesquise onde quiser.<br /><em>Compare aqui.</em>
+      </h1>
 
-  {/* ══ A PLACA ═════════════════════════════════════════════════════════════
-      Primeira tela. O H1 NÃO anima: ele é o elemento de LCP e já está no
-      primeiro quadro pintado. O que vira em volta dele é a placa — é a regra
-      "o resto chega em volta do LCP", não economia de código. */}
-  <section class="placa">
+      <div class="entra" style="--atraso: 120">
+        <div>
+          <p class="abertura__chamada">
+            Passagem aérea, hotel, pacote e aluguel de carro na mesma busca, no Brasil e no exterior, em
+            <strong>até 12x no cartão</strong>. Promoções novas todo dia, e a compra fechada por você — sem esperar
+            cotação de ninguém.
+          </p>
+
+          <p class="abertura__acao">
+            <a class="btn btn--primario" href={BUSCA} target="_blank" rel="noopener">
+              Buscar minha viagem<span class="visualmente-oculto"> — nossa busca online, abre em nova aba</span>
+            </a>
+            <span class="abertura__nota">
+              Grátis para pesquisar, sem cadastro para ver preço.
+            </span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <p class="abertura__credito">
+      Foto <a href={creditoAbertura.pagina} target="_blank" rel="noopener">
+        {creditoAbertura.autor}<span class="visualmente-oculto"> no Unsplash — abre em nova aba</span></a
+      >
+    </p>
+  </section>
+
+  {/* ══ O ÚNICO JAVASCRIPT DO SITE ═════════════════════════════════════════
+      ~200 bytes, inline, e só nesta página. As outras oito rotas continuam
+      com zero.
+
+      O PROBLEMA QUE ELE RESOLVE: a vitrine declara quatro
+      `view-transition-name` (um por fotografia) e o portão de destino declara
+      um só. Os outros três são ÓRFÃOS — existem no documento que sai e não no
+      que entra — e o navegador resolve órfão com o fade padrão dele. Ou seja:
+      três fotografias flutuando e desbotando no meio da transição, que é
+      exatamente o gesto que esta direção recusa em toda parte ("janela não
+      desbota, janela abre"). O logos/verificar.mjs pega isso congelando o
+      quadro de 60ms e procurando `-ua-view-transition-fade-out`.
+
+      Não há saída em CSS estático: a folha não sabe qual peça foi clicada, e
+      é o clique que decide qual dos quatro nomes deve sobreviver. Então o
+      script faz uma coisa só — apaga o nome das três que não foram clicadas,
+      antes de a navegação começar. `capture: true` porque isso precisa
+      acontecer antes de o navegador tirar a foto do estado "old".
+
+      Sem ele o site continua funcionando: a transição volta a ser o wipe do
+      root com os três fades por cima. É degradação, não quebra. */}
+  <script is:inline>
+    addEventListener(
+      "click",
+      (e) => {
+        const peca = e.target.closest?.(".peca");
+        if (!peca) return;
+        for (const f of document.querySelectorAll(".peca .foto"))
+          if (!peca.contains(f)) f.style.viewTransitionName = "none";
+      },
+      true,
+    );
+  </script>
+
+  {/* ══ A VITRINE ═══════════════════════════════════════════════════════════
+      Os quatro produtos, cada um com a fotografia do que ele vende. A célula
+      inteira é o link — não há botão dentro dela.
+
+      A fotografia carrega um `view-transition-name` por produto: é ela que
+      atravessa para a abertura do portão quando a pessoa clica, e o par
+      homônimo está em CabecaDePortao.astro. Nome por CÓDIGO de produto, não
+      genérico: precisa ser único dentro de cada documento e existir nos dois. */}
+  <section class="vitrine">
     <div class="container">
-      <div class="placa__topo">
-        <h1 class="placa__titulo">
-          Pesquise<br />onde quiser.<br /><em>Compare aqui.</em>
-        </h1>
-        <p class="placa__chamada">
-          Passagem aérea, hotel, pacote e aluguel de carro na mesma busca, no Brasil e no exterior, em
-          <strong>até 12x no cartão</strong>. Promoções novas todo dia, e a compra fechada por você — sem esperar
-          cotação de ninguém.
+      <div class="vitrine__cabeca">
+        <h2 class="vitrine__titulo">Quatro buscas, uma compra</h2>
+        <p class="vitrine__nota">
+          Cada uma abre a mesma plataforma de reservas, já no lugar certo.
         </p>
       </div>
 
-      {/* O painel inteiro: quatro linhas, cada uma com a própria coluna de
-          destino virando (FR-005, FR-006). O widget `.destino` que ficava ao
-          lado do H1 foi ABSORVIDO — não há mais um único motor autônomo, há
-          quatro, um por linha, em cascata de 120ms (contracts/coreografia.md
-          §2). A linha inteira é o link — não há botão dentro dela — e agora
-          aponta para o portão (rota interna), não para a busca externa
-          (FR-015, mudança de contrato registrada em contracts/rotas.md §3). */}
-      <ol class="linhas">
-        {PRODUTOS.map((p, i) => <Linha produto={p} linha={i} />)}
+      <ol class="vitrine__grade">
+        {
+          PRODUTOS.map((p) => {
+            const foto = p.codigo.toLowerCase();
+            return (
+              <li>
+                <a class="peca abre" href={p.rota}>
+                  <Foto
+                    nome={foto}
+                    alt=""
+                    sizes="(min-width: 46rem) 46vw, 92vw"
+                    estilo={`view-transition-name: vt-${foto}; --foco-foto: ${FOCO_NA_GRADE[foto]};`}
+                  />
+                  <span class="peca__veu" aria-hidden="true" />
+                  <span class="peca__legenda">
+                    <span class="peca__codigo">{p.codigo}</span>
+                    <span class="peca__nome">{p.nome}</span>
+                    <span class="peca__nota">{p.nota}</span>
+                    <span class="peca__seta">{p.onde}</span>
+                  </span>
+                </a>
+              </li>
+            );
+          })
+        }
       </ol>
-
-      <p class="placa__nota">
-        Grátis para pesquisar e sem cadastro para ver preço. O valor válido é o que aparece na busca no momento da
-        compra — esta página não exibe tarifa porque tarifa muda por rota e por data.
-      </p>
     </div>
   </section>
 
   {/* ══ 01 ══════════════════════════════════════════════════════════════════ */}
-  <section class="estacao">
+  <section class="secao">
     <div class="container">
-      <div class="estacao__cabeca">
-        <span class="estacao__num" aria-hidden="true">01</span>
+      <div class="secao__cabeca">
         <div>
-          <h2 class="estacao__titulo">Compare antes de fechar</h2>
-          <p class="estacao__chamada">
+          <span class="secao__num" aria-hidden="true">01</span>
+          <h2 class="secao__titulo">Compare antes de fechar</h2>
+        </div>
+        <div>
+          <p class="secao__chamada">
             Você já ia abrir os outros de qualquer jeito. Abra — e antes de clicar em comprar, rode a mesma busca
             aqui. É um minuto para descobrir se a mesma viagem sai por menos.
           </p>
@@ -122,17 +197,15 @@ const faqSchema = {
       <ol class="itens">
         {
           RAZOES.map((r) => (
-            <li class="vira-no-scroll">
-              <div>
-                <h3>{r.titulo}</h3>
-                <p>{r.texto}</p>
-              </div>
+            <li class="abre">
+              <h3>{r.titulo}</h3>
+              <p>{r.texto}</p>
             </li>
           ))
         }
       </ol>
 
-      <p class="acao-estacao">
+      <p class="acao-secao">
         <a class="btn btn--contorno" href={BUSCA} target="_blank" rel="noopener">
           Buscar minha viagem<span class="visualmente-oculto"> — nossa busca online, abre em nova aba</span>
         </a>
@@ -141,13 +214,15 @@ const faqSchema = {
   </section>
 
   {/* ══ 02 ══════════════════════════════════════════════════════════════════ */}
-  <section class="estacao">
+  <section class="secao">
     <div class="container">
-      <div class="estacao__cabeca">
-        <span class="estacao__num" aria-hidden="true">02</span>
+      <div class="secao__cabeca">
         <div>
-          <h2 class="estacao__titulo">Três passos, do jeito que você já compra tudo</h2>
-          <p class="estacao__chamada">
+          <span class="secao__num" aria-hidden="true">02</span>
+          <h2 class="secao__titulo">Três passos, do jeito que você já compra tudo</h2>
+        </div>
+        <div>
+          <p class="secao__chamada">
             Do primeiro clique ao bilhete no e-mail, sem depender de alguém confirmar do outro lado.
           </p>
         </div>
@@ -156,11 +231,9 @@ const faqSchema = {
       <ol class="itens">
         {
           PASSOS.map((p) => (
-            <li class="vira-no-scroll">
-              <div>
-                <h3>{p.titulo}</h3>
-                <p>{p.texto}</p>
-              </div>
+            <li class="abre">
+              <h3>{p.titulo}</h3>
+              <p>{p.texto}</p>
             </li>
           ))
         }
@@ -169,13 +242,15 @@ const faqSchema = {
   </section>
 
   {/* ══ 03 ══════════════════════════════════════════════════════════════════ */}
-  <section class="estacao">
+  <section class="secao">
     <div class="container">
-      <div class="estacao__cabeca">
-        <span class="estacao__num" aria-hidden="true">03</span>
+      <div class="secao__cabeca">
         <div>
-          <h2 class="estacao__titulo">Perguntas</h2>
-          <p class="estacao__chamada">
+          <span class="secao__num" aria-hidden="true">03</span>
+          <h2 class="secao__titulo">Perguntas</h2>
+        </div>
+        <div>
+          <p class="secao__chamada">
             As mesmas que chegam no {EMPRESA.telefoneExibicao}. Se a sua não estiver aqui, mande — o WhatsApp responde
             {" "}{ATENDIMENTO.prazo}.
           </p>

@@ -1,8 +1,5 @@
-/* art-direction · solari · eixos: geometria/autônomo/escura · orçamento: 0kb · 2026-08-27 */
+/* A direção mora em tokens.css. Este arquivo é a página. */
 @import "./tokens.css";
-/* Os 19 contornos, um custom property cada. Arquivo GERADO — quem manda nele é
-   logos/gerar-mapas.mjs, e a fonte é dado geográfico primário, não desenho. */
-@import "./mapas.css";
 
 /* ═══ 1 · BASE ══════════════════════════════════════════════════════════════ */
 
@@ -17,11 +14,18 @@
 }
 
 html {
-  /* A placa é uma grade de célula fixa. Barra de rolagem que aparece e some
-     entre páginas desloca a grade inteira em ~15px — numa direção feita de
-     colunas alinhadas, isso é o defeito mais visível que existe. */
+  /* `stable` e não `auto`: sem isto a barra de rolagem aparece e some entre a
+     abertura (que trava o scroll por um instante na transição de rota) e o
+     resto, e a página inteira pula 15px para o lado. */
   scrollbar-gutter: stable;
+  scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 body {
@@ -30,97 +34,19 @@ body {
   color: var(--texto);
   font-family: var(--corpo);
   font-size: var(--t-base);
-  line-height: 1.65;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+  /* A página inteira nunca rola para o lado. Peça que sangra usa margem
+     negativa dentro de um container que já cortou. */
+  overflow-x: clip;
 }
 
-/* A FOTOGRAFIA DA PAREDE. Terceira e última camada fixa do site, e a de trás
-   de todas: `html::before` porque `body::before` já é o mapa e `body::after` já
-   é o grão, e porque a ordem de pintura importa — a gravura é gravada NA
-   parede, então o mapa vem por cima da foto, nunca o contrário.
-
-   z-index -2 e não -1: ela tem que ficar entre o fundo da tela e o mapa. Isso
-   funciona porque o `background` do body é propagado para o canvas (o html não
-   declara nenhum), e o canvas pinta abaixo de qualquer z-index negativo. Se
-   alguém der um `background` ao `html` um dia, esta camada some — está escrito
-   aqui e é o único acoplamento da regra.
-
-   AS DUAS TINTAS. `color` troca o matiz da foto pelo navy preservando a
-   luminância dela; `soft-light` do laranja por cima levanta o quente só onde a
-   foto já era clara. Duas camadas de blend numa superfície só — dentro do
-   limite de 1–2 elementos que `mix-blend-mode` comporta, e são
-   `background-blend-mode` (composição interna do próprio elemento), que não
-   cria camada nova como o `mix-blend-mode` cria.
-
-   `q` no lugar do grão: NÃO tem `mix-blend-mode` própria. O grão já roda por
-   cima de tudo no `body::after`, e é ele que devolve a textura que o blur do
-   encoder tirou da foto. */
-html::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  pointer-events: none;
-  background-image: linear-gradient(var(--marca), var(--marca)), linear-gradient(var(--noite-950), var(--noite-950)),
-    var(--foto);
-  background-blend-mode: soft-light, color, normal;
-  background-repeat: no-repeat;
-  background-position: var(--foto-foco);
-  background-size: cover;
-  opacity: var(--foto-luz);
-}
-
-/* A PAREDE. A placa está parafusada numa parede, e desde a materialização de
-   27/08 a moldura existia mas a parede era um plano navy vazio. Agora ela é o
-   que uma parede de saguão é: um mapa gravado.
-
-   O QUE ELE MOSTRA. Exatamente os 19 lugares que esta busca alcança, e nenhum
-   a mais — um mapa-múndi inteiro seria decoração, e decoração é o que esta
-   direção recusa. Cada portão troca `--parede` pelo mapa da própria cobertura
-   (Base.astro), então a figura VARIA por rota pelo mesmo motivo que o objeto
-   da cabeça varia: são produtos diferentes, com alcances diferentes.
-
-   UMA camada `position: fixed` para o site inteiro, pela mesma razão do grão:
-   ela não rola. Parede que rola junto com o que está parafusado nela não é
-   parede, é papel de parede — e seriam N camadas de composição repintando no
-   scroll em vez de uma que o compositor resolve sozinho.
-
-   `38% 68%` não é centro: é o ponto do mapa que precisa sobreviver ao corte do
-   `cover`. Centrado, a janela de 360px cairia no Atlântico entre o Brasil e a
-   África — gratícula e mar. 38% da largura e 68% da altura é a América do Sul,
-   que é para onde 4 das 5 listas de destino apontam. */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image: var(--parede);
-  background-repeat: no-repeat;
-  background-position: 38% 68%;
-  background-size: cover;
-  /* COMPOSIÇÃO NORMAL, e isso foi medido antes de ser escrito: `soft-light`
-     sobre uma banda escura quase não levanta nada — a fórmula multiplica pelo
-     backdrop, e o backdrop aqui é oklch(0.166). A parede simplesmente sumiu
-     da tela. É o mesmo motivo pelo qual o grão sobrevive em soft-light e uma
-     linha não: ruído de alta frequência a 0.055 se lê pela textura, um fio de
-     1px se lê pelo contraste.
-
-     Quem segura o claro dentro do piso de acessibilidade é o próprio asset (o
-     fio claro tem teto de 0.52 de alfa, ver gerar-mapas.mjs), não o modo de
-     mistura. */
-  opacity: var(--parede-luz);
-}
-
-/* O grão. UMA camada para o site inteiro — `position: fixed` cobrindo a janela
-   em vez de um ::after por superfície. A diferença não é elegância: cada
-   `mix-blend-mode` cria uma camada de composição, e pôr grão em cada linha da
-   placa seriam 4+ camadas repintando no scroll. Aqui é uma, e ela não rola.
-
-   `soft-light` e não `overlay` porque a banda é escura: overlay sobre navy
-   estoura o claro do ruído e vira poeira branca. 0.055 é o teto em que a
-   textura ainda se lê como plástico injetado e não como chiado. */
+/* O GRÃO, sobre a interface inteira. Ele não é enfeite: sem ele, o CSS ao
+   lado de uma fotografia lê como adesivo colado por cima dela. Com ele, os
+   dois têm a mesma textura e a tela lê como uma peça só.
+   `soft-light` em banda escura (em banda clara seria `overlay`), 0.045 —
+   acima de ~0.08 vira ruído de TV. Gerado uma vez em data-uri, nunca animado:
+   feTurbulence animado repinta a tela a cada quadro. */
 body::after {
   content: "";
   position: fixed;
@@ -128,12 +54,13 @@ body::after {
   z-index: 9;
   pointer-events: none;
   background-image: var(--grao), var(--grao);
-  background-size: 240px 240px, 90px 90px;
-  opacity: 0.055;
+  background-size: 240px 240px, 88px 88px;
+  opacity: 0.045;
   mix-blend-mode: soft-light;
 }
 
 img,
+picture,
 svg {
   display: block;
   max-width: 100%;
@@ -141,31 +68,45 @@ svg {
 
 a {
   color: var(--marca);
-  text-underline-offset: 0.2em;
-  text-decoration-thickness: from-font;
+  text-underline-offset: 0.22em;
+  text-decoration-thickness: 1px;
 }
 
-:where(h1, h2, h3) {
-  font-family: var(--mono);
-  font-weight: 600;
-  line-height: 1.08;
-  letter-spacing: -0.02em;
+a:hover {
+  color: var(--marca-alta);
+}
+
+:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 3px;
+  border-radius: var(--raio);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--display);
+  font-weight: 400;
+  /* Serifa de alto contraste em corpo grande pede entrelinha curta e tracking
+     negativo — nos valores de fábrica ela lê como texto de livro ampliado, não
+     como display. */
+  line-height: 1.04;
+  letter-spacing: -0.015em;
   text-wrap: balance;
-  /* Ligadura de código em título é ruído — e a Plex Mono tem várias. */
-  font-variant-ligatures: none;
 }
 
 p {
   text-wrap: pretty;
 }
 
-/* Um anel só, e ele muda de cor conforme a superfície (ver --foco em
-   tokens.css). `:focus-visible` e não `:focus`: clique de mouse num link não
-   precisa de anel, navegação por teclado precisa. */
-:focus-visible {
-  outline: 3px solid var(--foco);
-  outline-offset: 3px;
-  border-radius: var(--r-1);
+strong {
+  font-weight: 600;
+  color: var(--texto);
+}
+
+::selection {
+  background: var(--marca);
+  color: var(--tinta-sobre-marca);
 }
 
 .visualmente-oculto {
@@ -181,1833 +122,1407 @@ p {
 
 .pular {
   position: absolute;
-  left: var(--e-4);
-  top: -100%;
+  top: var(--e-2);
+  left: var(--e-2);
   z-index: 60;
-  padding: var(--e-3) var(--e-5);
+  translate: 0 -160%;
+  padding: var(--e-2) var(--e-4);
   background: var(--marca);
   color: var(--tinta-sobre-marca);
-  font-family: var(--mono);
   font-weight: 600;
   text-decoration: none;
+  border-radius: var(--raio);
 }
+
 .pular:focus-visible {
-  top: var(--e-4);
-  --foco: var(--tinta-sobre-marca);
+  translate: 0 0;
 }
 
 .container {
-  width: min(100% - var(--e-5) * 2, var(--largura));
+  width: min(100% - 2.5rem, var(--largura));
   margin-inline: auto;
 }
 
-/* ═══ 2 · A PÁ ══════════════════════════════════════════════════════════════
-   O primitivo da direção. Tudo que se mexe nesta página é uma pá virando: a
-   entrada vira, o scroll vira, o ponteiro vira, a troca de rota vira. Não há
-   um quinto gesto e não há fade — pá não desbota.
-
-   `transform-origin: 50% 0` é o que separa isto de um "flip" genérico: a pá
-   está pendurada pela aresta de cima, como no mecanismo real, e não gira pelo
-   próprio centro.                                                            */
-
-/* O vinco: a linha onde a pá real se dobra ao meio. É ele que faz a peça
-   continuar lendo como PÁ quando está parada — o caso do movimento reduzido,
-   em que não há giro nenhum para explicar o que aquilo é.
-
-   MORA NA PÁ, não na janela. Ficou na janela na primeira versão e o defeito
-   só aparece em movimento: a dobra ficava suspensa no ar enquanto a peça
-   girava por trás dela, o que não é uma dobra, é um risco no vidro. */
-.vinco {
-  position: relative;
+@media (min-width: 46rem) {
+  .container {
+    width: min(100% - 4rem, var(--largura));
+  }
 }
-/* DOIS fios, não um — e é aqui que a matéria começa. Um fio escuro sozinho é
-   borda de tabela, que era o que havia antes. O sulco de uma dobra real tem a
-   fresta (escura, onde a luz de 200° não entra) e, logo abaixo dela, a quina
-   da metade de baixo pegando essa mesma luz. Dois pixels no total. */
-.vinco::after {
-  content: "";
-  position: absolute;
-  inset-inline: 0;
-  /* 47% e não 50%. A dobra de uma pá real corta o CARACTERE ao meio, e o meio
-     do caractere não é o meio da caixa de linha: os destinos são todos em
-     caixa alta e a perna do descendente fica vazia embaixo, o que empurra o
-     centro visual das maiúsculas para cima. Medido no quadro de 1440: a 50% o
-     fio cortava as letras a 10% da altura de caixa alta abaixo do centro. */
-  top: calc(47% - 1px);
-  height: 2px;
-  background: linear-gradient(to bottom, var(--vinco-sombra) 0 1px, var(--vinco-luz) 1px 2px);
-  pointer-events: none;
-  z-index: 1;
-}
+
+/* ═══ 2 · A COREOGRAFIA — UM VERBO: ABRIR ═══════════════════════════════════
+   Quatro camadas dizendo a MESMA coisa. Uma máscara que descobre a imagem:
+   ela abre na entrada, abre a próxima peça no scroll, abre um pouco mais sob
+   o ponteiro, e abre a rota seguinte na transição.
+
+   Não há fade em lugar nenhum, e não é economia: fade é o gesto que não diz
+   nada, e uma direção com um verbo próprio não pode ter um segundo verbo
+   genérico competindo com ele em toda entrada de elemento.
+
+   O elemento de LCP (a fotografia da abertura e o H1 sobre ela) NÃO participa
+   de nenhuma delas: ele já está no primeiro quadro pintado, e o resto chega
+   em volta. Animar a opacidade do LCP é adiar o LCP pelo tempo da animação. */
 
 /* ── camada 1 · ENTRADA ────────────────────────────────────────────────────
-   Roda uma vez, quando a página pinta. O H1 NÃO entra nesta lista de
-   propósito: ele é o elemento de LCP e já está lá no primeiro quadro. O que
-   chega em volta dele é a placa. Última pá começa em 340ms — a regra é nada
-   começar depois de 800ms. */
-@keyframes virar-entrada {
-  from {
-    transform: rotateX(-92deg);
-  }
-  72% {
-    transform: rotateX(5deg);
-  }
-  to {
-    transform: rotateX(0);
-  }
+   O que abre é o peitoril: a lâmina de texto sobe por trás da borda de baixo
+   da janela, revelada por uma fresta. `overflow: hidden` no pai é o que
+   transforma "texto subindo" no gesto da direção em vez de um fade-in-up.
+   Nada começa depois de 800ms; o stagger entre irmãos é de 70ms. */
+.entra {
+  overflow: hidden;
 }
 
-.entra {
-  animation: virar-entrada var(--dur-pa) var(--ease-pa) both;
+.entra > * {
+  translate: 0 100%;
+  animation: subir var(--dur-cena) var(--ease-cena) both;
   animation-delay: calc(var(--atraso, 0) * 1ms);
 }
 
+@keyframes subir {
+  to {
+    translate: 0 0;
+  }
+}
+
 /* ── camada 2 · SCROLL ─────────────────────────────────────────────────────
-   Mesmo gesto, agora amarrado à distância percorrida e não a milissegundos:
-   se a pessoa para de rolar, a pá para no meio do giro. Nativo, zero JS e
-   zero listener. `entry 8% cover 34%` fecha o giro em ~35vh de rolagem — a
-   janela em que o gesto é visto sem parecer que travou. */
+   A mesma máscara, medida em DISTÂNCIA e não em ms: se a pessoa para de
+   rolar, ela para. Um gesto de scroll completa em ~35vh de rolagem — menos,
+   ninguém vê; mais, o usuário acha que travou.
+
+   `animation-timeline: view()` é nativo e custa 0kb. Onde não houver suporte
+   (Safari até 26), a regra inteira não se aplica e o elemento nasce aberto —
+   que é o estado final. Degradação, não ausência de conteúdo. */
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
-    .vira-no-scroll {
-      animation: virar-entrada linear both;
+    .abre {
+      animation: abrir linear both;
       animation-timeline: view();
-      animation-range: entry 8% cover 34%;
+      animation-range: entry 8% cover 38%;
+    }
+
+    @keyframes abrir {
+      from {
+        clip-path: inset(0 0 100% 0);
+        translate: 0 2.5rem;
+      }
+      to {
+        clip-path: inset(0 0 0 0);
+        translate: 0 0;
+      }
+    }
+  }
+}
+
+/* O progresso da página como número, para o horizonte da abertura acompanhar
+   a rolagem (ver .abertura__foto). 0kb de JS: é a mesma linha do tempo
+   nativa, lida como custom property. */
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    :root {
+      animation: contar linear both;
+      animation-timeline: scroll(root block);
+    }
+
+    @keyframes contar {
+      to {
+        --progresso: 1;
+      }
     }
   }
 }
 
 /* ── camada 3 · PONTEIRO ───────────────────────────────────────────────────
-   Enriquecimento declarado: passar o cursor numa linha da placa faz a célula
-   de status virar de "24H" para "ABRIR". Nada que só esta camada alcança — o
-   link já diz para onde vai, e no toque a informação continua visível. */
+   A janela abre um pouco mais quando você chega perto: o véu recua e a
+   fotografia cresce dentro do próprio recorte. Não é `scale(1.05)` no card —
+   é a IMAGEM que se move atrás de uma moldura parada, que é o que uma janela
+   faz quando você se aproxima dela.
+
+   Enriquecimento puro: nada aqui é alcançável só pelo ponteiro. Em
+   `(hover: none)` a regra não existe, e o estado de foco de teclado recebe
+   exatamente o mesmo tratamento — quem navega por Tab vê o mesmo gesto. */
 @media (hover: hover) and (pointer: fine) {
-  .status {
-    display: grid;
-    perspective: 320px;
+  .peca:hover .foto img,
+  .peca:focus-within .foto img {
+    scale: 1.045;
   }
-  .status > * {
-    grid-area: 1 / 1;
-    transform-origin: 50% 0;
-    transition: transform var(--dur-pa) var(--ease-pa), opacity var(--dur-instante) linear;
-  }
-  .status__b {
-    transform: rotateX(-92deg);
-    opacity: 0;
-  }
-  .linha:hover .status__a,
-  .linha:focus-visible .status__a {
-    transform: rotateX(92deg);
-    opacity: 0;
-  }
-  .linha:hover .status__b,
-  .linha:focus-visible .status__b {
-    transform: rotateX(0);
-    opacity: 1;
-  }
-}
-/* No toque a segunda face nem existe no fluxo: sem ponteiro, ela nunca vira. */
-@media not all and (hover: hover) {
-  .status__b {
-    display: none;
+
+  .peca:hover .peca__veu,
+  .peca:focus-within .peca__veu {
+    opacity: 0.55;
   }
 }
 
+.peca:focus-within .foto img {
+  scale: 1.045;
+}
+
 /* ── camada 4 · TRANSIÇÃO ──────────────────────────────────────────────────
-   Entre rotas, sem framework. A faixa de cabeçalho atravessa (mesmo
-   `view-transition-name` nas duas páginas) e o corpo vira, em vez de piscar. */
+   Entre rotas, sem framework: a fotografia do produto ATRAVESSA da peça da
+   vitrine para a abertura do portão. É o mesmo `view-transition-name` nos
+   dois documentos, e é o que faz o clique parecer aproximar a janela em vez
+   de reiniciar o mundo. */
 @view-transition {
   navigation: auto;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  ::view-transition-old(corpo) {
-    animation: pa-sai var(--dur-base) var(--ease-pa) both;
+  ::view-transition-old(root) {
+    animation: sair var(--dur-base) var(--ease-entrada) both;
   }
-  ::view-transition-new(corpo) {
-    animation: pa-entra var(--dur-pa) var(--ease-pa) both;
+
+  ::view-transition-new(root) {
+    animation: entrar var(--dur-base) var(--ease-cena) both;
   }
-  @keyframes pa-sai {
+
+  @keyframes sair {
     to {
-      transform: rotateX(38deg);
-      opacity: 0;
+      clip-path: inset(0 0 100% 0);
     }
   }
-  @keyframes pa-entra {
+
+  @keyframes entrar {
     from {
-      transform: rotateX(-38deg);
-      opacity: 0;
+      clip-path: inset(100% 0 0 0);
     }
   }
 
-  /* T047a — Cláusula dos três sem par (G4, contracts/coreografia.md §3).
-     A capa tem QUATRO nomes de transição (vt-aer, vt-htl, vt-pct, vt-car); o
-     documento de destino tem só UM (o portão correspondente). Os outros três
-     não têm par no documento novo e o navegador aplica neles, por padrão, o
-     `-ua-view-transition-fade-out` — fade puro, sozinho, sem giro, medido
-     como um RASGO (op 0,61 e `transform: none` em t=60ms, ainda nítidos e de
-     pé em t=140ms, depois que `::view-transition-old(corpo)` já saiu). Causa:
-     `main { view-transition-name: corpo }` retira do snapshot do ancestral
-     todo elemento com nome PRÓPRIO — nomear as quatro colunas abre quatro
-     buracos no snapshot `corpo` da capa.
-     Não existe seletor que distinga o par do órfão, e não precisa existir: a
-     saída certa para os três é a MESMA do quarto — saem em lockstep com o
-     corpo de onde foram recortados, em vez de ficar para trás. Nomear só a
-     linha ativada foi investigado e não existe sem JavaScript
-     (`@view-transition { types }` é estático por documento; `:target` não
-     tem fragmento; `:focus-visible` não dispara em clique de ponteiro) — ver
-     research.md §R5. Custo: 0 byte. */
-  ::view-transition-old(vt-aer),
-  ::view-transition-old(vt-htl),
-  ::view-transition-old(vt-pct),
-  ::view-transition-old(vt-car) {
-    animation: pa-sai var(--dur-base) var(--ease-pa) both;
-  }
-  ::view-transition-new(vt-aer),
-  ::view-transition-new(vt-htl),
-  ::view-transition-new(vt-pct),
-  ::view-transition-new(vt-car) {
-    animation: pa-entra var(--dur-pa) var(--ease-pa) both;
+  /* A foto que atravessa não recorta: ela cresce da célula para a abertura.
+     `--ease-cena` e não linear — a distância que ela percorre é grande, e uma
+     curva linear num percurso longo lê como interpolação de software. */
+  ::view-transition-group(*) {
+    animation-duration: 460ms;
+    animation-timing-function: var(--ease-cena);
   }
 }
 
-/* T047b — Desligar a transição sob movimento reduzido (G4, achado
-   colateral). FR-028 contrata "transição de rota desligada" sob
-   `prefers-reduced-motion: reduce`, e até aqui isso não era verdade: as
-   regras acima moram dentro de `no-preference`, então sob `reduce` elas
-   simplesmente não se aplicam e sobra o CROSS-FADE PADRÃO do navegador nos
-   cinco nomes (`corpo`, `faixa`, `vt-*`), com os grupos ainda transladando —
-   o caminho de acessibilidade virando a versão mais cheia de fade da página.
-   Medido depois desta regra: zero animação de pseudo-elemento de transição,
-   página de destino inteira e correta no primeiro quadro. */
+/* ── o piso: sem movimento, tudo nasce inteiro e legível ──────────────────
+   Não é uma versão degradada: é a mesma composição, parada. A abertura tem a
+   fotografia, o título e o peitoril; as peças estão abertas; nada depende de
+   uma animação ter rodado para existir. */
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(*),
-  ::view-transition-old(*),
-  ::view-transition-new(*) {
-    animation: none !important;
+  .entra > * {
+    animation: none;
+    translate: 0 0;
+  }
+
+  .abre {
+    animation: none;
+    clip-path: none;
+    translate: 0 0;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root),
+  ::view-transition-group(*) {
+    animation: none;
+  }
+
+  .foto img {
+    transition: none;
   }
 }
 
-/* ── o piso: sem movimento, a placa nasce inteira e legível ────────────────
-   Não é "a animação fica mais curta": ela não existe, e o estado final é o
-   estado inicial. A pá parada continua sendo pá — o vinco, a grade de célula
-   e a mono não dependem de movimento nenhum. */
-@media (prefers-reduced-motion: reduce) {
-  .entra,
-  .vira-no-scroll,
-  .coluna-destino__pa {
-    animation: none !important;
-    transform: none !important;
-  }
-  .coluna-destino__pa {
-    opacity: 0;
-  }
-  .coluna-destino__pa:first-child {
-    opacity: 1;
-  }
-  /* A pá parada está TRAVADA, e pá travada está de frente para a luz: a
-     camada de sombra não pode ficar no valor de repouso do keyframe (0.88),
-     senão o destino nasce escuro atrás de um véu. Ela nasce acesa, e quem faz
-     a peça continuar lendo como pá aqui é o corpo — vinco, duas metades,
-     aresta —, não o movimento que não existe. */
-  .coluna-destino__pa::before {
-    animation: none !important;
-    opacity: 0;
-  }
-  .status__b {
-    display: none;
-  }
-  * {
-    transition-duration: 1ms !important;
-  }
-}
+/* ═══ 3 · A FOTOGRAFIA ══════════════════════════════════════════════════════
+   O componente Foto.astro. A moldura é o <span>, a imagem se move dentro
+   dela. `overflow: hidden` no span é o que permite o `scale` da camada de
+   ponteiro sem que a imagem invada o vizinho. */
 
-/* ═══ 2.5 · O SAGUÃO (a faixa fotográfica da capa) ══════════════════════════
-
-   A quinta camada de matéria, e a primeira que é FIGURA. As quatro anteriores
-   (volume, grão, gravura, fotografia-parede) existem para a superfície parecer
-   feita de alguma coisa; esta existe para ser olhada. É a janela do saguão
-   contra a qual a placa está parafusada.
-
-   ELA NÃO SE MEXE, e a ausência é declarada, não esquecida. O verbo deste site
-   é VIRAR — as quatro pás, os códigos, o status, tudo gira em torno da mesma
-   ideia. Um parallax aqui seria um segundo gesto (deslocar) competindo com o
-   primeiro no exato ponto da página onde o primeiro precisa ser percebido. E a
-   regra já estava escrita no `body::before`: parede que rola junto com o que
-   está parafusado nela não é parede, é papel de parede. A faixa é a janela; o
-   que vira é a placa.
-
-   `<img>` E NÃO `background-image`, invertendo a regra da parede, e por um
-   motivo medido: esta é a maior área pintada da primeira tela, então ela É o
-   elemento de LCP. Como `<img>` no HTML o pré-varredor do navegador acha o
-   arquivo antes de o CSS existir, e `fetchpriority="high"` põe ele na frente
-   da fila. Como `background-image` de pseudo-elemento, o navegador só descobre
-   a foto depois de baixar e casar o CSS — atrasando exatamente o que decide o
-   LCP da página. A parede pode ser pseudo-elemento porque ela é a última coisa
-   que importa pintar; a figura é a primeira. */
-.saguao {
-  height: var(--saguao-h);
-  overflow: hidden;
+.foto {
+  display: block;
   position: relative;
-  /* O metal do trilho por baixo: se a foto não chegar (rede ruim, formato sem
-     suporte), a faixa continua sendo uma peça do painel e não um rasgo branco
-     na primeira tela. É o fallback estático, e ele é composição, não vazio. */
-  background: var(--moldura);
-  /* A mesma aresta acesa do topo da placa, pela mesma luz de 200°: a faixa é
-     mais uma superfície parafusada na parede, não uma imagem colada. */
-  box-shadow:
-    inset 0 1px 0 var(--aresta-luz),
-    inset 0 -1px 0 color-mix(in oklch, var(--sombra-cor) 60%, transparent);
+  overflow: hidden;
+  /* A cor média da foto vem inline, do manifesto gerado. É o poster: o que se
+     vê entre o primeiro quadro e a imagem decodificada. */
+  background-size: cover;
 }
 
-.saguao img {
+/* O <picture> PRECISA DA ALTURA, e este é o degrau que quase passou batido:
+   `height: 100%` no <img> resolve contra o <picture>, não contra a `.foto`. Um
+   <picture> sem altura declarada fica com a altura intrínseca da imagem — numa
+   moldura de 497px o <img> ficava com 776px, o `object-fit: cover` não tinha o
+   que cobrir, e quem cortava era o `overflow: hidden` da moldura, sempre pelo
+   topo. Sintoma: a peça do aluguel de carro mostrava só a nuvem, e o
+   `object-position` que deveria descer até a estrada não fazia efeito nenhum,
+   porque não havia corte de `cover` para ele posicionar. */
+.foto picture {
   display: block;
   width: 100%;
   height: 100%;
+}
+
+.foto img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  /* 52% e não 50%: o que precisa sobreviver ao corte é a linha do horizonte
-     com as pessoas em pé contra ela, e ela fica logo abaixo do meio do
-     quadro. Centrado, a faixa de 96px do celular pegava só vidro. O número
-     vem da tabela gerada em src/data/fotos.ts, não escrito aqui. */
-  object-position: var(--saguao-foco, 50% 52%);
+  /* O FOCO DE EXIBIÇÃO, e ele não repete o foco do encoder. logos/baixar-fotos
+     recorta o ARQUIVO em 4:5 em volta do assunto; aqui a mesma imagem é
+     mostrada em 5:4 na coluna larga da vitrine e em 16:9 na abertura do
+     portão, e o `cover` corta de novo. Sem este valor a peça do aluguel de
+     carro mostrava só a nuvem: a estrada, que é o assunto, mora no terço de
+     baixo do arquivo. Quem passa o valor é quem monta a peça — é decisão de
+     enquadramento na página, não propriedade do arquivo. */
+  object-position: var(--foco-foto, 50% 50%);
+  transition: scale var(--dur-cena) var(--ease-cena);
 }
 
-/* O PÉ DA FAIXA. Sem isto a fotografia termina num corte seco no meio da
-   primeira tela, e corte seco em foto lê como imagem cortada, não como janela
-   acabando. O degradê é --fundo, o mesmo plano em que a placa flutua: a foto
-   AFUNDA na página em vez de parar. 38% porque abaixo disso o degradê come o
-   horizonte, que é a única linha da foto que precisa sobreviver. */
-.saguao::after {
-  content: "";
-  position: absolute;
-  inset: auto 0 0;
-  /* `min` e não 38% seco: numa faixa de 302px o degradê é 115px e some na
-     foto; nos 44px do telefone os mesmos 38% são 17px sobre uma faixa que já
-     é fresta, e o pouco que restava de fotografia virava tarja. O teto em
-     percentual segura o desktop, o teto em px segura o telefone. */
-  height: min(38%, 72px);
-  pointer-events: none;
-  background: linear-gradient(to bottom, transparent, var(--fundo));
+/* ═══ 4 · A ABERTURA ════════════════════════════════════════════════════════
+   A primeira tela: uma janela para o outro lado. A fotografia ocupa a tela
+   toda, em cor cheia e à luz que ela tem; o véu fecha de --vidro-inicio para
+   baixo, e é sobre o véu fechado que o título pousa.
+
+   POR QUE O TÍTULO FICA SOBRE A FOTO e não ao lado dela: a estrutura é
+   Vitrine, e em Vitrine a imagem manda e o texto é legenda. Título ao lado
+   devolveria a página ao díptico "imagem à direita, texto à esquerda", que é
+   a silhueta que esta troca de direção veio recusar.
+
+   O PREÇO DISSO é que o par de contraste do H1 não é com um token, é com
+   pixels de fotografia. Ele não se estima: logos/contraste-abertura.mjs
+   fotografa a página em cinco larguras e mede o texto contra o pixel real
+   mais claro sob cada linha. --vidro-piso é a saída daquela medição. */
+
+.abertura {
+  position: relative;
+  isolation: isolate;
+  /* `svh` e não `vh`: no celular, `100vh` é a altura COM a barra de endereço
+     recolhida, então a abertura nasce mais alta que a tela e o peitoril fica
+     abaixo da dobra justamente no aparelho em que a dobra importa.
+
+     92 e não 86: a altura extra vira fotografia, não espaço em branco. O véu
+     é medido em PORCENTAGEM da abertura, então esticá-la aumenta em pixels a
+     faixa limpa do topo sem mexer em nenhum dos três valores que o gate de
+     contraste calibrou. É a única alavanca que devolve imagem ao celular de
+     graça. */
+  min-height: 92svh;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  padding-block-end: var(--e-8);
 }
 
-/* A PLACA POUSANDO NA FAIXA. Duas contas, e as duas são obrigatórias:
-
-   1. O recobrimento. A placa sobe meio respiro por cima da borda de baixo da
-      foto para que a rampa de sombra que ela já projeta caia DENTRO da
-      fotografia. É a diferença entre painel parafusado na janela e painel
-      empilhado embaixo de uma imagem.
-   2. A altura. `min-height` da placa é a primeira tela menos o trilho; agora
-      a faixa também ocupa primeira tela, então ela sai da conta — senão a
-      soma das duas passa de 100svh e a quarta linha do painel cai para fora
-      da dobra, que é o que FR-011 proíbe e o que logos/verificar.mjs mede em
-      360×640. O `+ recobre` devolve o que a sobreposição já economizou. */
-.saguao + .placa {
-  margin-top: calc(var(--saguao-recobre) * -1);
-  min-height: calc(100vh - 3.5rem - var(--saguao-h) + var(--saguao-recobre));
-  min-height: calc(100svh - 3.5rem - var(--saguao-h) + var(--saguao-recobre));
-}
-
-/* OS 24px QUE FALTAVAM, e eles saem de RESPIRO, nunca de conteúdo. Com a
-   faixa em 44px a quarta linha ainda parava 33px abaixo da dobra em 360×640.
-   O caminho fácil era cortar a `.placa__chamada` de três linhas para duas — e
-   seria pagar a fotografia com o argumento de venda da página, que é
-   exatamente a troca que não se faz. Estes 24px são o respiro de cima do
-   painel e o padding interno dele: espaço vazio, no único lugar da primeira
-   tela onde ainda havia. Só abaixo de 46rem; do breakpoint para cima a folga
-   volta inteira. */
-@media (max-width: 45.99rem) {
-  .saguao + .placa {
-    margin-top: calc((var(--saguao-recobre) + var(--e-2)) * -1);
-    padding-block-start: var(--e-2);
+@media (min-width: 46rem) {
+  .abertura {
+    min-height: 100svh;
+    padding-block-end: var(--e-10);
   }
 }
 
-/* ═══ 3 · A PLACA (a primeira tela) ═════════════════════════════════════════ */
-
-/* A placa é um PAINEL PARAFUSADO NUMA PAREDE, e a parede é o --fundo. Antes
-   isto era `background: var(--placa)` com um fio embaixo — a mesma cor de
-   ponta a ponta, que é como se pinta uma div e não como se ilumina um objeto.
-
-   Três coisas, todas obedecendo a luz de 200°: o corpo tem gradiente (topo
-   claro, pé na sombra da própria moldura), a aresta de cima acende, e o pé
-   projeta sombra na parede em vez de terminar num fio. */
-.placa,
-.fecho {
-  position: relative;
-  background: linear-gradient(to bottom, var(--placa-alto) 0, var(--placa) 34%, var(--placa-baixo) 100%);
-  /* A rampa da sombra: cada degrau dobra o borrão e reduz o alfa. É o que
-     separa "difusa" de "0 4px 12px rgba(0,0,0,.1)". A cor tem matiz — é o navy
-     fechado, nunca preto sobre objeto azul. */
-  box-shadow:
-    inset 0 1px 0 var(--aresta-luz),
-    0 1px 0 var(--moldura),
-    0 6px 12px -6px color-mix(in oklch, var(--sombra-cor) 55%, transparent),
-    0 18px 36px -18px color-mix(in oklch, var(--sombra-cor) 45%, transparent);
-}
-.placa {
-  /* FR-009: o painel não encosta em nenhuma das quatro bordas do viewport —
-     margin nas quatro direções, não só padding interno, para --fundo
-     respirar em volta dele na primeira tela, nas três larguras. Um raio
-     pequeno porque agora ele é um retângulo FLUTUANDO na parede, não uma
-     faixa que sangra até a borda (mesma família de --r-1, um pouco maior —
-     a mesma proporção da janela de destino e do .fecho__caixa). */
-  margin: var(--painel-respiro);
-  border-radius: calc(var(--r-1) + 4px);
-  /* Compacto no mobile (T042/I6 medem 360×640): o bloco --e-8 e --e-4 volta
-     no breakpoint de 62rem, onde sobra altura. */
-  padding-block: var(--e-4) var(--e-6);
-  /* FR-011: a primeira tela sem `100vh` sozinho — `100vh` no mobile mede o
-     viewport MÁXIMO (antes de a barra de endereço recolher), maior que o que
-     a pessoa vê. `100vh` fica como FALLBACK (navegador sem `dvh`); `100svh`
-     é a unidade dinâmica que resolve o bug. O `- 3.5rem` aproxima a faixa de
-     status + a moldura do painel (T054/verificar.mjs mede o resultado real
-     nas três larguras e é o que decide se este número muda). */
-  min-height: calc(100vh - 3.5rem);
-  min-height: calc(100svh - 3.5rem);
+.abertura__foto {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  height: 100%;
 }
 
-/* A faixa de status: o que uma placa de aeroporto tem em cima. É também a
-   nav — e é por isso que não existe barra de 4 links neste site. */
-/* O trilho. A faixa vivia dentro do container e se separava do conteúdo por um
-   fio que parava nas margens — um fio de 74rem no meio de uma tela de 1440px
-   não é a régua de cima de um painel, é uma borda de div. O trilho é o
-   <header> INTEIRO, sangrando de ponta a ponta: metal recuado, mais escuro que
-   o painel, com o pé na sombra. É por contraste com ele que a aresta acesa no
-   topo de .placa lê como o painel começando. */
-header {
-  position: relative;
-  background: var(--moldura);
-  box-shadow: inset 0 -1px 0 color-mix(in oklch, var(--sombra-cor) 70%, transparent);
+.abertura__foto img {
+  /* O HORIZONTE QUE ACOMPANHA A ROLAGEM. Não é parallax de biblioteca: é a
+     mesma linha do tempo nativa de `--progresso`, aplicada a um deslocamento
+     de 4% da altura. O número é pequeno de propósito — o gesto tem que ser
+     percebido como a janela sendo olhada de outro ângulo, não como a foto
+     escorregando para fora da moldura.
+     `scale` acompanha para que o deslocamento nunca descubra a borda. */
+  scale: 1.06;
+  translate: 0 calc(var(--progresso, 0) * -4%);
 }
 
-.faixa {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--e-3) var(--e-5);
-  padding-block: var(--e-3);
-  font-family: var(--mono);
-  font-size: var(--t-xs);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--texto-3);
-  view-transition-name: faixa;
+/* O VÉU. Um gradiente só, do transparente ao --fundo, começando no horizonte.
+   Ele é a "janela": em cima a fotografia à luz cheia, embaixo o peitoril onde
+   corre o texto.
+
+   `color-mix` e não um rgba digitado: o véu tem que ser exatamente a cor do
+   fundo da página, senão a abertura termina numa faixa de outro navy e a
+   emenda com a seção seguinte fica visível. */
+.abertura__veu {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    /* 1 · o vertical: a janela. Limpa em cima, fechada no peitoril. */
+    linear-gradient(
+      to bottom,
+      color-mix(in oklch, var(--fundo) calc(var(--vidro-teto) * 100%), transparent) 0%,
+      color-mix(in oklch, var(--fundo) calc(var(--vidro-teto) * 100%), transparent) var(--vidro-inicio),
+      color-mix(in oklch, var(--fundo) calc(var(--vidro-meio) * 100%), transparent) 58%,
+      color-mix(in oklch, var(--fundo) calc(var(--vidro-piso) * 100%), transparent) 80%,
+      var(--fundo) 100%
+    ),
+    /* 2 · o lateral: a lâmina atrás da coluna de texto. Some antes dos 74%,
+       que é onde a coluna acaba no desktop — dali para a direita a
+       fotografia fica com a luz que ela tem. */
+    linear-gradient(
+      to right,
+      color-mix(in oklch, var(--fundo) calc(var(--vidro-lado) * 100%), transparent) 0%,
+      color-mix(in oklch, var(--fundo) calc(var(--vidro-lado) * 100%), transparent) 34%,
+      transparent 74%
+    );
 }
-.faixa__marca {
-  display: flex;
-  align-items: center;
-  gap: var(--e-2);
-  color: var(--texto);
-  text-decoration: none;
-  letter-spacing: 0.1em;
-}
-.faixa__marca:hover {
-  color: var(--marca);
-}
-/* Some abaixo de 46rem: a faixa quebra em duas linhas nessa largura e o ponto
-   ficava sozinho no fim da primeira, separando nada de nada. */
-.faixa__sep {
-  display: none;
-  color: var(--borda-forte);
-}
-/* "BUSCA ABERTA 24H" é o indicador de painel operando, e num painel de verdade
-   isso é uma lâmpada. Quadrado e não círculo: nesta direção tudo é retângulo,
-   e um ponto redondo aqui seria a única curva do site. Não pisca — piscar
-   seria um quinto gesto, e a direção tem um só. */
-.faixa__fim {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--e-2);
-  margin-inline-start: auto;
-  color: var(--marca);
-}
-.faixa__fim::before {
+
+/* A borda de baixo da janela. Um fio de luz, não um `1px solid`: a linha
+   clara em cima e a escura embaixo dão direção à borda, e direção é o que
+   faz uma quina parecer um objeto em vez de uma régua. */
+.abertura::after {
   content: "";
-  inline-size: 6px;
-  block-size: 6px;
-  flex: none;
-  background: var(--marca);
-  /* O halo: a lâmpada suja o metal em volta. Sem ele é um quadradinho
-     laranja; com ele é algo aceso atrás de um vidro. */
-  box-shadow: 0 0 0 1px color-mix(in oklch, var(--marca) 28%, transparent), 0 0 10px 1px
-    color-mix(in oklch, var(--marca) 45%, transparent);
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--borda) 22%, var(--borda) 78%, transparent);
 }
 
-.placa__topo {
-  padding-block: var(--e-4) var(--e-3);
+/* ═══ SOBRE FOTOGRAFIA NÃO EXISTE TEXTO SECUNDÁRIO ═════════════════════════
+   A regra que fechou os últimos pares do gate, e ela vale mais que os pares
+   que fechou.
+
+   A escala --texto / --texto-2 / --texto-3 é uma hierarquia por LUMINÂNCIA, e
+   luminância só hierarquiza contra um fundo estável. Sobre uma fotografia o
+   fundo varia pixel a pixel, e o degrau que no navy chapado lê como "isto é
+   secundário" vira, sobre um céu claro, simplesmente "isto está apagado" —
+   medido, 3.2:1 num bluf que precisa de 4.5.
+
+   Então dentro do peitoril e da faixa a escala colapsa: todo texto vai no
+   valor alto, e a hierarquia passa a ser feita por TAMANHO e por FAMÍLIA, que
+   é o que continua funcionando sobre qualquer fundo. Fora daí — nas seções,
+   no FAQ, no rodapé, onde o fundo é token — a escala de três degraus segue
+   inteira.
+
+   Isto fechou seis pares que nenhum ajuste de --vidro-* fecharia sem apagar a
+   fotografia do celular inteira. */
+.abertura__peitoril,
+.faixa {
+  --texto-2: oklch(0.96 0.008 250);
+  --texto-3: oklch(0.87 0.014 250);
+  --marca: var(--marca-alta);
 }
 
-h1.placa__titulo {
-  font-size: var(--t-placa);
-  text-transform: uppercase;
-  letter-spacing: -0.03em;
-  /* Três linhas curtas, quebradas à mão. A mono ocupa ~0.6em por caractere:
-     uma linha de 29 caracteres a 4.25rem pediria 946px e estouraria em
-     qualquer celular. Linha mais longa aqui tem 13 caracteres. */
-  max-width: 16ch;
+.abertura__peitoril {
+  position: relative;
+  align-self: end;
 }
-h1.placa__titulo em {
-  display: block;
+
+.abertura__titulo {
+  font-size: var(--t-abertura);
+  max-width: 15ch;
+  /* Sombra de texto sutil e na cor da sombra da direção, não preta: ela não
+     está ali para dar contraste (isso é trabalho do véu, e é medido), está
+     para dar ao tipo a mesma profundidade que os objetos da fotografia têm. */
+  text-shadow: 0 2px 24px oklch(0.09 0.035 258 / 0.55);
+}
+
+.abertura__titulo em {
   font-style: normal;
   color: var(--marca);
 }
 
-.placa__chamada {
-  margin-top: var(--e-3);
-  max-width: 48ch;
-  font-size: var(--t-lg);
+.abertura__chamada {
+  margin-block-start: var(--e-5);
+  /* 42ch e não 46: a chamada tem que caber em três linhas no desktop. A quarta
+     linha empurra o bloco inteiro 30px para cima, e 30px para cima é onde o
+     título sai da parte fechada do véu — a medida de contraste da abertura é
+     o que decide a largura desta coluna. */
+  max-width: 42ch;
   color: var(--texto-2);
-  /* Abaixo de 46rem os 48ch não limitam nada — a coluna já tem ~30ch de
-     largura própria — e o parágrafo inteiro chegava a 6–7 linhas, sozinho
-     empurrando a quarta linha do painel para fora de 360×640 (FR-011). O
-     texto INTEIRO continua no DOM (leitor de tela e busca em página leem
-     tudo); só o QUADRO mostra três linhas. A "01" logo abaixo já completa o
-     argumento por extenso. */
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  overflow: hidden;
+  font-size: var(--t-lg);
 }
-.placa__chamada strong {
+
+.abertura__chamada strong {
   color: var(--texto);
-  font-weight: 600;
 }
 
-/* ── a célula que vira sozinha: o motor autônomo, generalizado ─────────────
-   São DESTINOS, não preços. Um nome de país/região é fato; uma tarifa sem
-   consulta seria número inventado, e a tarifa real mora na busca da
-   OnerTravel, muda por rota e por data e não tem como estar correta numa
-   página estática. Zero JS: N pás no mesmo lugar da grade, cada uma com o
-   mesmo par de keyframes e um atraso de 1/N do ciclo.
-
-   ANTES havia UMA lista de 8 destinos, UM `@keyframes ciclo` e UM widget
-   `.destino` ao lado do H1. Agora há QUATRO listas de comprimento diferente
-   (5/7/8/11 — coprimos entre si, FR-005), a velocidade do giro (--pa-giro) é
-   a MESMA nas quatro colunas — uma pá não gira mais rápido porque a lista é
-   menor — e o widget foi ABSORVIDO: a coluna vive dentro de cada linha do
-   painel (Linha.astro) e dentro de cada cabeça de portão
-   (CabecaDePortao.astro). Seletor de keyframe não aceita `var()`, então são
-   QUATRO tabelas de porcentagem, uma por N.
-
-   `.coluna-destino__janela` e `.coluna-destino__pa` são a peça REUSÁVEL, 8
-   usos no site inteiro. O primitivo não decide o tamanho
-   (font-size/inline-size): cada contexto que o usa declara o próprio. */
-/* A janela reserva a altura da pá com `line-height` fixo, e NÃO com o texto
-   dentro dela. As oito pás vivem na mesma célula da grade e todas menos uma
-   estão giradas para fora — se a altura viesse do conteúdo, ela mudaria a cada
-   giro e arrastaria a linha inteira junto. É daqui que sai o CLS 0. */
-/* A JANELA É O BURACO DO PAINEL, não um espaço em branco. Antes era uma célula
-   de grade transparente e a pá era texto solto dentro dela — por isso a placa
-   parada lia como lista. Agora é um recorte no metal: mais escuro que o
-   painel, com a luz de 200° batendo na quina de baixo do recorte (a única que
-   ela alcança lá dentro) e sombra caindo da aresta de cima para dentro.
-
-   18ch é medido, não escolhido: o destino mais longo ("BUENOS AIRES", 12
-   caracteres) ocupa 79% do campo e o mais curto ("LISBOA") ocupa 39%. Campo
-   sobrando é o que uma pá de placa real parece — o que não pode é sobrar
-   METADE, que é onde 22ch caía e a peça lia como caixa vazia com uma palavra
-   encostada na esquerda. Encolhe junto com a tela pelo min(). */
-.coluna-destino__janela {
-  display: inline-grid;
+.abertura__acao {
+  margin-block-start: var(--e-6);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-3) var(--e-5);
   align-items: center;
-  perspective: 620px;
-  inline-size: min(100%, 18ch);
-  padding: 3px; /* a folga entre a pá e a moldura do recorte */
-  line-height: 1.15;
-  font-size: var(--t-pa);
-  background: var(--moldura);
-  border-radius: calc(var(--r-1) + 3px);
-  box-shadow:
-    inset 0 3px 6px -2px color-mix(in oklch, var(--sombra-cor) 80%, transparent),
-    inset 0 -1px 0 var(--vinco-luz);
-}
-/* A PÁ, que agora tem corpo: duas metades de plástico dobradas no vinco. A de
-   cima pega a luz, a de baixo vive na sombra da de cima — o corte é DURO em
-   50% (dois `hard stops`), porque plástico dobrado não tem degradê na dobra.
-
-   `animation-name`, `-duration` e `-delay` vêm de CUSTOM PROPERTIES, lidas de
-   `var()` — o que é proibido é usar `var()` dentro de um SELETOR de
-   `@keyframes` (uma porcentagem), não numa propriedade de animação. É essa
-   distinção que deixa um primitivo só cobrir os quatro comprimentos: quem usa
-   a classe declara `--n`, `--ciclo-nome` e `--sombra-nome` (`ciclo-N` /
-   `sombra-pa-N`, N = tamanho da lista daquele produto) via `style`, e o CSS
-   deste bloco não muda por coluna. */
-.coluna-destino__pa {
-  grid-area: 1 / 1;
-  position: relative;
-  transform-origin: 50% 0;
-  backface-visibility: hidden;
-  padding: 0.3em 0.42em;
-  border-radius: var(--r-1);
-  /* DUAS camadas: a gravura do lugar e, embaixo dela, o corpo da peça.
-     `soft-light` é o que transforma o asset preto-e-branco em sulco: onde ele
-     é escuro a peça escurece (fundo do rebaixo), onde é claro ela clareia
-     (a quina). O matiz nunca sai do token — a gravura obedece à cor da pá em
-     vez de trazer a própria, que é o mesmo princípio da sombra com matiz.
-
-     `--mapa` chega por `style` em ColunaDestino.astro. O fallback `none` não é
-     decoração defensiva: `background-image: none, <degradê>` continua válido,
-     enquanto uma custom property vazia invalidaria a declaração INTEIRA e a pá
-     perderia o próprio corpo junto com a figura. */
-  background-image: var(--mapa, none), linear-gradient(to bottom, var(--pa-cima) 0 50%, var(--pa-baixo) 50% 100%);
-  background-repeat: no-repeat;
-  background-position:
-    right 0.34em center,
-    0 0;
-  background-size:
-    auto var(--gravura-altura),
-    auto;
-  background-blend-mode: soft-light, normal;
-  /* Aresta de cima acesa, pé da peça na sombra. Mesma luz de 200° da placa e
-     do trilho — a regra é uma fonte de luz para o site inteiro. */
-  box-shadow:
-    inset 0 1px 0 var(--aresta-luz),
-    inset 0 -1px 0 var(--vinco-sombra);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--marca-alta);
-  white-space: nowrap;
-  opacity: 0;
-  will-change: transform, opacity;
-  animation-name: var(--ciclo-nome);
-  animation-duration: calc(var(--n) * var(--pa-parada));
-  animation-timing-function: var(--ease-pa);
-  animation-iteration-count: infinite;
-  animation-fill-mode: both;
-  /* Atraso NEGATIVO de um giro, e ele resolve uma coisa só: no primeiro quadro
-     a pá 0 já está travada, então a primeira tela não abre com o destino
-     girando. Ele NÃO cria a sobreposição entre as pás — sendo uniforme, adianta
-     todas igualmente e a distância entre elas não muda. Quem sobrepõe é o
-     keyframe abaixo.
-     O segundo termo (`--linha`) é a CASCATA entre linhas do painel (FR-006):
-     cada linha nasce `--pa-cascata` mais adiantada que a anterior. Fora do
-     painel (cabeça de portão, este widget) `--linha` não é declarada e o
-     fallback `0` não muda nada. */
-  animation-delay: calc((var(--i) * var(--pa-parada)) - var(--pa-giro) - (var(--linha, 0) * var(--pa-cascata)));
 }
 
-/* AS QUATRO TABELAS. giro% = --pa-giro ÷ ciclo × 100 = 8/N% (`ciclo` = N ×
-   --pa-parada). A SAÍDA VAZA ALÉM DO SLOT DE PROPÓSITO: a pá fica opaca até o
-   fim do próprio slot (100/N%) e só então começa a subir, terminando em
-   (100/N + giro%)% — exatamente a janela em que a pá seguinte está descendo.
-   Com a saída contida no slot a janela ficaria VAZIA por um giro inteiro a
-   cada troca: o gesto principal da página piscando em branco. Medido quadro a
-   quadro na entrega anterior (N=8); a fórmula é a mesma para os quatro N. */
-@keyframes ciclo-5 {
-  /* N=5 · ciclo 11,0s · giro 1,600% */
-  0% {
-    transform: rotateX(-92deg);
-    opacity: 0;
-  }
-  1.6%,
-  20% {
-    transform: rotateX(0);
-    opacity: 1;
-  }
-  21.6% {
-    transform: rotateX(92deg);
-    opacity: 0;
-  }
-  21.7%,
-  100% {
-    transform: rotateX(-92deg);
-    opacity: 0;
-  }
-}
-@keyframes ciclo-7 {
-  /* N=7 · ciclo 15,4s · giro 1,143% */
-  0% {
-    transform: rotateX(-92deg);
-    opacity: 0;
-  }
-  1.143%,
-  14.286% {
-    transform: rotateX(0);
-    opacity: 1;
-  }
-  15.429% {
-    transform: rotateX(92deg);
-    opacity: 0;
-  }
-  15.529%,
-  100% {
-    transform: rotateX(-92deg);
-    opacity: 0;
-  }
-}
-@keyframes ciclo-8 {
-  /* N=8 · ciclo 17,6s · giro 1,000% */
-  0% {
-    transform: rotateX(-92deg);
-    opacity: 0;
-  }
-  1%,
-  12.5% {
-    transform: rotateX(0);
-    opacity: 1;
-  }
-  13.5% {
-    transform: rotateX(92deg);
-    opacity: 0;
-  }
-  13.6%,
-  100% {
-    transform: rotateX(-92deg);
-    opacity: 0;
-  }
-}
-@keyframes ciclo-11 {
-  /* N=11 · ciclo 24,2s · giro 0,727% */
-  0% {
-    transform: rotateX(-92deg);
-    opacity: 0;
-  }
-  0.727%,
-  9.091% {
-    transform: rotateX(0);
-    opacity: 1;
-  }
-  9.818% {
-    transform: rotateX(92deg);
-    opacity: 0;
-  }
-  9.918%,
-  100% {
-    transform: rotateX(-92deg);
-    opacity: 0;
-  }
+.abertura__nota {
+  color: var(--texto-3);
+  font-size: var(--t-sm);
+  max-width: 44ch;
 }
 
-/* A LUZ NA PÁ QUE CAI. Sem isto o giro lê como texto girando: a face chegava
-   com o mesmo brilho a 92° e a 0°, o que não acontece com nada físico. Uma
-   superfície de canto para a luz recebe quase nada dela e acende conforme se
-   vira para a fonte — é a única razão pela qual uma pá de verdade "aparece"
-   em vez de simplesmente estar lá.
+/* O crédito da fotografia, no canto. Pequeno e discreto, mas presente: este
+   site aponta a origem de tudo que publica, e uma imagem em cor cheia na
+   primeira tela é a coisa mais visível que ele publica. */
+.abertura__credito {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding: var(--e-2) var(--e-3);
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  color: var(--texto-3);
+}
 
-   Anda no MESMO ciclo (mesma `--n`, mesma `--pa-duracao`), com a MESMA curva
-   e o MESMO atraso da pá: se dessincronizar, a peça acende antes de terminar
-   de cair. Fica acima do vinco (z-index 2 contra 1) porque a dobra também
-   está na sombra — sombra que respeita um sulco de 1px é sombra desenhada. */
-.coluna-destino__pa::before {
+.abertura__credito a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.abertura__credito a:hover {
+  color: var(--texto-2);
+  text-decoration: underline;
+}
+
+/* ═══ 5 · A FAIXA (a navegação) ═════════════════════════════════════════════
+   Sobre a fotografia, sem barra: só a marca e um dado. Não há menu de quatro
+   links com um botão à direita — essa silhueta é a de ~80% das landings, e
+   numa Vitrine a navegação é a própria grade de peças. Os links do site
+   inteiro moram no rodapé, que cabe numa linha porque são quatro páginas.
+
+   `position: absolute` e não `fixed`: barra fixa sobre fotografia rouba 56px
+   de altura da imagem em toda a rolagem, e a imagem é o assunto.
+
+   O SELETOR É A CLASSE, NUNCA `header`. A cabeça de portão também é um
+   <header> — estilizar o elemento fazia a abertura das quatro rotas de
+   produto virar `position: absolute` junto com a barra, colapsando a altura
+   da página inteira. Elemento é semântica, classe é papel. */
+.cabecalho {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  z-index: 10;
+}
+
+/* A VERGA. O véu da faixa, e ela mora AQUI e não no --abertura__veu por um
+   motivo prático: a faixa existe em todas as nove rotas, e quatro delas
+   (as de documento) não têm abertura nenhuma. Presa ao véu, a proteção
+   sumiria justamente onde a faixa corre sobre o fundo — onde ela é
+   inofensiva, mas onde um gradiente a mais também não custa nada. */
+.cabecalho::before {
   content: "";
   position: absolute;
-  inset: 0;
-  z-index: 2;
-  border-radius: inherit;
+  inset-inline: 0;
+  top: 0;
+  z-index: -1;
+  height: var(--vidro-verga-h);
   pointer-events: none;
-  background: var(--sombra-cor);
-  /* `linear`, e é a ÚNICA coisa nesta página que não corre na curva da pá.
-     Não é descuido: --ease-pa despeja 80% do giro nos primeiros 17% do tempo
-     ("cai rápido e trava seco", que é o caráter certo para uma pá de
-     alumínio). Com a luz na mesma curva, ela apagava junto — a peça aterrissa
-     acesa em ~40ms e a matéria não chega a ser vista. Em linear a luz fica
-     PARA TRÁS do ângulo: a pá trava primeiro e termina de pegar a luz depois,
-     que é o atraso que faz a superfície ler como superfície. */
-  animation-name: var(--sombra-nome);
-  animation-duration: calc(var(--n) * var(--pa-parada));
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  animation-fill-mode: both;
-  animation-delay: calc((var(--i) * var(--pa-parada)) - var(--pa-giro) - (var(--linha, 0) * var(--pa-cascata)));
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklch, var(--fundo) calc(var(--vidro-verga) * 100%), transparent) 0%,
+    color-mix(in oklch, var(--fundo) calc(var(--vidro-verga) * 45%), transparent) 46%,
+    transparent 100%
+  );
 }
 
-/* AS QUATRO TABELAS DA LUZ. Início = 1,4 × giro% — não é número novo: é a
-   MESMA proporção que já valia para N=8 (giro 1% → luz sobe até 1,4%, os
-   0,4% restantes são a peça assentando, ~70ms). Generalizada para as quatro
-   colunas em vez de fixada em N=8. Fim do apagão e reacendimento seguem o
-   mesmo par (100/N)% e (100/N + giro%)% do keyframe `ciclo-N` correspondente
-   — as duas tabelas de cada N precisam concordar, e é por isso que moram lado
-   a lado. */
-@keyframes sombra-pa-5 {
-  0% {
-    opacity: 0.88;
-  }
-  2.24%,
-  20% {
-    opacity: 0;
-  }
-  21.6%,
-  100% {
-    opacity: 0.88;
-  }
-}
-@keyframes sombra-pa-7 {
-  0% {
-    opacity: 0.88;
-  }
-  1.6%,
-  14.286% {
-    opacity: 0;
-  }
-  15.429%,
-  100% {
-    opacity: 0.88;
-  }
-}
-@keyframes sombra-pa-8 {
-  0% {
-    opacity: 0.88;
-  }
-  1.4%,
-  12.5% {
-    opacity: 0;
-  }
-  13.5%,
-  100% {
-    opacity: 0.88;
-  }
-}
-@keyframes sombra-pa-11 {
-  0% {
-    opacity: 0.88;
-  }
-  1.018%,
-  9.091% {
-    opacity: 0;
-  }
-  9.818%,
-  100% {
-    opacity: 0.88;
-  }
-}
-
-/* ═══ 4 · AS LINHAS DA PLACA (a estrutura: Índice) ══════════════════════════
-   Zero cards nesta página, e isso é a estrutura escolhida, não economia. A
-   página do hub tinha quatro cards com ícone; aqui os mesmos quatro produtos
-   são linhas de uma placa, com código à esquerda e status à direita. A linha
-   INTEIRA é o link — não há botão dentro dela. */
-
-.linhas {
-  list-style: none;
-  margin: var(--e-4) 0 0;
-  padding: 0;
-  /* Mesmo sulco de dois fios da .linha, no topo da lista. Ver o comentário
-     abaixo: o que separa duas células de um painel é uma FRESTA, e fresta tem
-     dois lados. */
-  background-image: linear-gradient(to bottom, var(--vinco-sombra) 0 1px, var(--vinco-luz) 1px 2px);
-  background-repeat: no-repeat;
-  background-position: top;
-  background-size: 100% 2px;
-  padding-top: 2px;
-}
-
-/* A LINHA VIROU CÉLULA. Antes eram linhas separadas por `border-bottom: 1px
-   solid var(--borda)` — o mesmo fio que separa linha de tabela em qualquer
-   lugar, e é por isso que a placa lia como tabela.
-
-   O que separa duas células de um painel de verdade é uma FRESTA entre duas
-   peças de plástico: escura no vão, clara na quina de baixo que pega a luz de
-   200°. Dois fios em `background-image` e não em `border` de propósito — a
-   borda de baixo de uma célula seria coberta pelo `background-color` que a
-   célula seguinte pinta no hover, e a fresta sumiria justo debaixo do cursor. */
-/* Duas fileiras abaixo de 46rem (FR-013): código + nome numa, destino +
-   estado na outra — mantendo célula de altura fixa, fresta e moldura. Cinco
-   áreas nomeadas porque duas larguras diferentes reorganizam as MESMAS cinco
-   peças em formas diferentes (2 fileiras aqui, 1 fileira lá embaixo), e nome
-   de área é o que deixa as duas formas apontarem para o mesmo HTML. */
-.linha {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  grid-template-areas:
-    "codigo nome nome"
-    "destino destino status";
+.faixa {
+  display: flex;
   align-items: center;
-  gap: 2px var(--e-4);
-  min-height: var(--celula-mobile);
-  padding: var(--e-2);
-  color: var(--texto);
-  text-decoration: none;
-  background-color: transparent;
-  background-image: linear-gradient(to bottom, var(--vinco-sombra) 0 1px, var(--vinco-luz) 1px 2px);
-  background-repeat: no-repeat;
-  background-position: bottom;
-  background-size: 100% 2px;
-  transition: background-color var(--dur-rapida) var(--ease-saida);
-}
-.linha:hover,
-.linha:focus-visible {
-  background-color: var(--placa-linha);
+  gap: var(--e-3);
+  padding-block: var(--e-4);
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-2);
+  /* A faixa corre sobre o topo da fotografia, que é a parte CLARA dela. Sem
+     esta sombra o texto some no céu de três das cinco imagens — e o topo é a
+     única região da abertura onde o véu está aberto de propósito. */
+  text-shadow: 0 1px 12px oklch(0.09 0.035 258 / 0.9), 0 0 3px oklch(0.09 0.035 258 / 0.7);
 }
 
-/* O código é uma PÁ PEQUENA, e usa exatamente a matéria da pá do destino: duas
-   metades, aresta acesa em cima, pé na sombra. Não é enfeite repetido — é o
-   que amarra a página numa ideia só. Um painel Solari é feito de pás; a maior
-   mostra o destino e as pequenas mostram o código da linha. */
-.linha__codigo {
-  grid-area: codigo;
-  justify-self: start;
-  padding: 0.18em 0.4em;
-  border-radius: var(--r-1);
-  background: linear-gradient(to bottom, var(--pa-cima) 0 50%, var(--pa-baixo) 50% 100%);
-  box-shadow:
-    inset 0 1px 0 var(--aresta-luz),
-    inset 0 -1px 0 var(--vinco-sombra);
-  font-family: var(--mono);
+.faixa__marca {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e-2);
+  color: var(--texto);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.faixa__sep {
+  color: var(--texto-3);
+}
+
+.faixa__fim {
+  margin-inline-start: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e-2);
+  color: var(--texto-2);
+}
+
+.faixa__fim::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  background: var(--marca);
+  /* O único ponto redondo do site, e ele é redondo porque é uma luz acesa,
+     não uma forma decorativa. */
+  border-radius: 50%;
+  box-shadow: 0 0 10px var(--marca);
+}
+
+@media (max-width: 33rem) {
+  /* Em tela estreita a linha inteira não cabe sem quebrar. O que sai é a
+     cidade, não o status: "busca aberta 24h" é a informação que responde à
+     dúvida de quem chega às 23h, e a origem da agência está no rodapé. */
+  .faixa__sep,
+  .faixa__cidade {
+    display: none;
+  }
+
+  /* Esconder a cidade não bastou: a 360px "AUTOGESTOR VIAGENS" ainda quebrava
+     em duas linhas, e marca em duas linhas no canto superior é a primeira
+     coisa que se vê de errado numa página. O que sobra são os dois blocos que
+     têm de caber lado a lado, então os dois encolhem e nenhum quebra — o
+     `nowrap` é o que garante que a próxima palavra longa não desfaça isto. */
+  .faixa {
+    gap: var(--e-2);
+    font-size: 0.6875rem;
+    letter-spacing: 0.03em;
+  }
+
+  .faixa__marca,
+  .faixa__fim {
+    white-space: nowrap;
+  }
+}
+
+/* ═══ 6 · A VITRINE (a grade irregular) ═════════════════════════════════════
+   Os quatro produtos. NÃO são quatro cards iguais lado a lado com um ícone de
+   linha em cima — é uma grade assimétrica de fotografias em retrato, onde o
+   texto é legenda e nada compete com a imagem.
+
+   A ASSIMETRIA É DECLARADA: 7/5 em duas linhas, invertida na segunda. Não é
+   4×1 nem 2×2 (que são grades simétricas e não são decisão nenhuma); é a
+   proporção que faz duas peças por linha terem pesos diferentes e o olho
+   percorrer a página em zigue-zague em vez de varrer uma régua. */
+
+.vitrine {
+  padding-block: var(--e-10) var(--e-12);
+}
+
+.vitrine__cabeca {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--e-4);
+  flex-wrap: wrap;
+  margin-block-end: var(--e-6);
+}
+
+.vitrine__titulo {
+  font-size: var(--t-2xl);
+}
+
+.vitrine__nota {
+  color: var(--texto-3);
   font-size: var(--t-sm);
-  letter-spacing: 0.08em;
+  max-width: 34ch;
+}
+
+.vitrine__grade {
+  display: grid;
+  gap: var(--e-4);
+  list-style: none;
+  padding: 0;
+}
+
+@media (min-width: 46rem) {
+  .vitrine__grade {
+    grid-template-columns: 7fr 5fr;
+    gap: var(--e-5);
+    /* `start` e não o `stretch` de fábrica: com stretch a célula da linha
+       assume a altura da peça mais alta e a peça baixa ganha um vão morto
+       embaixo — que é o oposto de uma grade irregular, porque devolve o
+       alinhamento de tabela que a assimetria veio quebrar. */
+    align-items: start;
+  }
+
+  /* A inversão da segunda linha. Sem ela, a coluna larga fica sempre à
+     esquerda e a grade vira duas colunas de larguras diferentes — que é
+     simetria com outro nome. */
+  .vitrine__grade > li:nth-child(3) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .vitrine__grade > li:nth-child(4) {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  /* A peça da coluna estreita sobe um pouco. O desalinhamento é o que
+     transforma uma grade em composição — duas peças com o topo na mesma linha
+     leem como tabela, por mais irregular que seja a largura. */
+  .vitrine__grade > li:nth-child(2),
+  .vitrine__grade > li:nth-child(4) {
+    margin-block-start: var(--e-8);
+  }
+}
+
+/* A RAZÃO MORA NA PEÇA, NÃO NA FOTOGRAFIA, e a diferença não é estilística.
+   Com `aspect-ratio` na `.foto`, a `.peca` fica com altura automática e o
+   `<li>` estica para a altura da linha do grid — a legenda, que é
+   `position: absolute; bottom: 0` da peça, descolava do rodapé da imagem e
+   pousava no meio dela. Declarada aqui, a peça É a moldura: a foto preenche
+   por dentro e a legenda tem onde se apoiar. */
+.peca {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 5;
+  color: inherit;
+  text-decoration: none;
+  isolation: isolate;
+  border-radius: var(--raio);
+  box-shadow: var(--sombra-peca);
+}
+
+.peca .foto {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+/* A razão segue A COLUNA, não a ordem: quem está na coluna larga (7fr) deita,
+   quem está na estreita (5fr) fica em pé. Retrato numa coluna de 7fr vira uma
+   peça de quase mil pixels de altura — foi o que aconteceu quando esta regra
+   olhava `nth-child(odd)`, que casa com a ordem do HTML e não com a posição
+   depois da inversão da segunda linha. As peças 1 e 4 são as da coluna larga.
+   É a razão que muda, não a imagem: o arquivo é o mesmo 4:5 e o
+   `object-fit: cover` corta em volta do foco. */
+@media (min-width: 46rem) {
+  .vitrine__grade > li:nth-child(1) .peca,
+  .vitrine__grade > li:nth-child(4) .peca {
+    aspect-ratio: 5 / 4;
+  }
+}
+
+/* O véu da peça. Mesmo gesto da abertura, em escala menor: transparente em
+   cima, fechado embaixo, e a legenda pousa no fechado. */
+.peca__veu {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    to bottom,
+    transparent 34%,
+    color-mix(in oklch, var(--fundo) 62%, transparent) 72%,
+    color-mix(in oklch, var(--fundo) 92%, transparent) 100%
+  );
+  transition: opacity var(--dur-base) var(--ease-saida);
+}
+
+.peca__legenda {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  padding: var(--e-5);
+  display: grid;
+  gap: var(--e-1);
+}
+
+.peca__codigo {
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.14em;
   color: var(--marca);
 }
-.linha__nome-bloco {
-  grid-area: nome;
-  min-width: 0;
+
+.peca__nome {
+  font-family: var(--display);
+  font-size: var(--t-2xl);
+  line-height: 1.05;
+  letter-spacing: -0.015em;
 }
-.linha__nome {
-  font-family: var(--mono);
-  /* --t-base e não --t-lg: em 360px a coluna do nome tem ~172px e
-     "Passagens aéreas" a 16px de mono mede 154 — quebrava em duas linhas e
-     desalinhava o código da própria linha. A mono não perdoa 1px. */
-  font-size: var(--t-base);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  display: block;
-}
-.linha__nota {
-  /* Some abaixo de 46rem (junto com --linha__onde): FR-011 mede a placa
-     inteira em 360×640, e uma quinta linha de texto por célula era o que
-     mais custava — a coluna de destino já comunica "do que se trata"
-     enquanto vira. Volta no breakpoint em que sobra altura de sobra. */
-  display: none;
+
+.peca__nota {
+  color: var(--texto-2);
   font-size: var(--t-sm);
-  color: var(--texto-3);
-  line-height: 1.45;
+  max-width: 32ch;
 }
-/* A coluna de destino DENTRO da linha (T009/T037): a janela do primitivo
-   compartilhado, menor que os 18ch do widget de hoje — ela divide o espaço
-   com código, nome, abrangência e estado (risco nomeado no plan.md; medido
-   nas três larguras em T044). */
-.linha__destino {
-  grid-area: destino;
-  justify-self: start;
-  font-size: var(--t-lg);
-  inline-size: min(100%, 13ch);
-}
-.linha__onde {
-  grid-area: onde;
+
+/* A seta. Aparece sempre (não é hover-only: quem está no celular também
+   precisa saber que a peça é um link), e ANDA no hover — o mesmo verbo,
+   em escala de detalhe. */
+.peca__seta {
+  margin-block-start: var(--e-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e-2);
   font-family: var(--mono);
   font-size: var(--t-xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--texto-3);
-  display: none;
-}
-.status {
-  grid-area: status;
-  justify-self: end;
-  font-family: var(--mono);
-  font-size: var(--t-xs);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
   color: var(--marca);
-  text-align: end;
-  min-width: 5.5ch;
 }
 
-.placa__nota {
-  /* Mesmo raciocínio de .linha__nota: some abaixo de 46rem para caber em
-     360×640 (FR-011); o fato que ela carrega (grátis, sem tarifa aqui)
-     continua dito em /sobre, no rodapé e no llms.txt — não é a única
-     declaração do site. */
-  display: none;
-  margin-top: var(--e-5);
-  font-size: var(--t-sm);
-  color: var(--texto-3);
-  max-width: var(--leitura);
+.peca__seta::after {
+  content: "→";
+  transition: translate var(--dur-rapida) var(--ease-saida);
 }
 
-/* ═══ 5 · AÇÃO ══════════════════════════════════════════════════════════════ */
+.peca:hover .peca__seta::after,
+.peca:focus-visible .peca__seta::after {
+  translate: 4px 0;
+}
+
+/* O foco de teclado envolve a peça inteira, não a caixa de texto dentro
+   dela: o link é a fotografia. */
+.peca:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 4px;
+}
+
+/* ═══ 7 · AÇÃO ══════════════════════════════════════════════════════════════ */
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--e-3);
-  min-height: 52px;
-  padding: var(--e-3) var(--e-6);
+  gap: var(--e-2);
+  padding: 0.8rem 1.5rem;
   border: 1px solid transparent;
-  border-radius: var(--r-1);
-  font-family: var(--mono);
+  border-radius: var(--raio);
+  font-family: var(--corpo);
   font-size: var(--t-base);
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
   text-decoration: none;
   cursor: pointer;
-  transition: background var(--dur-rapida) var(--ease-saida), border-color var(--dur-rapida) var(--ease-saida),
-    transform var(--dur-instante) var(--ease-saida), box-shadow var(--dur-instante) var(--ease-saida);
+  transition:
+    background-color var(--dur-rapida) var(--ease-saida),
+    border-color var(--dur-rapida) var(--ease-saida),
+    translate var(--dur-rapida) var(--ease-saida);
 }
-/* A TECLA. Não é pá: pá é uma folha pendurada que vira, tecla é um bloco de
-   plástico que se afunda — por isso a luz aqui cai contínua, sem o corte duro
-   em 50% que as pás têm. Mesma fonte de 200°: topo aceso, corpo na cor da
-   marca, e a peça projeta sombra no recesso em que está encaixada. */
+
 .btn--primario {
-  background: linear-gradient(to bottom, var(--marca-alta) 0, var(--marca) 58%);
+  background: var(--marca);
   color: var(--tinta-sobre-marca);
-  box-shadow:
-    inset 0 1px 0 color-mix(in oklch, white 42%, transparent),
-    0 2px 0 color-mix(in oklch, var(--sombra-cor) 55%, transparent),
-    0 10px 20px -8px color-mix(in oklch, var(--sombra-cor) 70%, transparent);
-  /* Sobre laranja o anel laranja daria 1.0:1 e sumiria. Troca para a mesma
-     tinta escura do rótulo: 6.9:1. Isto não é gosto, é WCAG 2.4.11. */
-  --foco: var(--tinta-sobre-marca);
+  /* A sombra segue --luz-azimute como todo o resto. O botão é o objeto mais
+     próximo do olho na página; sem sombra própria ele lê como um retângulo
+     pintado no fundo. */
+  box-shadow: 2px 6px 18px oklch(0.09 0.035 258 / 0.4);
 }
+
 .btn--primario:hover {
-  background: linear-gradient(to bottom, var(--marca-alta) 0, var(--marca-alta) 58%);
+  background: var(--marca-alta);
+  translate: 0 -1px;
 }
-/* Tecla que tem volume e não afunda ao ser apertada lê como adesivo. 1px de
-   curso e a sombra encolhe junto — não é uma quinta camada de coreografia, é
-   a peça respondendo ao dedo. Some sozinho em movimento reduzido, que zera
-   toda transição. */
+
 .btn--primario:active {
-  transform: translateY(1px);
-  box-shadow:
-    inset 0 1px 0 color-mix(in oklch, white 30%, transparent),
-    0 1px 0 color-mix(in oklch, var(--sombra-cor) 55%, transparent),
-    0 4px 10px -6px color-mix(in oklch, var(--sombra-cor) 70%, transparent);
+  translate: 0 1px;
+  box-shadow: 1px 2px 6px oklch(0.09 0.035 258 / 0.4);
 }
+
+/* Sobre o botão laranja, o anel de foco laranja daria 1.0:1 — sumiria
+   exatamente no controle mais importante da página. Aqui ele troca para a
+   mesma tinta escura do rótulo. */
+.btn--primario:focus-visible {
+  outline-color: var(--tinta-sobre-marca);
+}
+
 .btn--contorno {
   border-color: var(--borda-forte);
   color: var(--texto);
   background: transparent;
 }
+
 .btn--contorno:hover {
   border-color: var(--marca);
   color: var(--marca);
 }
+
 .btn--bloco {
-  display: flex;
   width: 100%;
 }
 
-/* ═══ 6 · ESTAÇÕES ══════════════════════════════════════════════════════════
-   O ritmo desta página NÃO é `.secao > .container > olho + h2 + chamada` (o
-   do hub e do coopluz) nem o percurso 5/7 do site de seguro. É um índice: um
-   número de célula, um título de placa, e uma lista densa embaixo. */
-
-/* TODO FILETE DESTE SITE É UMA FRESTA. O fio escuro é o vão entre duas peças
-   e o claro logo depois dele é a quina que pega a luz de 200° — o mesmo sulco
-   da dobra da pá e da separação entre células da placa. Um miolo cheio de
-   filetes de 1px e um painel cheio de frestas seriam duas linguagens na mesma
-   página; aqui é uma. A sombra vai para FORA numa borda de baixo e para
-   DENTRO (`inset`) numa de cima: é sempre o lado oposto ao vão. */
-.estacao {
-  padding-block: var(--e-10);
-  border-bottom: 1px solid var(--vinco-sombra);
-  box-shadow: 0 1px 0 var(--vinco-luz);
-}
-.estacao__cabeca {
-  display: grid;
-  grid-template-columns: 3.25rem 1fr;
-  gap: var(--e-4);
-  align-items: start;
-}
-/* O número da estação é a mesma pá pequena do código da linha da placa —
-   AER/HTL lá em cima, 01/02/03 aqui. Os números dos ITENS continuam sendo
-   numerais soltos de propósito: eles são secundários (--texto-3), e uma dúzia
-   de plaquinhas no miolo faria a hierarquia sumir. Pá é para o que marca
-   posição na placa, não para tudo que tem número. */
-.estacao__num {
-  justify-self: start;
-  margin-top: 0.3em;
-  padding: 0.18em 0.4em;
-  border-radius: var(--r-1);
-  background: linear-gradient(to bottom, var(--pa-cima) 0 50%, var(--pa-baixo) 50% 100%);
-  box-shadow:
-    inset 0 1px 0 var(--aresta-luz),
-    inset 0 -1px 0 var(--vinco-sombra);
-  font-family: var(--mono);
+.depois-do-btn {
+  margin-block-start: var(--e-3);
+  color: var(--texto-3);
   font-size: var(--t-sm);
+}
+
+/* ═══ 8 · SEÇÕES EDITORIAIS ═════════════════════════════════════════════════
+   O texto longo da página. Estrutura de duas colunas assimétricas (título à
+   esquerda, prosa à direita), sem card e sem ícone: numa Vitrine o texto é
+   legenda, e legenda não mora dentro de caixa. */
+
+.secao {
+  padding-block: var(--e-10);
+  border-block-start: 1px solid var(--borda);
+}
+
+.secao__cabeca {
+  display: grid;
+  gap: var(--e-4);
+  margin-block-end: var(--e-8);
+}
+
+@media (min-width: 62rem) {
+  .secao__cabeca {
+    grid-template-columns: 1fr 1.25fr;
+    gap: var(--e-8);
+    align-items: start;
+  }
+}
+
+.secao__num {
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.16em;
   color: var(--marca);
-  letter-spacing: 0.08em;
+  display: block;
+  margin-block-end: var(--e-3);
 }
-.estacao__titulo {
+
+.secao__titulo {
   font-size: var(--t-3xl);
-  text-transform: uppercase;
-  max-width: 22ch;
+  max-width: 18ch;
 }
-.estacao__chamada {
-  margin-top: var(--e-4);
-  max-width: var(--leitura);
+
+.secao__chamada {
   color: var(--texto-2);
   font-size: var(--t-lg);
+  max-width: 56ch;
 }
 
-/* A lista densa: item numerado, sem card, sem ícone, sem borda em volta.
-   Só o filete que separa uma linha da outra — igual à placa. */
+/* A lista numerada. O número é mono e pequeno; o título é serifa. É a mesma
+   dupla de famílias da página inteira, em escala de item. */
 .itens {
   list-style: none;
-  margin: var(--e-8) 0 0;
   padding: 0;
-  counter-reset: item;
-  border-top: 1px solid var(--vinco-sombra);
-  box-shadow: inset 0 1px 0 var(--vinco-luz);
-}
-.itens > li {
-  counter-increment: item;
   display: grid;
-  grid-template-columns: 3.25rem 1fr;
-  gap: var(--e-4);
-  padding-block: var(--e-5);
-  border-bottom: 1px solid var(--vinco-sombra);
-  box-shadow: 0 1px 0 var(--vinco-luz);
-  transform-origin: 50% 0;
+  gap: var(--e-6);
 }
-.itens > li::before {
-  content: counter(item, decimal-leading-zero);
-  font-family: var(--mono);
-  font-size: var(--t-sm);
-  color: var(--texto-3);
-  letter-spacing: 0.08em;
-  padding-top: 0.3em;
+
+@media (min-width: 62rem) {
+  .itens {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--e-8);
+  }
 }
+
+.itens > li {
+  display: grid;
+  gap: var(--e-3);
+  padding-block-start: var(--e-4);
+  border-block-start: 1px solid var(--borda);
+}
+
 .itens h3 {
   font-size: var(--t-xl);
-  margin-bottom: var(--e-2);
-}
-.itens p {
-  color: var(--texto-2);
-  max-width: var(--leitura);
 }
 
-/* Os concorrentes em tipografia, nunca logotipo: CVC, Booking, Decolar e
-   Hotéis.com são marcas registradas de terceiros e não há ativo licenciado
-   neste repositório. Mesma decisão do coopluz com os logos de emissora. */
+.itens p {
+  color: var(--texto-2);
+}
+
+/* Nomes de concorrentes em tipografia, nunca logotipo: são marcas
+   registradas de terceiros e não há ativo licenciado neste repositório. */
 .rivais {
+  list-style: none;
+  padding: 0;
+  margin-block-start: var(--e-4);
   display: flex;
   flex-wrap: wrap;
-  gap: var(--e-2) var(--e-5);
-  margin-top: var(--e-6);
-  padding: var(--e-4) 0;
-  border-block: 1px solid var(--vinco-sombra);
-  box-shadow: inset 0 1px 0 var(--vinco-luz), 0 1px 0 var(--vinco-luz);
-  list-style: none;
+  gap: var(--e-2) var(--e-4);
   font-family: var(--mono);
-  font-size: var(--t-sm);
+  font-size: var(--t-xs);
   letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--texto-3);
 }
 
-.acao-estacao {
-  margin-top: var(--e-8);
+.acao-secao {
+  margin-block-start: var(--e-8);
 }
 
-/* ═══ 7 · FAQ ═══════════════════════════════════════════════════════════════
-   <details> nativo: abre sem JS, é pesquisável pelo Ctrl+F do navegador em
-   navegador moderno e o teclado já funciona sem uma linha de ARIA. */
+/* ═══ 9 · FAQ ═══════════════════════════════════════════════════════════════
+   <details> nativo: abre sem JS, o teclado já funciona sem uma linha de ARIA e
+   o navegador consegue encontrar texto dentro do que está fechado. */
+
 .faq {
-  margin-top: var(--e-8);
-  border-top: 1px solid var(--vinco-sombra);
-  box-shadow: inset 0 1px 0 var(--vinco-luz);
+  border-block-start: 1px solid var(--borda);
 }
+
 .faq details {
-  border-bottom: 1px solid var(--vinco-sombra);
-  box-shadow: 0 1px 0 var(--vinco-luz);
+  border-block-end: 1px solid var(--borda);
 }
+
 .faq summary {
-  display: grid;
-  grid-template-columns: 1fr 1.5rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
   gap: var(--e-4);
-  align-items: center;
-  padding-block: var(--e-5);
-  font-family: var(--mono);
-  font-size: var(--t-base);
-  font-weight: 600;
+  padding-block: var(--e-4);
   cursor: pointer;
   list-style: none;
-  min-height: 48px;
+  font-family: var(--display);
+  font-size: var(--t-xl);
+  line-height: 1.2;
+  transition: color var(--dur-rapida) var(--ease-saida);
 }
+
 .faq summary::-webkit-details-marker {
   display: none;
 }
+
+/* O marcador é o mesmo gesto da direção: um traço que ABRE virando cruz.
+   Não é uma seta que gira — seta girando é rotação, e rotação era o verbo da
+   direção anterior. */
 .faq summary::after {
   content: "+";
   font-family: var(--mono);
+  font-size: var(--t-lg);
   color: var(--marca);
-  font-size: var(--t-xl);
-  line-height: 1;
-  text-align: end;
-  transition: transform var(--dur-base) var(--ease-pa);
+  transition: rotate var(--dur-base) var(--ease-cena);
 }
+
 .faq details[open] summary::after {
   content: "−";
 }
+
 .faq summary:hover {
   color: var(--marca);
 }
+
 .faq__r {
-  padding-bottom: var(--e-5);
-  max-width: var(--leitura);
+  padding-block-end: var(--e-5);
   color: var(--texto-2);
+  max-width: 68ch;
 }
+
 .faq__fonte {
   display: inline-block;
-  margin-top: var(--e-3);
+  margin-block-start: var(--e-2);
   font-size: var(--t-sm);
 }
 
-/* ═══ 8 · FECHO E RODAPÉ ════════════════════════════════════════════════════ */
+/* ═══ 10 · FECHO ════════════════════════════════════════════════════════════ */
 
 .fecho {
-  padding-block: var(--e-10);
+  padding-block: var(--e-10) var(--e-12);
+  border-block-start: 1px solid var(--borda);
 }
+
 .fecho__grade {
   display: grid;
   gap: var(--e-8);
-  align-items: start;
-}
-.fecho h2 {
-  font-size: var(--t-3xl);
-  text-transform: uppercase;
-  max-width: 18ch;
-}
-.fecho p {
-  margin-top: var(--e-4);
-  color: var(--texto-2);
-  max-width: var(--leitura);
-}
-/* Era o único card chapado que sobrou: fundo liso e um fio de 1px em volta,
-   ou seja, a silhueta exata que o resto do site deixou de ter. Agora é o mesmo
-   RECESSO da janela do destino — buraco no metal, sombra caindo da aresta de
-   cima para dentro, quina de baixo pegando a luz. E o que mora dentro dele é
-   uma tecla acesa. */
-.fecho__caixa {
-  border-radius: calc(var(--r-1) + 3px);
-  padding: var(--e-5);
-  background: var(--moldura);
-  box-shadow:
-    inset 0 3px 6px -2px color-mix(in oklch, var(--sombra-cor) 80%, transparent),
-    inset 0 -1px 0 var(--vinco-luz);
-}
-.fecho__caixa h3 {
-  font-size: var(--t-xl);
-  text-transform: uppercase;
-  margin-bottom: var(--e-2);
-}
-.fecho__caixa p {
-  margin-top: 0;
-  margin-bottom: var(--e-5);
-  font-size: var(--t-sm);
-  color: var(--texto-3);
-}
-/* Avisa que o ambiente troca: quem clica sai daqui e cai na plataforma de
-   reservas, que tem outro visual. É uma FRASE e não um enfeite de 3px porque
-   a frase é o que a pessoa lê — a faixa degradê que estava aqui tinha a
-   metade esquerda da mesma cor do botão em cima dela e não se via. */
-.fecho__caixa p.depois-do-btn {
-  margin: var(--e-4) 0 0;
 }
 
-/* Rodapé de uma linha só — é a barra de baixo da placa, não um bloco de 4
-   colunas. O índice do site cabe nela porque este site tem 4 páginas. */
-.rodape {
-  padding-block: var(--e-6);
-  font-size: var(--t-sm);
-  color: var(--texto-3);
+@media (min-width: 62rem) {
+  .fecho__grade {
+    grid-template-columns: 1.2fr 1fr;
+    gap: var(--e-10);
+    align-items: start;
+  }
 }
+
+.fecho h2 {
+  font-size: var(--t-3xl);
+  max-width: 16ch;
+  margin-block-end: var(--e-4);
+}
+
+.fecho p {
+  color: var(--texto-2);
+  max-width: 54ch;
+}
+
+.fecho p + p {
+  margin-block-start: var(--e-4);
+}
+
+/* A caixa de ação é a única superfície elevada da página, e é de propósito:
+   ela é o peitoril de novo, em escala de bloco. Um degrau de superfície com
+   fio de luz na quina de cima — não uma borda cinza de 1px em volta. */
+.fecho__caixa {
+  padding: var(--e-6);
+  background: var(--superficie);
+  border-radius: var(--raio);
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.07),
+    var(--sombra-peca);
+}
+
+.fecho__caixa h3 {
+  font-size: var(--t-xl);
+  margin-block-end: var(--e-2);
+}
+
+.fecho__caixa p {
+  color: var(--texto-2);
+  font-size: var(--t-sm);
+  margin-block-end: var(--e-5);
+}
+
+/* ═══ 11 · RODAPÉ ═══════════════════════════════════════════════════════════ */
+
+.rodape {
+  padding-block: var(--e-6) var(--e-8);
+  border-block-start: 1px solid var(--borda);
+  background: var(--fundo);
+}
+
 .rodape__linha {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--e-3) var(--e-5);
-  align-items: center;
+  gap: var(--e-2) var(--e-5);
+  padding-block-end: var(--e-5);
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.rodape__linha a {
+  color: var(--texto-2);
+  text-decoration: none;
+}
+
+.rodape__linha a:hover {
+  color: var(--marca);
+}
+
+.rodape__nota {
+  color: var(--texto-3);
+  font-size: var(--t-xs);
+  line-height: 1.65;
+  max-width: 92ch;
+}
+
+.rodape__nota + .rodape__nota {
+  margin-block-start: var(--e-3);
+}
+
+/* ═══ 12 · O PORTÃO (as quatro rotas de produto) ════════════════════════════
+   Mesma direção, uma tela abaixo em escala: a abertura do portão é a
+   fotografia daquele produto, e é ELA que atravessa a transição vinda da peça
+   correspondente na vitrine da capa. */
+
+.portao__abertura {
+  position: relative;
+  isolation: isolate;
+  /* 74 e não 62: em 62svh a moldura ficava com quase 2,6:1 e a fotografia
+     4:5 aparecia como uma tira do meio do arquivo — reconhecível como cor,
+     não como lugar. Mais altura é mais imagem, e o texto do portão é curto
+     (um código, um título de uma linha, um bluf de quatro), então a altura
+     extra vira fotografia e não vão vazio.
+     Continua menor que a abertura da capa (92svh) de propósito: o portão é
+     uma tela de leitura, e a lista de cobertura tem que aparecer na dobra. */
+  min-height: 74svh;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  padding-block-end: var(--e-8);
+  margin-block-end: var(--e-10);
+}
+
+.portao__abertura::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--borda) 22%, var(--borda) 78%, transparent);
+}
+
+.portao__volta {
+  display: inline-flex;
+  margin-block-end: var(--e-5);
   font-family: var(--mono);
   font-size: var(--t-xs);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding-bottom: var(--e-4);
-  /* A barra de baixo da placa fecha com a mesma fresta que abre lá em cima.
-     As páginas de documento NÃO recebem esta fresta e continuam em filete
-     simples (`.doc h2`, `.trilha`) — elas são fichas, não painéis, e essa
-     diferença é da estrutura escolhida, não descuido. */
-  border-bottom: 1px solid var(--vinco-sombra);
-  box-shadow: 0 1px 0 var(--vinco-luz);
-}
-.rodape__linha a {
-  color: var(--texto-3);
-  text-decoration: none;
-}
-.rodape__linha a:hover {
-  color: var(--marca);
-}
-.rodape__nota {
-  margin-top: var(--e-4);
-  max-width: 78ch;
-  line-height: 1.6;
-}
-.rodape__nota + .rodape__nota {
-  margin-top: var(--e-3);
-}
-
-/* ═══ 8.5 · OS PORTÕES (macroestrutura própria) ═════════════════════════════
-   FR-016/FR-017 · G33. Diferente do Índice da capa (`.placa`/`.estacao`) e do
-   `.doc` das fichas legais: cinco blocos — cabeça, cobertura, detalhe
-   ampliado, ficha, ação. O que é comum aos quatro portões está aqui; o que
-   VARIA (FR-020) mora em `.cabeca-portao--*` (bloco 1) e `.detalhe--*`
-   (bloco 3), abaixo. */
-
-.portao {
-  padding-block: 0 var(--e-10);
-}
-
-/* ── Bloco 1 · a cabeça ─────────────────────────────────────────────────── */
-.cabeca-portao {
-  position: relative;
-  background: linear-gradient(to bottom, var(--placa-alto) 0, var(--placa) 34%, var(--placa-baixo) 100%);
-  box-shadow:
-    inset 0 1px 0 var(--aresta-luz),
-    0 1px 0 var(--moldura),
-    0 6px 12px -6px color-mix(in oklch, var(--sombra-cor) 55%, transparent),
-    0 18px 36px -18px color-mix(in oklch, var(--sombra-cor) 45%, transparent);
-  padding-block: var(--e-6) var(--e-8);
-}
-.cabeca-portao .container {
-  display: grid;
-  gap: var(--e-8);
-}
-
-/* FR-019: uma LINHA DE PLACA de volta, não breadcrumb e não botão "voltar".
-   Reusa `.linha` (mesma matéria, mesmo anel de foco já medido) — não é
-   componente novo, é o mesmo elo que a lista da capa usa. */
-.cabeca-portao__volta {
-  margin-bottom: var(--e-6);
-}
-
-.cabeca-portao__miolo {
-  display: grid;
-  gap: var(--e-6);
-  align-items: end;
-}
-.cabeca-portao__objeto {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--e-6);
-}
-
-/* O código do produto em ESCALA DE OBJETO: mesma matéria de `.linha__codigo`
-   (pá pequena de duas metades), sem o teto de uma célula de tabela. */
-.cabeca-portao__codigo {
-  display: inline-block;
-  padding: 0.12em 0.32em;
-  border-radius: var(--r-1);
-  background: linear-gradient(to bottom, var(--pa-cima) 0 50%, var(--pa-baixo) 50% 100%);
-  box-shadow:
-    inset 0 1px 0 var(--aresta-luz),
-    inset 0 -1px 0 var(--vinco-sombra);
-  font-family: var(--mono);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--marca);
-  font-size: clamp(1.5rem, 1.1rem + 2vw, 2.25rem);
-}
-
-.cabeca-portao__h1 {
-  font-size: var(--t-3xl);
-  text-transform: uppercase;
-  max-width: 20ch;
-}
-.cabeca-portao__bluf {
-  margin-top: var(--e-4);
-  max-width: var(--leitura);
-  font-size: var(--t-lg);
   color: var(--texto-2);
-}
-
-/* A coluna de destino do produto, DENTRO da cabeça: reusa o primitivo
-   compartilhado (T009), em escala maior que a da linha do painel — é o
-   "objeto ampliado" que dá nome à direção. */
-.cabeca-portao .coluna-destino__janela {
-  font-size: clamp(1.75rem, 1rem + 3.6vw, 3.25rem);
-  inline-size: min(100%, 14ch);
-}
-
-/* ── objeto: PAR (AER) — duas pás, ida ‖ volta ─────────────────────────────
-   Duas pernas da mesma viagem, lado a lado; a coluna de destino vira entre
-   as duas, porque o destino é o mesmo nas duas pernas. */
-.cabeca-portao--par .cabeca-portao__objeto {
-  align-items: stretch;
-}
-.cabeca-portao__perna {
-  display: flex;
-  flex-direction: column;
+  text-decoration: none;
+  align-items: center;
   gap: var(--e-2);
 }
-.cabeca-portao__perna-rotulo {
-  font-family: var(--mono);
-  font-size: var(--t-xs);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--texto-3);
+
+.portao__volta::before {
+  content: "←";
+  transition: translate var(--dur-rapida) var(--ease-saida);
 }
 
-/* ── objeto: FAIXA (HTL) — pá única sobre uma faixa de noites ──────────────
-   A faixa é o formulário de estadia virado matéria: cada célula é uma
-   noite, a acesa é a que está "selecionada" nesta demonstração. */
-.cabeca-portao__faixa-noites {
-  display: flex;
-  gap: 3px;
-  margin-top: var(--e-3);
-}
-.cabeca-portao__noite {
-  inline-size: var(--e-4);
-  block-size: var(--e-3);
-  background: var(--moldura);
-  box-shadow:
-    inset 0 1px 0 var(--vinco-sombra),
-    inset 0 -1px 0 var(--vinco-luz);
-  border-radius: 1px;
-}
-.cabeca-portao__noite--acesa {
-  background: var(--marca);
-  box-shadow: none;
+.portao__volta:hover {
+  color: var(--marca);
 }
 
-/* ── objeto: DUAS METADES (PCT) — voo em cima, hotel embaixo, o vinco é a
-   emenda (FR-022). A pá de código já TEM duas metades com um vinco — aqui
-   ela cresce até virar o próprio argumento: a metade de cima rotulada VOO, a
-   de baixo HTL, e o mesmo sulco de dois fios que separa as pás da placa
-   inteira é a costura entre as duas partes do pacote. A peça carrega o
-   argumento; não há texto duplicando o que ela já diz. */
-.cabeca-portao__pa-grande {
-  position: relative;
-  display: grid;
-  min-inline-size: min(100%, 20rem);
-  border-radius: calc(var(--r-1) + 3px);
-  overflow: hidden;
-  box-shadow:
-    inset 0 1px 0 var(--aresta-luz),
-    inset 0 -1px 0 var(--vinco-sombra),
-    0 10px 20px -10px color-mix(in oklch, var(--sombra-cor) 60%, transparent);
+.portao__volta:hover::before {
+  translate: -4px 0;
 }
-.cabeca-portao__pa-metade {
-  padding: var(--e-4) var(--e-5);
-  font-family: var(--mono);
-}
-.cabeca-portao__pa-metade--cima {
-  background: var(--pa-cima);
-  border-bottom: 1px solid var(--vinco-sombra);
-  box-shadow: inset 0 -1px 0 var(--vinco-luz);
-}
-.cabeca-portao__pa-metade--baixo {
-  background: var(--pa-baixo);
-}
-.cabeca-portao__pa-rotulo {
+
+.portao__codigo {
   display: block;
+  font-family: var(--mono);
   font-size: var(--t-xs);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  /* --texto-2 e não --texto-3: medido a 4.43:1 sobre --pa-cima, abaixo do
-     4.5:1 que WCAG AA pede para texto normal (logos/contraste.mjs pegou
-     antes de a página existir — Princípio V). --texto-2 mede acima do
-     mínimo nas duas metades. */
+  letter-spacing: 0.16em;
+  color: var(--marca);
+  margin-block-end: var(--e-3);
+}
+
+.portao__h1 {
+  font-size: var(--t-3xl);
+  max-width: 16ch;
+  text-shadow: 0 2px 24px oklch(0.09 0.035 258 / 0.55);
+}
+
+.portao__bluf {
+  margin-block-start: var(--e-4);
+  max-width: 52ch;
   color: var(--texto-2);
-}
-.cabeca-portao__pa-valor {
-  display: block;
-  margin-top: 0.2em;
-  font-size: var(--t-xl);
-  font-weight: 600;
-  color: var(--marca-alta);
-}
-
-/* ── objeto: CAMPO ÚNICO (CAR) — retirada e devolução no mesmo campo ───────
-   Um recesso só (a mesma matéria da janela de destino), dividido em duas
-   metades por um fio — não são dois campos, é UM campo com duas respostas,
-   que é literalmente o que o formulário de aluguel pede. */
-.cabeca-portao__campo {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  min-inline-size: min(100%, 20rem);
-  padding: 3px;
-  background: var(--moldura);
-  border-radius: calc(var(--r-1) + 3px);
-  box-shadow:
-    inset 0 3px 6px -2px color-mix(in oklch, var(--sombra-cor) 80%, transparent),
-    inset 0 -1px 0 var(--vinco-luz);
-}
-.cabeca-portao__campo-metade {
-  padding: var(--e-3) var(--e-4);
-  font-family: var(--mono);
-}
-.cabeca-portao__campo-metade + .cabeca-portao__campo-metade {
-  border-left: 1px solid var(--vinco-sombra);
-  box-shadow: inset 1px 0 0 var(--vinco-luz);
-}
-.cabeca-portao__campo-rotulo {
-  display: block;
-  font-size: var(--t-xs);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--texto-3);
-}
-.cabeca-portao__campo-valor {
-  display: block;
-  margin-top: 0.2em;
   font-size: var(--t-lg);
-  font-weight: 600;
-  color: var(--marca-alta);
 }
 
-/* ── Bloco 2 · o que está atrás ─────────────────────────────────────────── */
 .portao__secao {
   padding-block: var(--e-8);
-  border-bottom: 1px solid var(--vinco-sombra);
-  box-shadow: 0 1px 0 var(--vinco-luz);
+  border-block-start: 1px solid var(--borda);
 }
+
 .portao__secao-titulo {
-  font-size: var(--t-xl);
-  text-transform: uppercase;
-  margin-bottom: var(--e-5);
-}
-.cobertura {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  border-top: 1px solid var(--vinco-sombra);
-  box-shadow: inset 0 1px 0 var(--vinco-luz);
-  max-width: var(--leitura);
-}
-.cobertura li {
-  padding-block: var(--e-3);
-  border-bottom: 1px solid var(--vinco-sombra);
-  box-shadow: 0 1px 0 var(--vinco-luz);
-  color: var(--texto-2);
+  font-size: var(--t-2xl);
+  margin-block-end: var(--e-5);
 }
 
-/* ── Bloco 3 · detalhe ampliado — único por portão (FR-020) ────────────────
-   `comparacao` (AER): companhias em tipografia, lado a lado, NUNCA logotipo
-   (FR-021). */
-.detalhe--comparacao {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--e-3) var(--e-6);
-  font-family: var(--mono);
-  font-size: var(--t-lg);
-  color: var(--texto);
-}
-.detalhe--comparacao li {
-  padding: var(--e-2) var(--e-4);
-  background: var(--placa-linha);
-  border-radius: var(--r-1);
-}
-
-/* `estados` (HTL): os regimes como quatro estados da mesma pá. */
-.detalhe--estados {
-  display: grid;
-  gap: 2px;
-  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-  background-image: linear-gradient(to bottom, var(--vinco-sombra) 0 1px, var(--vinco-luz) 1px 2px);
-  background-repeat: no-repeat;
-  background-position: top;
-  background-size: 100% 2px;
-  padding-top: 2px;
-}
-.detalhe--estados li {
-  padding: var(--e-4);
-  background: var(--placa-linha);
-}
-.detalhe--estados h3 {
-  font-family: var(--mono);
-  font-size: var(--t-base);
-  color: var(--marca);
-  text-transform: uppercase;
-}
-.detalhe--estados p {
-  margin-top: var(--e-2);
-  font-size: var(--t-sm);
-  color: var(--texto-3);
-}
-
-/* `duasColunas` (PCT): entra ‖ não entra, em FRESTA — a mesma matéria de
-   separação da placa, aplicada como divisor vertical entre as duas colunas. */
-.detalhe--duas-colunas {
-  display: grid;
-  gap: var(--e-8);
-}
-.detalhe__coluna h3 {
-  font-family: var(--mono);
-  font-size: var(--t-base);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.detalhe__coluna--entra h3 {
-  color: var(--marca);
-}
-.detalhe__coluna--nao-entra h3 {
-  color: var(--texto-3);
-}
+/* Listas densas, sem card e sem ícone de linha. A densidade é o efeito. */
+.cobertura,
+.detalhe--comparacao,
+.detalhe--grade,
+.detalhe--estados,
 .detalhe__coluna ul {
   list-style: none;
-  margin: var(--e-4) 0 0;
   padding: 0;
-  border-top: 1px solid var(--vinco-sombra);
-  box-shadow: inset 0 1px 0 var(--vinco-luz);
 }
-.detalhe__coluna li {
+
+.cobertura li {
   padding-block: var(--e-3);
-  border-bottom: 1px solid var(--vinco-sombra);
-  box-shadow: 0 1px 0 var(--vinco-luz);
+  border-block-end: 1px solid var(--borda);
+  color: var(--texto-2);
+  padding-inline-start: var(--e-5);
+  position: relative;
+}
+
+.cobertura li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 1.5em;
+  width: var(--e-3);
+  height: 1px;
+  background: var(--marca);
+}
+
+.detalhe--comparacao,
+.detalhe--grade {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-2) var(--e-3);
+}
+
+.detalhe--comparacao li,
+.detalhe--grade li {
+  padding: var(--e-2) var(--e-4);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  font-family: var(--mono);
+  font-size: var(--t-sm);
   color: var(--texto-2);
 }
 
-/* `grade` (CAR): aeroportos de retirada em códigos IATA. */
-.detalhe--grade {
-  display: grid;
-  gap: 2px;
-  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
-  background-image: linear-gradient(to bottom, var(--vinco-sombra) 0 1px, var(--vinco-luz) 1px 2px);
-  background-repeat: no-repeat;
-  background-position: top;
-  background-size: 100% 2px;
-  padding-top: 2px;
-}
-.detalhe--grade li {
-  padding: var(--e-3) var(--e-4);
-  background: var(--placa-linha);
-  font-family: var(--mono);
-}
-.detalhe__iata {
-  display: block;
-  font-size: var(--t-lg);
-  font-weight: 600;
-  letter-spacing: 0.04em;
+.detalhe__iata,
+.detalhe__cidade-iata {
   color: var(--marca);
 }
-.detalhe__cidade-iata {
-  display: block;
-  margin-top: 0.15em;
-  font-size: var(--t-xs);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--texto-3);
-}
 
-/* ── Bloco 4 · a ficha ──────────────────────────────────────────────────── */
-.ficha {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  max-width: var(--leitura);
-  border-top: 1px solid var(--vinco-sombra);
-  box-shadow: inset 0 1px 0 var(--vinco-luz);
-}
-.ficha__item {
+.detalhe--estados {
   display: grid;
-  grid-template-columns: 12rem 1fr;
-  gap: var(--e-4);
-  padding-block: var(--e-3);
-  border-bottom: 1px solid var(--vinco-sombra);
-  box-shadow: 0 1px 0 var(--vinco-luz);
-}
-.ficha__rotulo {
-  font-family: var(--mono);
-  font-size: var(--t-sm);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--texto-3);
-}
-.ficha__valor {
-  color: var(--texto-2);
-}
-.ficha__fonte {
-  display: block;
-  margin-top: var(--e-2);
-  font-size: var(--t-sm);
-}
-
-/* ── Bloco 5 · ação ─────────────────────────────────────────────────────── */
-.portao__acao {
-  padding-block: var(--e-8) var(--e-10);
-}
-.portao__acao-lead {
-  max-width: var(--leitura);
-  margin-bottom: var(--e-5);
-  color: var(--texto-2);
-}
-.portao__acao .depois-do-btn {
-  margin-top: var(--e-4);
-  max-width: var(--leitura);
-  color: var(--texto-3);
-  font-size: var(--t-sm);
+  gap: var(--e-5);
 }
 
 @media (min-width: 46rem) {
-  .cabeca-portao .container {
-    grid-template-columns: 1fr;
-  }
-  .cabeca-portao__miolo {
-    grid-template-columns: 1.1fr 1fr;
-  }
-  .detalhe--duas-colunas {
-    grid-template-columns: 1fr 1fr;
-    gap: var(--e-10);
-  }
-  .detalhe__coluna--entra {
-    border-right: 1px solid var(--vinco-sombra);
-    box-shadow: inset -1px 0 0 var(--vinco-luz);
-    padding-right: var(--e-8);
+  .detalhe--estados {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--e-5) var(--e-8);
   }
 }
 
-/* ═══ 9 · PÁGINAS DE DOCUMENTO ══════════════════════════════════════════════
-   /sobre, /privacidade e /termos NÃO encenam a placa: são documentos, não
-   painéis de partida. Encenar um percurso que o conteúdo não tem é pior que
-   não ter. Herdam a banda, a mono nos títulos e o filete — só isso. */
-.doc {
-  padding-block: var(--e-8) var(--e-10);
+.detalhe--estados li {
+  padding-block-start: var(--e-3);
+  border-block-start: 1px solid var(--borda);
 }
-.doc h1 {
-  font-size: var(--t-3xl);
-  text-transform: uppercase;
-  max-width: 20ch;
-}
-.doc h2 {
-  font-size: var(--t-xl);
-  text-transform: uppercase;
-  margin-top: var(--e-8);
-  padding-top: var(--e-4);
-  border-top: 1px solid var(--borda);
-}
-.doc h3 {
+
+.detalhe--estados h3 {
   font-size: var(--t-lg);
-  margin-top: var(--e-6);
+  margin-block-end: var(--e-2);
 }
-.doc p,
-.doc li {
-  max-width: var(--leitura);
+
+.detalhe--estados p {
+  color: var(--texto-2);
+  font-size: var(--t-sm);
+}
+
+.detalhe--duas-colunas {
+  display: grid;
+  gap: var(--e-6);
+}
+
+@media (min-width: 46rem) {
+  .detalhe--duas-colunas {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--e-8);
+  }
+}
+
+.detalhe__coluna h3 {
+  font-size: var(--t-lg);
+  margin-block-end: var(--e-3);
+}
+
+.detalhe__coluna--entra h3 {
+  color: var(--marca);
+}
+
+.detalhe__coluna--nao-entra h3 {
+  color: var(--texto-3);
+}
+
+.detalhe__coluna li {
+  padding-block: var(--e-2);
+  border-block-end: 1px solid var(--borda);
+  color: var(--texto-2);
+  font-size: var(--t-sm);
+}
+
+.ficha {
+  list-style: none;
+  padding: 0;
+}
+
+.ficha__item {
+  display: grid;
+  gap: var(--e-1);
+  padding-block: var(--e-3);
+  border-block-end: 1px solid var(--borda);
+}
+
+@media (min-width: 46rem) {
+  .ficha__item {
+    grid-template-columns: 16rem 1fr;
+    gap: var(--e-4);
+    align-items: baseline;
+  }
+}
+
+.ficha__rotulo {
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--texto-3);
+}
+
+.ficha__valor {
   color: var(--texto-2);
 }
+
+.ficha__fonte {
+  display: inline-block;
+  margin-inline-start: var(--e-2);
+  font-size: var(--t-sm);
+}
+
+.portao__acao {
+  padding-block: var(--e-8) var(--e-10);
+  border-block-start: 1px solid var(--borda);
+}
+
+.portao__acao-lead {
+  color: var(--texto-2);
+  max-width: 56ch;
+  margin-block-end: var(--e-5);
+}
+
+/* ═══ 13 · PÁGINAS DE DOCUMENTO ═════════════════════════════════════════════
+   /sobre, /privacidade, /termos, /404. Sem fotografia: são texto, e uma
+   fotografia decorativa numa política de privacidade é exatamente o tipo de
+   enfeite que a direção recusa. O que elas herdam é a tipografia e a banda. */
+
+.doc {
+  padding-block: var(--e-12) var(--e-10);
+  max-width: 68ch;
+}
+
+.doc h1 {
+  font-size: var(--t-3xl);
+  margin-block-end: var(--e-5);
+}
+
+.doc h2 {
+  font-size: var(--t-2xl);
+  margin-block: var(--e-8) var(--e-4);
+}
+
+.doc h3 {
+  font-size: var(--t-lg);
+  margin-block: var(--e-5) var(--e-2);
+}
+
+.doc p,
+.doc li {
+  color: var(--texto-2);
+}
+
 .doc p,
 .doc ul,
 .doc ol {
-  margin-top: var(--e-4);
+  margin-block-end: var(--e-4);
 }
+
+.doc ul,
+.doc ol {
+  padding-inline-start: var(--e-5);
+}
+
 .doc li + li {
-  margin-top: var(--e-2);
+  margin-block-start: var(--e-2);
 }
+
 .doc__data {
-  margin-top: var(--e-4);
   font-family: var(--mono);
   font-size: var(--t-xs);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--texto-3);
 }
 
 .trilha {
-  padding-block: var(--e-4);
-  border-bottom: 1px solid var(--borda);
-  font-family: var(--mono);
-  font-size: var(--t-xs);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  padding-block-start: var(--e-10);
 }
+
 .trilha ol {
+  list-style: none;
+  padding: 0;
   display: flex;
   flex-wrap: wrap;
   gap: var(--e-2);
-  list-style: none;
-  margin: 0;
-  padding: 0;
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--texto-3);
 }
+
 .trilha li + li::before {
   content: "/";
   margin-inline-end: var(--e-2);
   color: var(--borda-forte);
 }
+
 .trilha a {
-  color: var(--texto-3);
+  color: var(--texto-2);
   text-decoration: none;
 }
+
 .trilha a:hover {
   color: var(--marca);
 }
 
-main {
-  view-transition-name: corpo;
-}
-
-/* ═══ 10 · LARGURAS ═════════════════════════════════════════════════════════
-   Mobile primeiro. O tráfego desta vertical é majoritariamente celular — é
-   por isso que o motor da direção é autônomo e não ponteiro. */
-
-@media (min-width: 46rem) {
-  .faixa__sep {
-    display: inline;
-  }
-  .linha {
-    /* Uma fileira só: código, nome, destino, abrangência, estado. */
-    grid-template-columns: 3.25rem 1fr auto 9rem auto;
-    grid-template-areas: "codigo nome destino onde status";
-    min-height: var(--celula);
-    padding-inline: var(--e-3);
-  }
-  .placa__chamada {
-    display: block;
-    -webkit-line-clamp: unset;
-    overflow: visible;
-  }
-  .linha__nome {
-    font-size: var(--t-lg);
-  }
-  .linha__onde {
-    display: block;
-  }
-  .linha__nota {
-    display: block;
-  }
-  .linha {
-    padding: var(--e-3) var(--e-3);
-  }
-  .linha__destino {
-    font-size: var(--t-xl);
-  }
-  .linhas {
-    margin-top: var(--e-6);
-  }
-  .placa__nota {
-    display: block;
-  }
-  .estacao__cabeca {
-    grid-template-columns: 3.25rem 1fr;
-  }
-  .fecho__grade {
-    grid-template-columns: 1.2fr 1fr;
-    gap: var(--e-10);
-  }
-}
-
-/* A partir daqui o item da lista vira três colunas — número, título, texto —
-   em vez de duas. Não é enfeite: em 1440px o parágrafo trava em 62ch por
-   legibilidade e sobrava metade da largura vazia sob um filete que ia até a
-   borda. Três colunas usam a largura E repetem a grade da placa, que é a
-   mesma ideia da página. `display: contents` no <div> deixa o h3 e o <p>
-   caírem direto na grade do <li> sem precisar mudar a marcação. */
-@media (min-width: 62rem) {
-  .itens > li {
-    grid-template-columns: 3.25rem minmax(0, 21rem) minmax(0, 1fr);
-    align-items: start;
-  }
-  .itens > li > div {
-    display: contents;
-  }
-  .itens h3 {
-    margin-bottom: 0;
-  }
-}
-
-@media (min-width: 62rem) {
-  .placa {
-    padding-block: var(--e-6) var(--e-10);
-  }
-  .placa__topo {
-    display: grid;
-    grid-template-columns: 1.15fr 1fr;
-    gap: var(--e-10);
-    align-items: end;
-    padding-block: var(--e-8) var(--e-6);
-  }
-  .placa__chamada {
-    margin-top: 0;
-    padding-bottom: 0.5em;
-  }
+/* A trilha existe nas rotas de portão, que abrem com fotografia em tela
+   cheia. Ali ela não pode ficar por cima da imagem — a trilha é navegação, e
+   navegação sobre foto exige sombra de texto que ela não tem. Nos portões o
+   <main> a recebe antes da abertura, então ela some: o link de volta dentro
+   da própria abertura faz o trabalho, e com o gesto certo. */
+.portao .trilha,
+.trilha:has(+ .portao) {
+  display: none;
 }

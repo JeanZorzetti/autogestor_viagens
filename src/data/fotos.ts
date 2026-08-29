@@ -1,20 +1,67 @@
 /* GERADO por logos/baixar-fotos.mjs — não edite à mão.
-   Chave da parede → onde o corte de `cover` tem que cair naquela foto.
-   Fotografias do Unsplash (licença livre, sem atribuição obrigatória); os
-   créditos, com autor e link, ficam em public/img/FOTOS.json. */
+   Créditos com autor e link em public/img/FOTOS.json. */
 
-export const FOTO_FOCO: Record<string, string> = {
-  "aer": "30% 60%",
-  "htl": "50% 50%",
-  "pct": "50% 40%",
-  "car": "50% 55%",
-  "saguao": "50% 52%",
+export type Foto = {
+  papel: "abertura" | "peca";
+  larguras: number[];
+  razao: number;
+  /** Média da imagem em sRGB. Pintada como background do container enquanto o
+      arquivo decodifica — o poster desta direção, e o que impede o flash de
+      navy chapado no lugar onde vai entrar uma fotografia colorida. */
+  cor: string;
 };
 
-/* As dimensões REAIS do recorte, para os atributos width/height do <img>.
-   Quem segura o CLS aqui é a altura fixa do container (--saguao-h, em
-   tokens.css), não estes números — mas um <img> que declara um tamanho
-   diferente do arquivo é uma mentira no HTML que custa zero para não contar.
-   Saem do recorte feito no encoder, não de uma conta à mão que envelhece na
-   primeira troca de foto. */
-export const SAGUAO = { largura: 1440, altura: 302 } as const;
+export const FOTOS: Record<string, Foto> = {
+  "saguao": {
+    "papel": "abertura",
+    "larguras": [
+      760,
+      1280,
+      1920
+    ],
+    "razao": 1.7777777777777777,
+    "cor": "rgb(50 61 64)"
+  },
+  "aer": {
+    "papel": "peca",
+    "larguras": [
+      520,
+      1040
+    ],
+    "razao": 0.8,
+    "cor": "rgb(105 95 88)"
+  },
+  "htl": {
+    "papel": "peca",
+    "larguras": [
+      520,
+      1040
+    ],
+    "razao": 0.8,
+    "cor": "rgb(68 77 105)"
+  },
+  "pct": {
+    "papel": "peca",
+    "larguras": [
+      520,
+      1040
+    ],
+    "razao": 0.8,
+    "cor": "rgb(108 116 146)"
+  },
+  "car": {
+    "papel": "peca",
+    "larguras": [
+      520,
+      1040
+    ],
+    "razao": 0.8,
+    "cor": "rgb(114 93 83)"
+  }
+};
+
+/** Altura do arquivo daquela largura. É conta, não tabela: a razão está no
+    manifesto e derivar aqui garante que width/height do <img> nunca divirjam
+    do que o encoder produziu. */
+export const alturaDe = (nome: string, largura: number) =>
+  Math.round(largura / FOTOS[nome].razao);
