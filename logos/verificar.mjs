@@ -56,7 +56,14 @@ const PORTA = 4331;
 
 // SC-003/SC-004: 800ms e 0,01 são os números que a spec mede de fato; 1500ms
 // é só o teto declarado da faixa Captação (contexto, não o gate).
-const ORCAMENTO = { lcp: 800, cls: 0.01, js: 0 };
+//
+// `js` NÃO é zero: o GA4 (Base.astro) carrega gtag.js depois do `load`, medido
+// em ~172000B nas nove rotas (script + 1 fetch de coleta). O filtro antigo
+// (`r.url().endsWith(".js")`) media 0 porque a URL do gtag termina em query
+// string (`?id=…`), não em `.js` — o número nunca correspondeu à rede real.
+// O orçamento aqui é o próprio GA4, com folga; o script inline de ~0,2kb da
+// capa (view-transition-name órfão) já foi removido, ver global.css.
+const ORCAMENTO = { lcp: 800, cls: 0.01, js: 180_000 };
 
 const ROTAS = [
   { slug: "capa", caminho: "/" },
@@ -322,21 +329,31 @@ for (const rota of ROTAS) {
   await ctx.close();
 }
 
-// ── T051 · o quadro da transição capa → portão ──────────────────────────────
-// Congelado pela Web Animations API a partir de `pagereveal` no documento
-// NOVO — é o único ponto que roda antes de a transição começar. Dois
+// ── T051 · o quadro da transição, capa ⇄ portão ─────────────────────────────
+// Congelado pela Web Animations API a partir de `pagereveal` no documento que
+// ENTRA — é o único ponto que roda antes de a transição começar. Dois
 // quadros: 60ms (o corpo virando) e 140ms (o corpo praticamente fora — é
-// onde um órfão parado denunciaria o G4 voltando). Falha se qualquer
-// `::view-transition-old(vt-*)` estiver rodando `-ua-view-transition-fade-out`
-// — esse nome de animação É o bug do G4.
-{
+// onde um órfão parado denunciaria o G4 voltando). Falha se algum nome de
+// `view-transition` existir de um lado só (velho sem par novo, ou vice-versa).
+//
+// O listener é `ctx.addInitScript`, não `pagina.evaluate`: evaluate roda no
+// documento ATUAL, e o pagereveal que importa dispara no documento seguinte,
+// depois da navegação — um `pagina.evaluate` antes do clique nunca ouve esse
+// evento, e a checagem só "passava" porque lia animações órfãs residuais aos
+// 200ms, não porque congelava algo no instante certo.
+//
+// E as DUAS direções entram: capa→portão só prova o par vt-aer que a peça
+// clicada carrega. É a VOLTA (portão→capa) que expõe as outras três peças da
+// vitrine — vt-htl, vt-pct, vt-car — que não têm par no documento que sai do
+// portão, e são órfãs de verdade toda vez que alguém aperta "Voltar ao
+// saguão". O CSS abaixo (global.css, regra `:only-child`) existe por causa
+// desta metade do gate.
+for (const [rotulo, ida, clique, esperado] of [
+  ["capa → portão", "/", ".vitrine__grade > li:nth-child(1) .peca", /passagens-aereas/],
+  ["portão → capa", "/passagens-aereas", ".portao__volta", /^http:\/\/[^/]+\/$/],
+]) {
   const ctx = await navegador.newContext({ viewport: { width: 1440, height: 900 } });
-  const pagina = await ctx.newPage();
-  await pagina.goto(base + "/", { waitUntil: "networkidle" });
-  await pagina.evaluate(() => document.fonts.ready);
-
-  await pagina.evaluate(() => {
-    window.__quadros = [];
+  await ctx.addInitScript(() => {
     document.addEventListener("pagereveal", (e) => {
       if (!e.viewTransition) return;
       e.viewTransition.ready.then(() => {
@@ -347,10 +364,11 @@ for (const rota of ROTAS) {
       });
     });
   });
-  // A peça da vitrine, que carrega o `view-transition-name: vt-aer` na
-  // fotografia — é ela que tem que atravessar para a abertura do portão.
-  await pagina.locator(".vitrine__grade > li:nth-child(1) .peca").click();
-  await pagina.waitForURL(/passagens-aereas/, { timeout: 3000 }).catch(() => {});
+  const pagina = await ctx.newPage();
+  await pagina.goto(base + ida, { waitUntil: "networkidle" });
+  await pagina.evaluate(() => document.fonts.ready);
+  await pagina.locator(clique).click();
+  await pagina.waitForURL(esperado, { timeout: 3000 }).catch(() => {});
   await pagina.waitForTimeout(200);
 
   for (const [nome, t] of [
@@ -368,8 +386,7 @@ for (const rota of ROTAS) {
        reprovava a transição justamente quando ela estava certa.
 
        Órfão é o nome que existe de um lado só: tem `old(vt-X)` e não tem
-       `new(vt-X)`, ou o contrário. Era o caso das três peças não clicadas da
-       vitrine, antes do script inline da capa. */
+       `new(vt-X)`, ou o contrário. */
     const fadeEncontrado = await pagina.evaluate((t) => {
       const velhos = new Set();
       const novos = new Set();
@@ -383,14 +400,14 @@ for (const rota of ROTAS) {
       const orfaos = [...velhos].filter((n) => !novos.has(n)).concat([...novos].filter((n) => !velhos.has(n)));
       return orfaos.length ? orfaos.join(", ") : false;
     }, t);
-    await pagina.screenshot({ path: `${SAIDA}/transicao-capa-portao-${nome}.png` });
+    await pagina.screenshot({ path: `${SAIDA}/transicao-${rotulo.replace(/[^a-z]+/gi, "-")}-${nome}.png` });
     if (fadeEncontrado)
       problemas.push(
-        `transição @ ${nome}: nome(s) de transição sem par nos dois documentos — ${fadeEncontrado}. ` +
+        `transição @ ${rotulo} @ ${nome}: nome(s) de transição sem par nos dois documentos — ${fadeEncontrado}. ` +
           `O navegador resolve órfão com o fade padrão dele, que é o gesto que esta direção não usa.`,
       );
   }
-  console.log("transição   quadros de 60ms e 140ms congelados, ver logos/_verificacao/transicao-*.png");
+  console.log(`transição   ${rotulo}  quadros de 60ms e 140ms congelados, ver logos/_verificacao/transicao-*.png`);
   await ctx.close();
 }
 
@@ -464,8 +481,12 @@ for (const rota of ROTAS) {
     const ctx = await navegador.newContext({ viewport: { width: 1440, height: 900 } });
     const pagina = await ctx.newPage();
     let bytesJs = 0;
+    // `resourceType() === "script"` e não `url().endsWith(".js")`: o gtag.js
+    // do GA4 é servido em `.../gtag/js?id=G-…`, e uma URL com query string
+    // nunca termina em `.js` — o filtro antigo lia 0 bytes de JS com o GA4
+    // carregado na tela, em produção, nas nove rotas.
     pagina.on("response", async (r) => {
-      if (r.url().endsWith(".js")) bytesJs += Number(r.headers()["content-length"] ?? 0);
+      if (r.request().resourceType() === "script") bytesJs += Number(r.headers()["content-length"] ?? 0);
     });
     const cdp = await ctx.newCDPSession(pagina);
     await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });

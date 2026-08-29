@@ -3,10 +3,19 @@
 /* ═══ O CUSTO, MEDIDO ══════════════════════════════════════════════════════
    Faixa: CAPTAÇÃO (tráfego pago, custo por clique) — a mais apertada.
 
-   JS adicionado ....... 0,2kb, inline, só na capa (o script que impede o
-                         fade dos view-transition-name órfãos, comentado em
-                         src/pages/index.astro). As outras oito rotas: 0.
-                         Nenhuma dependência de runtime.
+   JS de PÁGINA ........ 0 bytes, nas nove rotas. O script inline que existia
+                         só na capa (apagava o view-transition-name órfão no
+                         clique) saiu: a mesma correção agora é CSS puro
+                         (`:only-child` em global.css, camada 4) e cobre as
+                         duas direções — a inline só cobria a ida.
+   JS DE TERCEIRO ...... ~172kb, GA4 (gtag.js), nas nove rotas — carrega DEPOIS
+                         do `load` (Base.astro), fora do caminho do LCP. Não é
+                         JavaScript "da página" no sentido do Princípio I (não
+                         monta nada, não é dependência de runtime do
+                         repositório), mas é bytes reais na rede do visitante
+                         e o orçamento de logos/verificar.mjs mede isso agora
+                         (ORCAMENTO.js = 180000 — o filtro antigo, por
+                         extensão de URL, lia 0 com o GA4 já carregado).
    Fonte ............... 20,5kb da Instrument Serif (precarregada, é o texto
                          do LCP) + 15,6kb da Plex Mono (`font-display:
                          optional`, sem preload).
@@ -20,7 +29,7 @@
    MEDIDO por logos/verificar.mjs nas nove rotas:
      LCP  296–500ms   (orçamento interno do projeto: 800ms · limiar CWV: 2500)
      CLS  0,0000      (orçamento: 0,01 · limiar CWV: 0,1)
-     JS   0 bytes externos
+     JS   ~172kb (GA4, pós-load)   (orçamento: 180000 · zero JS de página)
      Elemento de LCP: IMG nas cinco rotas com fotografia; P nas quatro de
      documento.
 

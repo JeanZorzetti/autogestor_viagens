@@ -1,7 +1,52 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Versão: 1.0.0 → 1.0.1
+Versão: 1.0.1 → 1.0.2
+Tipo de bump: PATCH — correção de fato, sem redefinir princípio nem regra de
+governança. Auditoria de design-review em 2026-08-29 (repositório inteiro)
+encontrou a constituição descrevendo um repositório que não existe mais:
+
+  1. Princípio I e a seção "Direção" ainda descreviam a placa de embarque
+     ("Solari") — pá girando, `H1.placa__titulo`, `test/placa.test.mjs` — uma
+     direção substituída pelo dono em 28/08/2026 (ver tokens.css, bloco "O QUE
+     ESTA DIREÇÃO SUBSTITUIU"). `test/placa.test.mjs` também não existe mais:
+     virou `test/conteudo.test.mjs` na mesma troca.
+  2. Princípio I afirmava "orçamento de JavaScript de runtime é 0 kb" sem
+     ressalva. Medido nas nove rotas: o GA4 (`Base.astro`) carrega ~172000B de
+     `gtag.js` de terceiro depois do `load`, em produção, desde antes desta
+     constituição existir. O texto nunca foi verdade em produção — só na
+     leitura que ignorava o que carrega depois da pintura.
+  3. `logos/verificar.mjs` (T051) testava só a IDA da transição (capa→portão)
+     e testava com o listener no documento errado (`pagina.evaluate` antes do
+     clique, que não ouve o `pagereveal` do documento seguinte); a VOLTA
+     (portão→capa) tinha três `view-transition-name` órfãos de verdade — o
+     próprio defeito que o teste existe para pegar — sem que o gate acusasse.
+
+Nada do que é permitido muda em consequência: o GA4 já rodava, a direção já
+tinha trocado, a volta já tinha o defeito. O que muda é que a constituição, o
+teste e o CSS agora dizem a verdade sobre o repositório — e a última linha
+some: `global.css` ganhou a regra `:only-child` que fecha a volta, e o script
+inline de ~0,2kb que só cobria a ida foi removido (ver `logos/verificar.mjs`,
+`src/styles/global.css`, `src/pages/index.astro`).
+
+Artefatos dependentes revisados:
+  ✅ README.md — decisão registrada: a linha de custo passa a citar o GA4 pelo
+     nome, com o número medido, no lugar de "0 bytes de JS".
+  ✅ `logos/verificar.mjs` — `ORCAMENTO.js` deixou de ser 0 (o filtro por
+     `.endsWith(".js")` nunca pegava o GA4, cuja URL termina em query string);
+     agora conta por `resourceType() === "script"` e o teto é 180000. O bloco
+     T051 passou a testar as duas direções da transição, com o listener em
+     `ctx.addInitScript` no lugar de `pagina.evaluate`.
+  ✅ `src/styles/tokens.css` — o bloco "O CUSTO, MEDIDO" foi corrigido para
+     nomear o GA4 e separar "JS de página" (0) de "JS de terceiro" (~172kb).
+  ⏭️  `specs/001-painel-e-portoes/*` — não revisado, de propósito: é registro
+     histórico de uma feature concluída sob a direção Solari, e envelhecer é o
+     comportamento correto de um artefato de spec fechado. Só esta
+     constituição precisava continuar descrevendo o repositório de hoje.
+  ✅ `.claude/skills/speckit-*/SKILL.md` — sem referência à direção antiga ou
+     ao nome de teste antigo; nada a mudar.
+
+Histórico (1.0.0 → 1.0.1):
 Tipo de bump: PATCH — correção de fato no Sync Impact Report, sem tocar em
 princípio, seção ou regra de governança. A ratificação 1.0.0 afirmava que
 `specs/001-painel-e-portoes` estava "implementada e verificada" e que o portão de
@@ -82,9 +127,17 @@ plataforma de reservas, e este site existe para produzir um clique nela.
 
 O site MUST ser gerado como HTML estático. Cada página MUST funcionar por
 completo sem JavaScript no cliente, e neste repositório a regra é mais dura que
-nos irmãos: o orçamento de JavaScript de runtime é **0 kb**, e o de dependência
-de runtime é **zero pacote**. Não há rota dinâmica, função serverless nem cold
+nos irmãos: o orçamento de JavaScript **de página** — o que este repositório
+escreve e envia como parte da experiência — é **0 kb**, e o de dependência de
+runtime é **zero pacote**. Não há rota dinâmica, função serverless nem cold
 start, e não deve passar a haver por conveniência.
+
+O zero é do que este repositório autora, não da rede. O GA4 (`Base.astro`)
+carrega `gtag.js` de terceiro depois do evento `load`, em toda rota — é medição,
+não coreografia nem interação, e não é "JavaScript novo" a cada PR porque já
+existia quando esta constituição foi ratificada. `logos/verificar.mjs` mede o
+peso dele (`ORCAMENTO.js`) para que continue sendo o único item na conta; um
+segundo script de terceiro exige a mesma disciplina do parágrafo seguinte.
 
 Coreografia, estado visual e resposta a scroll MUST ser CSS. Sem JavaScript, sem
 suporte a `scroll-timeline` ou sob `prefers-reduced-motion`, a página MUST ser
@@ -234,24 +287,35 @@ a origem responde **301** — `canonical` cruzada não basta, porque mantém as 
 servindo 200. Publicar só a metade de cá recria a canibalização que a spec 003 do
 `coopluz` existiu para matar.
 
-**Direção: a placa de embarque.** O verbo da página é **virar**, não desbotar:
-uma pá gira no eixo horizontal e trava num valor novo. Não MUST haver fade em
-nenhuma camada. O gesto MUST permanecer o mesmo nas quatro camadas (entrada,
-scroll, ponteiro, transição de rota) — inventar um segundo gesto dilui o único
-que a página tem.
+**Direção: a janela de embarque.** O verbo da página é **abrir**, não desbotar:
+uma máscara descobre a fotografia, e o texto pousa no peitoril. Não MUST haver
+fade em nenhuma camada. O gesto MUST permanecer o mesmo nas quatro camadas
+(entrada, scroll, ponteiro, transição de rota) — inventar um segundo gesto
+dilui o único que a página tem.
 
-O elemento de LCP (`H1.placa__titulo`) MUST NOT ser animado: o resto chega em
-volta dele. A pá que gira sozinha MUST mostrar destino, NUNCA preço
-(Princípio VI). O ciclo da placa MUST NOT deixar a janela vazia — a saída de uma
-pá se sobrepõe à entrada da próxima, de propósito, e `test/placa.test.mjs` falha
-se alguém "consertar" isso.
+O elemento de LCP (a fotografia da abertura e o H1 que pousa sobre ela) MUST
+NOT ser animado: o resto chega em volta dele. A fotografia MUST mostrar
+destino, NUNCA preço (Princípio VI). A transição entre a peça da vitrine e a
+abertura do portão MUST usar o mesmo `view-transition-name` nos dois
+documentos, nas duas direções (ida e volta) — um nome que existe de um lado só
+é órfão, e o navegador resolve órfão com o fade que esta direção proíbe;
+`logos/verificar.mjs` (T051) mede isso indo e voltando.
 
-**Macroestrutura: índice, não pilha de seções.** Enquanto o site tiver este
-tamanho, o conteúdo é lista: linha de placa com código à esquerda e status à
-direita, a linha inteira sendo o link. **Zero cards.** Páginas internas
-(`/sobre`, `/privacidade`, `/termos`) MUST usar o documento simples (`.doc`) e
-MUST NOT encenar a placa — encenar um percurso que o conteúdo não tem é pior que
-não encenar nenhum.
+> Até 28/08/2026 a direção era a **placa de embarque** ("Solari"): o verbo era
+> **virar**, uma pá girava no eixo horizontal e travava num valor novo, e
+> `test/placa.test.mjs` media esse ciclo. Foi substituída inteira pelo dono —
+> ver o registro em `tokens.css`, bloco "O QUE ESTA DIREÇÃO SUBSTITUIU" — e o
+> teste virou `test/conteudo.test.mjs`. Nenhum princípio deste documento
+> depende de qual direção está no ar; só este parágrafo precisava acompanhar a
+> troca.
+
+**Macroestrutura: índice, não pilha de seções genéricas.** A capa é a Vitrine —
+uma grade de peças fotográficas, cada peça inteira sendo o link para o
+respectivo portão — seguida de listas densas numeradas (as três razões, os três
+passos) e um FAQ em `<details>` nativo. **Zero card com ícone de linha.**
+Páginas internas (`/sobre`, `/privacidade`, `/termos`) MUST usar o documento
+simples (`.doc`) e MUST NOT encenar a janela — encenar um percurso que o
+conteúdo não tem é pior que não encenar nenhum.
 
 **Tipografia como material.** A monoespaçada manda no display, nos códigos e nas
 linhas da placa; o texto corrido MUST rodar na pilha do sistema (0 kb baixados).
@@ -279,15 +343,16 @@ precisam do fluxo.
 
 **Lógica testável mora em `.mjs`.** Toda lógica pura não-trivial — cálculo de
 ciclo, parsing de CSS, medição — MUST ficar em um `.mjs` que `node --test`
-importe direto, sem transpilar. `test/placa.test.mjs` e `logos/contraste.mjs` são
-o padrão.
+importe direto, sem transpilar. `test/conteudo.test.mjs` e `logos/contraste.mjs`
+são o padrão.
 
 **Todo caminho não-trivial deixa um teste.** Ramo, laço, parser ou invariante de
 conteúdo MUST deixar ao menos uma checagem executável — a menor coisa que falha
 se a regra quebrar. Sem framework, sem fixture, sem suíte por função. One-liner
-trivial não precisa de teste. As invariantes já cobertas (ciclo da placa,
-sobreposição das pás, ausência de `R$`, CTA único) MUST NOT ser removidas sem
-emenda a esta constituição.
+trivial não precisa de teste. As invariantes já cobertas (ausência de `R$` no
+build servido, todo CTA externo apontando para `EXTERNOS.busca`, slugs de rota
+sem colisão, o `view-transition-name` existindo nos dois documentos, crédito
+de foto presente) MUST NOT ser removidas sem emenda a esta constituição.
 
 **Ativo derivado é gerado, nunca desenhado.** Favicon e imagem de compartilhamento
 MUST sair de script (`node logos/gerar-og.mjs`), de uma fonte só. Arquivo mantido
@@ -350,4 +415,4 @@ registro ou marca de terceiro.
 pegadinhas de ambiente e as decisões já tomadas. Esta constituição diz o que não
 se negocia; o README diz como o trabalho é feito.
 
-**Version**: 1.0.1 | **Ratified**: 2026-08-28 | **Last Amended**: 2026-08-28
+**Version**: 1.0.2 | **Ratified**: 2026-08-28 | **Last Amended**: 2026-08-29

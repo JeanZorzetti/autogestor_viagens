@@ -22,7 +22,15 @@ const servicoSchema = {
 };
 ---
 
-<Base titulo={titulo} descricao={descricao} schema={[servicoSchema]}>
+<Base
+  titulo={titulo}
+  descricao={descricao}
+  schema={[servicoSchema]}
+  trilha={[
+    { nome: "Início", href: "/" },
+    { nome: produto.nome, href: produto.rota },
+  ]}
+>
   <article class="portao">
     <CabecaDePortao produto={produto} titulo={produto.nome} bluf={bluf} />
 
@@ -68,6 +76,10 @@ const servicoSchema = {
           }
         </ul>
       </section>
+
+      <nav class="portao__outros" aria-label="Outros produtos">
+        {PRODUTOS.filter((p) => p.codigo !== produto.codigo).map((p) => <a href={p.rota}>{p.nome}</a>)}
+      </nav>
 
       <section class="portao__acao">
         <p class="portao__acao-lead">

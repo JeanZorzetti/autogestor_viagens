@@ -190,13 +190,18 @@ busca da OnerTravel e muda por rota, por data e por hora. Está dito na primeira
 tela, em `/sobre`, nos Termos, no rodapé e — em maiúsculas — no `llms.txt`,
 para um motor de resposta não preencher a lacuna sozinho.
 
-**Há 0,2kb de JavaScript no site inteiro, e ele existe por um motivo só.** A
-vitrine declara quatro `view-transition-name` e o portão de destino declara um;
-os outros três seriam órfãos, e o navegador resolve órfão com o fade padrão
-dele — três fotografias desbotando no meio da transição, que é exatamente o
-gesto que esta direção recusa. Não há saída em CSS estático: a folha não sabe
-qual peça foi clicada. O script (inline, só na capa) apaga o nome das três que
-não foram. Sem ele o site continua funcionando; é degradação, não quebra.
+**O órfão da vitrine é resolvido em CSS, não em JavaScript.** A vitrine declara
+quatro `view-transition-name` e o portão de destino declara um; os outros três
+ficam sem par, e o navegador resolve órfão com o fade padrão dele — três
+fotografias desbotando no meio da transição, o gesto que esta direção recusa.
+Havia um script inline (~0,2kb, só na capa) que apagava o nome das três não
+clicadas antes da navegação — mas ele só cobria a IDA (capa → portão): no
+caminho de volta é a capa que ENTRA com quatro nomes contra o um do portão que
+SAI, e um script disparado pelo clique dentro da capa nunca roda nessa direção.
+A correção que fecha as duas — `::view-transition-old(*):only-child` em
+`global.css` — não sabe (nem precisa saber) qual documento é a origem: um nome
+sem par vira filho único do próprio `::view-transition-image-pair`, e a regra
+desliga a animação dele. Zero JavaScript, cobertura maior.
 
 **A "emenda" verde foi construída e depois removida.** A plataforma de destino
 (OnerTravel) tem header verde e este site é navy; a primeira versão avisava
@@ -237,8 +242,17 @@ houver; o esqueleto do Coopluz mostra o caminho.
 Faixa: **captação** (o site existe para produzir um clique na busca).
 
 ```
-JS adicionado: 0,2 kb, inline, só na capa (nenhuma dependência de runtime;
-               as outras oito rotas: 0 bytes)
+JS de página: 0 bytes, nas 9 rotas (nenhuma dependência de runtime). Havia um
+              script inline de ~0,2kb só na capa, que apagava o
+              view-transition-name das peças não clicadas antes da
+              navegação — ele só cobria a IDA (capa -> portão). A mesma
+              correção agora é CSS puro (`:only-child` em global.css) e
+              cobre as duas direções; o script saiu (2026-08-29).
+JS de terceiro: ~172 kb, GA4 (gtag.js), nas 9 rotas — carrega DEPOIS do
+                `load`, fora do caminho do LCP. Medido por
+                logos/verificar.mjs (ORCAMENTO.js = 180000); o filtro
+                antigo (`url().endsWith(".js")`) lia 0, porque a URL do
+                GA4 termina em query string, não em `.js`.
 Fonte: 2 arquivos — Instrument Serif 400 (20,5 kb, precarregada, é o texto
        do LCP) e IBM Plex Mono 600 (15,6 kb, font-display: optional)
 Fotografia: abertura 39,8 kb em 1280 / 67,3 kb em 1920 (AVIF); as 4 peças
@@ -249,13 +263,13 @@ LCP: 296-500ms nas 9 rotas (orçamento interno 800ms · limiar CWV 2500ms)
 CLS: 0,0000 (orçamento 0,01 · limiar CWV 0,1)
 Elemento de LCP: IMG nas 5 rotas com fotografia; P nas 4 de documento
 
-Fallback: sem JS a página é idêntica, menos o fade dos três nomes de
-          transição não clicados. Se a fotografia não chegar, o container
-          fica pintado com a COR MÉDIA dela (gerada pelo pipeline, gravada
-          no manifesto) e o véu, a tipografia, o peitoril e a grade
-          continuam compostos — não é um retângulo cinza, é a mesma página
-          com um bloco de cor no lugar da imagem. Com prefers-reduced-
-          motion, tudo nasce inteiro e parado.
+Fallback: sem JS a página é idêntica. Se a fotografia não chegar, o
+          container fica pintado com a COR MÉDIA dela (gerada pelo
+          pipeline, gravada no manifesto) e o véu, a tipografia, o
+          peitoril e a grade continuam compostos — não é um retângulo
+          cinza, é a mesma página com um bloco de cor no lugar da
+          imagem. Com prefers-reduced-motion, tudo nasce inteiro e
+          parado.
 Fora do limiar bom de CWV? não
 ```
 
@@ -265,13 +279,17 @@ orçamento — que está na constante `ORCAMENTO` no topo dele, não neste READM
 
 **Ressalva honesta:** esses números são de máquina local sem throttle de rede.
 Em 4G simulado o LCP sobe; o que protege a margem é o tamanho — 116 kb de
-primeira tela com zero JS bloqueante tem folga larga para os 2,0s da faixa.
+primeira tela com zero JS de página bloqueante tem folga larga para os 2,0s
+da faixa.
 
 Também verificado, nas 9 rotas: console limpo em 4 larguras, nenhum estouro
 horizontal, todas as paradas de teclado com anel de foco visível (26 na capa),
 nada preso fechado com `prefers-reduced-motion`, nada preso fechado depois de
-rolar a página inteira, e nenhum `view-transition-name` órfão na passagem
-capa -> portão (congelada em 60ms e 140ms pela Web Animations API).
+rolar a página inteira, e nenhum `view-transition-name` órfão nas DUAS
+direções da passagem capa <-> portão (congelada em 60ms e 140ms pela Web
+Animations API; até 2026-08-29 o gate só testava a ida, e testava com o
+listener no documento errado — a volta tinha três nomes órfãos de verdade e
+o gate não acusava).
 
 ## Deploy
 

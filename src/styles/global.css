@@ -264,6 +264,26 @@ strong {
   navigation: auto;
 }
 
+/* O ÓRFÃO DA VOLTA. A vitrine declara quatro `view-transition-name` (um por
+   fotografia); o portão declara um só, o clicado. Na IDA isso não aparece —
+   o documento que sai (a capa) tem os quatro, o que entra (o portão) tem um,
+   e só o clicado precisa de par. Na VOLTA o problema se inverte: o portão
+   que sai tem um nome, a capa que entra tem quatro, e as três não-clicadas
+   chegam SEM PAR no documento anterior — órfãs de verdade, resolvidas pelo
+   navegador com o fade padrão dele. Era o script inline que existia só na
+   capa (apagava o nome de quem não foi clicado) — e ele só cobria a ida,
+   porque só rodava no clique DENTRO da capa.
+   `::view-transition-image-pair(nome)` só tem os dois filhos (old e new)
+   quando o nome existe nos dois documentos; um nome órfão vira o ÚNICO filho
+   do próprio par. `:only-child` pega exatamente essa forma, nas duas
+   direções, sem depender de saber qual documento é a origem — e substitui o
+   script: 0,2kb inline a menos, cobertura maior. Medido nas duas direções em
+   logos/verificar.mjs (T051). */
+::view-transition-old(*):only-child,
+::view-transition-new(*):only-child {
+  animation: none;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   ::view-transition-old(root) {
     animation: sair var(--dur-base) var(--ease-entrada) both;
@@ -1419,6 +1439,33 @@ strong {
   display: inline-block;
   margin-inline-start: var(--e-2);
   font-size: var(--t-sm);
+}
+
+/* Os outros três produtos, ao pé do portão. Sem isto cada portão era beco
+   sem saída — as únicas rotas internas que ele oferecia eram /sobre,
+   /privacidade e /termos (o rodapé), nenhum irmão de produto. Mesma
+   linguagem visual do rodapé (mono, versalete, linha) porque é a mesma
+   função: navegação secundária, não vitrine — a vitrine com fotografia mora
+   só na capa. */
+.portao__outros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-2) var(--e-5);
+  padding-block: var(--e-6);
+  border-block-start: 1px solid var(--borda);
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.portao__outros a {
+  color: var(--texto-2);
+  text-decoration: none;
+}
+
+.portao__outros a:hover {
+  color: var(--marca);
 }
 
 .portao__acao {

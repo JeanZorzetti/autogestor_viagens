@@ -77,7 +77,7 @@ const faqSchema = {
               Buscar minha viagem<span class="visualmente-oculto"> — nossa busca online, abre em nova aba</span>
             </a>
             <span class="abertura__nota">
-              Grátis para pesquisar, sem cadastro para ver preço.
+              Grátis para pesquisar, sem cadastro. A busca abre em nova aba, na plataforma de reservas.
             </span>
           </p>
         </div>
@@ -91,39 +91,23 @@ const faqSchema = {
     </p>
   </section>
 
-  {/* ══ O ÚNICO JAVASCRIPT DO SITE ═════════════════════════════════════════
-      ~200 bytes, inline, e só nesta página. As outras oito rotas continuam
-      com zero.
+  {/* ══ SEM JAVASCRIPT — O ÓRFÃO DA VITRINE É RESOLVIDO EM CSS ═══════════════
+      Havia aqui um script inline (~200 bytes) que apagava, no clique, o
+      `view-transition-name` das três fotografias não escolhidas — porque
+      elas ficam sem par no documento do portão e o navegador resolve órfão
+      com o fade padrão dele.
 
-      O PROBLEMA QUE ELE RESOLVE: a vitrine declara quatro
-      `view-transition-name` (um por fotografia) e o portão de destino declara
-      um só. Os outros três são ÓRFÃOS — existem no documento que sai e não no
-      que entra — e o navegador resolve órfão com o fade padrão dele. Ou seja:
-      três fotografias flutuando e desbotando no meio da transição, que é
-      exatamente o gesto que esta direção recusa em toda parte ("janela não
-      desbota, janela abre"). O logos/verificar.mjs pega isso congelando o
-      quadro de 60ms e procurando `-ua-view-transition-fade-out`.
+      Ele só cobria METADE do problema: resolvia a IDA (capa → portão), mas
+      não a VOLTA. No caminho inverso é o portão que sai com um nome só, e são
+      as fotografias da CAPA — o documento que ENTRA — que chegam órfãs; um
+      script disparado pelo clique dentro da capa nunca roda nessa direção.
+      `npm run verificar` mediu isso nas duas direções (T051) e pegou o furo.
 
-      Não há saída em CSS estático: a folha não sabe qual peça foi clicada, e
-      é o clique que decide qual dos quatro nomes deve sobreviver. Então o
-      script faz uma coisa só — apaga o nome das três que não foram clicadas,
-      antes de a navegação começar. `capture: true` porque isso precisa
-      acontecer antes de o navegador tirar a foto do estado "old".
-
-      Sem ele o site continua funcionando: a transição volta a ser o wipe do
-      root com os três fades por cima. É degradação, não quebra. */}
-  <script is:inline>
-    addEventListener(
-      "click",
-      (e) => {
-        const peca = e.target.closest?.(".peca");
-        if (!peca) return;
-        for (const f of document.querySelectorAll(".peca .foto"))
-          if (!peca.contains(f)) f.style.viewTransitionName = "none";
-      },
-      true,
-    );
-  </script>
+      A correção que cobre as duas direções é `::view-transition-old(*):
+      only-child` em global.css: um nome sem par vira filho único do próprio
+      par (`::view-transition-image-pair`), e a regra desliga a animação sem
+      saber qual documento é a origem. Zero JavaScript, zero script inline —
+      e esta agora é, de fato, uma das oito rotas com zero. */}
 
   {/* ══ A VITRINE ═══════════════════════════════════════════════════════════
       Os quatro produtos, cada um com a fotografia do que ele vende. A célula
@@ -138,7 +122,7 @@ const faqSchema = {
       <div class="vitrine__cabeca">
         <h2 class="vitrine__titulo">Quatro buscas, uma compra</h2>
         <p class="vitrine__nota">
-          Cada uma abre a mesma plataforma de reservas, já no lugar certo.
+          Cada uma explica o que essa busca cobre antes de você abrir a plataforma de reservas.
         </p>
       </div>
 
@@ -205,11 +189,12 @@ const faqSchema = {
         }
       </ol>
 
-      <p class="acao-secao">
+      <div class="acao-secao">
         <a class="btn btn--contorno" href={BUSCA} target="_blank" rel="noopener">
           Buscar minha viagem<span class="visualmente-oculto"> — nossa busca online, abre em nova aba</span>
         </a>
-      </p>
+        <p class="depois-do-btn">A busca abre em nova aba, na plataforma de reservas.</p>
+      </div>
     </div>
   </section>
 
